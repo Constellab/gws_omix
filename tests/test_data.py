@@ -8,6 +8,9 @@ import os
 import unittest
 import asyncio
 
+
+#from omix import
+
 # from peewee import CharField, ForeignKeyField
 # from starlette.requests import Request
 # from starlette.responses import JSONResponse, HTMLResponse
@@ -15,15 +18,15 @@ import asyncio
 # from gws.controller import Controller
 # import data module heree
 
-# class TestData(unittest.TestCase):
+class TestData(unittest.TestCase):
     
-#     @classmethod
-#     def setUpClass(cls):
-#         pass
+     @classmethod
+     def setUpClass(cls):
+         pass
 
-#     @classmethod
-#     def tearDownClass(cls):
-#         pass
+     @classmethod
+     def tearDownClass(cls):
+         pass
 
-#     def test_data(self):
-#         pass
+     def test_data(self):
+         pass
