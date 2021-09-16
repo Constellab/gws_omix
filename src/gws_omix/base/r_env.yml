@@ -1,0 +1,9 @@
+name: .venv
+channels:
+  - bioconda
+  - conda-forge
+  - r
+dependencies:
+
+  - r-base
+  - bioconductor-deseq2
