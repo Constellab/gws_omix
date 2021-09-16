@@ -10,7 +10,7 @@ import csv
 from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
-from ..file.blast_ec_file import Blast_EC_File
+from ..file.blast_ec_file import BlastEcFile
 
 @task_decorator("BlastEc")
 class BlastEc(BaseOmixEnvTask):
