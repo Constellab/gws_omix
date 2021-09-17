@@ -4,11 +4,8 @@
 
 from gws_core import File, resource_decorator
 
-@resource_decorator("DeepEcFile",
-                    human_name="DeepEcFile",
+@resource_decorator("DeepECFile",
+                    human_name="DeepECFile",
                     short_description="DeepEc File")
-
-
-
-class DeepEcFile(File):
+class DeepECFile(File):
     ''' DeepEc file class'''

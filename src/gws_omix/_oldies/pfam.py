@@ -7,7 +7,7 @@ import os
 import re
 import csv
 
-from gws.json import JSONData
+from gws_core.cond import JSONData
 from gws.typing import Path
 from gws.shell import Shell
 from gws.file import File

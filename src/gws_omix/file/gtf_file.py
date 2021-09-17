@@ -7,7 +7,5 @@ from gws_core import File, resource_decorator
 @resource_decorator("GTFFile",
                     human_name="GTFFile",
                     short_description="GTF File")
-
-
 class GTFFile(File):
     ''' GTF file class'''

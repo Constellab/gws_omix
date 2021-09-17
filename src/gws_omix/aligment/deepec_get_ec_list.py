@@ -9,9 +9,8 @@ import csv
 
 from gws_core import task_decorator, File, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.omix_env_task import BaseOmixEnvTask
-from ..file.deepec_file import DeepEcFile
-from ..file.ec_list_file import EcListFile
-
+from ..file.deepec_file import DeepECFile
+from ..file.ec_list_file import ECListFile
 
 @task_decorator("DeepEcGetEcList")
 class DeepEcGetEcList(BaseOmixEnvTask):
@@ -28,17 +27,17 @@ class DeepEcGetEcList(BaseOmixEnvTask):
     """
 
     input_specs = {
-        'EC_file': (DeepEcFile,)
+        'deepec_file': (DeepECFile,)
     }
     output_specs = {
-        'EC_list_output_file': (EcListFile,)
+        'ec_list_file': (ECListFile,)
     }
 
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
-        result_file.path = self._create_ec_list_from_deepec_output_file(EC_file)
-        return {"EC_list_output_file": result_file} 
+        result_file.path = self._create_ec_list_from_deepec_output_file("deepec_file")
+        return {"ec_list_file": result_file} 
 
 # deepec
 #Query ID   Predicted EC number

@@ -7,8 +7,5 @@ from gws_core import File, resource_decorator
 @resource_decorator("FastaFile",
                     human_name="FastaFile",
                     short_description="Fasta File")
-
-
-
 class FastaFile(File):
     ''' Fasta file class'''

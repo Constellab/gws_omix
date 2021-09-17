@@ -10,7 +10,7 @@ import csv
 from gws_core import task_decorator, File, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.deepec_env_task import DeepECEnvTask
 from ..file.fasta_file import FastaFile
-from ..file.deepec_file import DeepEcFile
+from ..file.deepec_file import DeepECFile
 
 @task_decorator("DeepEC")
 class DeepEC(DeepECEnvTask):
@@ -23,13 +23,13 @@ class DeepEC(DeepECEnvTask):
         'fasta_file': (FastaFile,)
     }
     output_specs = {
-        "deepec_output_file": (DeepEcFile,)
+        "deepec_file": (DeepECFile,)
     }
     
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
         result_file.path = self._get_output_file_path(params)
-        return {"deepec_output_file": result_file} 
+        return {"deepec_file": result_file} 
 
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:   

@@ -1,20 +1,33 @@
 {
-    "name": "omix",
-    "authors": "Gencovery",
-    "version": "0.1",
-    "app_dir": "./",
-    "app_host": "0.0.0.0",
-    "app_port": 3000,
-    "log_dir": "../../logs/",
-    "data_dir": "../../data/",
-    "db_name": "db.sqlite3",
-    "is_test": false,
-    "is_debug": true,
-    "dirs": {
-        "omix:testdata_dir": "./tests/testdata"
+    "name"         : "gws_omix",
+    "author"       : "Gencovery",
+    "version"      : "0.1.0",
+    "variables":{
+        "gws_omix:testdata_dir" : "{CURRENT_DIR}/tests/testdata"
     },
-    "externs": [],
-    "dependencies": [
-        "biox"
-    ]
+    "environment":{
+        "pip":[
+            {
+                "source": "https://pypi.python.org/simple",
+                "packages":[]
+            },
+            {
+                "source": "https://$GWS_PIP_PACKAGE_TOKEN@gitlab.com/api/.../packages/pypi",
+                "packages":[]
+            }
+        ],
+        "git":[
+            {
+                "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/core",
+                "packages":[
+                    "gws_core[commit=latest, branch=develop]"
+                ]
+            }
+        ],
+        "variables":{
+            "GWS_GIT_LOGIN": "",
+            "GWS_GIT_PWD": "",
+            "GWS_PIP_PACKAGE_TOKEN": ""
+        }
+    }
 }

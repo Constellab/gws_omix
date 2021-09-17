@@ -7,13 +7,13 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils
+from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Settings
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
-from ..file.blast_ec_file import BlastEcFile
+from ..file.blast_ec_file import BlastECFile
 
-@task_decorator("BlastEc")
-class BlastEc(BaseOmixEnvTask):
+@task_decorator("BlastEC")
+class BlastEC(BaseOmixEnvTask):
     """
     BlastEC class. Represents a process that wraps NCBI blast program. This version !!! ALLOWED !!! to get EC numbers for digital twins reconstruction.
     
@@ -32,28 +32,29 @@ class BlastEc(BaseOmixEnvTask):
         'fasta_file': (FastaFile,)
     }
     output_specs = {
-        'filtered_blast_ec_file': (Blast_EC_File,)
+        'filtered_blast_ec_file': (BlastECFile,)
     }
     config_specs = {
-        "taxo": StrParam(allowed_value=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
-        "alignment_type": StrParam(default_value="PP",allowed_value=["PP","TNP"], description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
+        "taxonomy": StrParam(allowed_values=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
+        "alignment_type": StrParam(default_value="PP",allowed_values=["PP","TNP"], description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
         "num_alignments": IntParam(default_value=10, min_value=1, max_value=250, description="Number of database sequences to show alignments for [Default: 10]"),
         "e_value": FloatParam(default_value=0.00001, min_value=0.0, description="E-value : Default = 0.00001 (i.e 1e-5)"),
         "threads": IntParam(default_value=4, min_value=2, description="Number of threads"),
         "idt": IntParam(default_value=70, min_value=1, max_value=100, description="Similarity/identity minimum percentage threshold to exclude results. [Default = 70]"),
-        "cov": IntParam(default_value=70, min_value=1, max_value=100, description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]")
+        "cov": IntParam(default_value=70, min_value=1, max_value=100, description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]"),
+        "uniprot_db_dir": StrParam(default_value="", description="Location of the UniProtKB database"), # TODO: set protected
     }
-
+    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # execute blast cmd
         result_file = File()
-        result_file.path = self._get_output_file_path(params)
+        result_file.path = self._get_output_file_path(params["taxonomy"], inputs["fasta_file"].path)
         
         # execute blast parsing command and ec number retrieving 
-        taxo  = params["taxo"]
-        idt  = params["idt"]
-        datab_dir = "$blast_index_dir"
-        tab_file = os.path.join(datab_dir, taxo + ".uniprotKB.tab")        
+        taxo = params["taxonomy"]
+        idt = params["idt"]
+        local_uniprot_db_dir = params["uniprot_db_dir"]
+        tab_file = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.tab")        
         
         result_file_2 = File()
         result_file_2.path = self._create_filtered_output_file(result_file.path, tab_file, idt)
@@ -61,15 +62,17 @@ class BlastEc(BaseOmixEnvTask):
         return {"filtered_blast_ec_file": result_file_2}
   
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        taxo  = params["taxo"]
+        taxo  = params["taxonomy"]
         alignment  = params["alignment_type"]
         evalue  = params["e_value"]
         thread  = params["threads"]
         num_alignments  = params["num_alignments"]
         cov  = params["cov"]
-        fasta_file = params["fasta_file"]
-        datab_dir = "$blast_index_dir"
-        datab_file_path = os.path.join(datab_dir, taxo + ".uniprotKB.faa")
+        local_uniprot_db_dir = params["uniprot_db_dir"]
+
+        fasta_file = inputs["fasta_file"]
+        
+        datab_file_path = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.faa")
 
         if alignment == "PP":
             blast_type = "blastp"
@@ -84,12 +87,12 @@ class BlastEc(BaseOmixEnvTask):
             " -num_threads ", thread,
             " -qcov_hsp_perc ", cov,
             " -num_alignments ", num_alignments,
-            "-outfmt  \"7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore\" -show_gis -task \"blastp-fast\" -out ", self._get_output_file_path(params)
+            "-outfmt  \"7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore\" -show_gis -task \"blastp-fast\" -out ", self._get_output_file_path(params["taxonomy"], inputs["fasta_file"].path)
         ]
         return cmd
 
-    def _get_output_file_path(self, params):
-        return params["fasta_file"]+ ".alligned_on." + params["taxo"] + ".blast_output.csv"
+    def _get_output_file_path(self, taxonomy, fasta_file_path):
+        return fasta_file_path + ".alligned_on." + taxonomy + ".blast_output.csv"
 
     def _create_filtered_output_file(self, blast_output_file, tabular_file, id):
         gene_ec={}
@@ -98,7 +101,7 @@ class BlastEc(BaseOmixEnvTask):
 
         with open(tabular_file, 'r') as lines: # Create dict. containing genes with their corresponding EC number(s)
             li=lines.readlines()
-            for i, line in enumerate(li):
+            for _, line in enumerate(li):
                 if re.match("^#",line):
                     pass
                 else:

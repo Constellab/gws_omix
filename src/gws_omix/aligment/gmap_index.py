@@ -24,7 +24,7 @@ class GmapIndex(BaseOmixEnvTask):
         'uncompressed_genome_fasta_file': (FastaFile,),      
     }
     output_specs = {
-        'Gmap_index_file': (File,)
+        'gmap_index_file': (File,)
     }
     config_specs = {
         "threads": IntParam(default_value=8, min_value=1, description="Number of threads [Default =  8] ")

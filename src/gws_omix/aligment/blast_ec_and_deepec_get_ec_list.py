@@ -9,27 +9,29 @@ import csv
 
 from gws_core import task_decorator, File, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.omix_env_task import BaseOmixEnvTask
-from ..file.deepec_file import DeepEcFile
-from ..file.blast_ec_file import BlastEcFile
-from ..file.ec_list_file import EcListFile
+from ..file.deepec_file import DeepECFile
+from ..file.blast_ec_file import BlastECFile
+from ..file.ec_list_file import ECListFile
 
-@task_decorator("BlastEcAndDeepEcGetEcList")
-class BlastEcAndDeepEcGetEcList(BaseOmixEnvTask):
+@task_decorator("ECListMerger", 
+                human_name="ECListMerger", 
+                short_description="Merger of DeepECFile and BlastECFile output files")
+class ECListMerger(BaseOmixEnvTask):
 
     input_specs = {
-        'DeepEC_EC_file': (DeepEcFile,),
-        'BLAST_EC_EC_file': (BlastEcFile,),        
+        'deepec_ec_file': (DeepECFile,),
+        'blast_ec_file': (BlastECFile,),        
     }
     output_specs = {
-        'ec_list_merged': (EcListFile,)
+        'merged_ec_list': (ECListFile,)
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        deep_ec_fi  = params["DeepEC_EC_file"]
-        blast_ec_fi  = params["BLAST_EC_EC_file"]
+        deep_ec_fi  = params["deepec_ec_file"]
+        blast_ec_fi  = params["blast_ec_file"]
         result_file = File()
         result_file.path = self._create_ec_list_from_deepec_and_blast_ec_output_file(deep_ec_fi, blast_ec_fi)
-        return {"EC_list_output_file": result_file} 
+        return {"ec_list_file": result_file} 
 
 
     def _create_ec_list_from_deepec_and_blast_ec_output_file(self, deepec_output_file, blast_output_file):

@@ -4,11 +4,8 @@
 
 from gws_core import File, resource_decorator
 
-@resource_decorator("EcListFile",
-                    human_name="EcListFile",
-                    short_description="EcList File")
-
-
-
-class EcListFile(File):
-    ''' EcList file class'''
+@resource_decorator("ECListFile",
+                    human_name="ECListFile",
+                    short_description="File of EC list")
+class ECListFile(File):
+    ''' EC list file class'''

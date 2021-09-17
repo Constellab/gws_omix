@@ -41,7 +41,7 @@ class STARMapping(BaseOmixEnvTask):
     config_specs = {
         "threads": IntParam(default_value=12, min_value=6, description="Number of threads [Default =  12] "),
         "memory": IntParam(default_value=48000000000, min_value=8000000000, description="Memory (RAM in Bytes) usage" ),
-        "alignment_type": StrParam(default_value="transcriptome", allowed_value=["genome", "transcriptome"], description="Mapping file output: Choose between reads mapped on the whole genome (regardless of gene position; genome option) or filtering only reads mapped on gene coordinates (transcriptome option; needed for gene counting with SALMON (TPM expresssion values): i.e. bam unsorted). [Respectivly, options : genome, transcriptome ]. Default = transcriptome"}
+        "alignment_type": StrParam(default_value="transcriptome", allowed_values=["genome", "transcriptome"], description="Mapping file output: Choose between reads mapped on the whole genome (regardless of gene position; genome option) or filtering only reads mapped on gene coordinates (transcriptome option; needed for gene counting with SALMON (TPM expresssion values): i.e. bam unsorted). [Respectivly, options : genome, transcriptome ]. Default = transcriptome"}
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

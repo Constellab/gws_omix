@@ -9,9 +9,9 @@ import csv
 
 from gws_core import task_decorator, File, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.omix_env_task import BaseOmixEnvTask
-from ..file.deepec_file import DeepEcFile
-from ..file.blast_ec_file import BlastEcFile
-from ..file.ec_list_file import EcListFile
+from ..file.deepec_file import DeepECFile
+from ..file.blast_ec_file import BlastECFile
+from ..file.ec_list_file import ECListFile
 
 
 @task_decorator("BlastEcGetEcList")
@@ -28,18 +28,18 @@ sp|A3LZ57|SEC16_PICST	sp|A3LZ57|SEC16_PICST	100.000	100	100	2212	0	0	1	2212	2212
 
     """
     input_specs = {
-        'EC_file': (BlastEcFile,)
+        'blastec_file': (BlastECFile,)
     }
     output_specs = {
-        'EC_list_output_file': (EcListFile,)
+        'ec_list_file': (ECListFile,)
     }
 
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        ec_fi  = params["EC_file"]
+        ec_fi  = params["blastec_file"]
         result_file = File()
         result_file.path = self._create_ec_list_from_deepec_output_file(ec_fi)
-        return {"EC_list_output_file": result_file} 
+        return {"ec_list_file": result_file} 
 
     def _create_ec_list_from_blast_output_file(self, blast_output_file):
         uniq_ec={}

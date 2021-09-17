@@ -26,8 +26,8 @@ from ..file.gtf_file import GTFFile
 # gmap -t 7 -f 2 -D ./ -d INDEX.e_coli_K12.genome.fna.fasta output.2.fa 1> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 2> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.log
 # gffread output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 -T -o output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ; grep "path1\";" output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf > output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.best_hit.gtf ; rm output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ;
 
-@task_decorator("GmapAlign")
-class GmapAlign(BaseOmixEnvTask):
+@task_decorator("GmapAlignGTF")
+class GmapAlignGTF(BaseOmixEnvTask):
     """
     Gmap alignment tool class. Represents a process that wraps Gmap aligment tool. Gmap index is Mandatory to use Gmap tools.
     
@@ -44,23 +44,23 @@ class GmapAlign(BaseOmixEnvTask):
         'cdna_or_cds_fasta_file': (FastaFile,)          
     }
     output_specs = {
-        'Gmap_gtf_file': (GTFFile,)
+        'gmap_gtf_file': (GTFFile,)
     }
     config_specs = {
         "threads": IntParam(default_value=8, min_value=1, description="Number of threads [Default =  8] "),
         "min-identity": FloatParam(default_value=0.7, max_value=1.0, min_value=0.0, description="Do not print alignments with identity less this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
         "min-trimmed-coverage": FloatParam(default_value=0.7, min_value=0.0, max_value=1.0, description="Do not print alignments with trimmed coverage less than this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
         "max-hit-number": IntParam(default_value=5, min_value=0, description="Maximum number of hits to show (default 5).  If set to 1, GMAP will not report chimeric alignments, since those imply two hits. If you want a single alignment plus chimeric alignments, then set this to be 0. [Default =  5] "),
-        "cross-species": StrParam(default_value="No", allowed_value=["Yes","No"], description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
-        "alt-start-codons": StrParam(default_value="No", allowed_value=["Yes","No"], description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
-        "fulllength": StrParam(default_value="No", allowed_value=["Yes","No"], description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
+        "cross-species": StrParam(default_value="No", allowed_values=["Yes","No"], description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
+        "alt-start-codons": StrParam(default_value="No", allowed_values=["Yes","No"], description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
+        "fulllength": StrParam(default_value="No", allowed_values=["Yes","No"], description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
 
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
         result_file.path = self._get_output_file_path(params)
-        return {"Gmap_gtf_file": result_file} 
+        return {"gmap_gtf_file": result_file} 
    
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]

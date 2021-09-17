@@ -34,8 +34,8 @@ class Blast(BaseOmixEnvTask):
         'filtered_blast_file': (File,)
     }
     config_specs = {
-        "taxo": StrParam(allowed_value=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
-        "alignment_type": StrParam(default_value="PP",allowed_value=["PP","TNP"], description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
+        "taxo": StrParam(allowed_values=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
+        "alignment_type": StrParam(default_value="PP",allowed_values=["PP","TNP"], description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
         "num_alignments": IntParam(default_value=10, min_value=1, max_value=250, description="Number of database sequences to show alignments for [Default: 10]"),
         "e_value": FloatParam(default_value=0.00001, min_value=0.0, description="E-value : Default = 0.00001 (i.e 1e-5)"),
         "threads": IntParam(default_value=4, min_value=2, description="Number of threads"),

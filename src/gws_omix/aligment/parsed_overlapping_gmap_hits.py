@@ -7,7 +7,7 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils
+from gws_core import task_decorator, File, FloatParam, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.gff3_file import GFF3File
 from ..file.gtf_file import GTFFile
@@ -22,14 +22,14 @@ class ParsedOverlappingGmapHits(BaseOmixEnvTask):
         * `B_overlap`: Proportion of feature B overlapped by feature A  (default=0.5, 0.0 would means no overlap).
     """
     input_specs = {
-        'Gmap_gff3_file': (GFF3File,)       
+        'gmap_gff3_file': (GFF3File,)       
     }
     output_specs = {
         'Parsed_Gmap_gtf_file': (GTFFile,)
     }
     config_specs = {
-        "A_overlap": IntParam(default_value=0.5, min_value=0.0, max_value=1.0, description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
-        "B_overlap": IntParam(default_value=0.5, min_value=0.0, max_value=1.0, description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
+        "A_overlap": FloatParam(default_value=0.5, min_value=0.0, max_value=1.0, description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
+        "B_overlap": FloatParam(default_value=0.5, min_value=0.0, max_value=1.0, description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
     }   
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
@@ -39,7 +39,7 @@ class ParsedOverlappingGmapHits(BaseOmixEnvTask):
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         A_proportion = params["A_overlap"]
         B_proportion = params["B_overlap"]
-        gmap_gff3 = params["Gmap_gff3_file"]
+        gmap_gff3 = params["gmap_gff3_file"]
 
         cmd = [
             "bedtools intersect  ",

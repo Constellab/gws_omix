@@ -4,8 +4,8 @@
 
 import os
 from gws_core import task_decorator, CondaEnvShell
-__cdir = os.path.abspath(os.path.dirname(__file__))
 
 @task_decorator("BaseREnvTask")
 class BaseREnvTask(CondaEnvShell):
+    __cdir = os.path.abspath(os.path.dirname(__file__))
     env_file_path = os.path.join(__cdir, "r_env.yml")

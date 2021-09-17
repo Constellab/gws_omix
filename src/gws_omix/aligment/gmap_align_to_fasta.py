@@ -7,7 +7,7 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
+from gws_core import task_decorator, File, FloatParam, IntParam, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gtf_file import GTFFile
@@ -48,12 +48,12 @@ class GmapAlign(BaseOmixEnvTask):
     }
     config_specs = {
         "threads": IntParam(default_value=8, min_value=1, description="Number of threads [Default =  8] "),
-        "min-identity": IntParam(default_value=0.7, max_value=1.0, min_value=0.0, description="Do not print alignments with identity less this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
-        "min-trimmed-coverage": IntParam(default_value=0.7, min_value=0.0, max_value=1.0, description="Do not print alignments with trimmed coverage less than this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
+        "min-identity": FloatParam(default_value=0.7, max_value=1.0, min_value=0.0, description="Do not print alignments with identity less this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
+        "min-trimmed-coverage": FloatParam(default_value=0.7, min_value=0.0, max_value=1.0, description="Do not print alignments with trimmed coverage less than this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
         "max-hit-number": IntParam(default_value=5, min_value=0, description="Maximum number of hits to show (default 5).  If set to 1, GMAP will not report chimeric alignments, since those imply two hits. If you want a single alignment plus chimeric alignments, then set this to be 0. [Default =  5] "),
-        "cross-species": StrParam(default_value="No", allowed_value=["Yes","No"], description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
-        "alt-start-codons": StrParam(default_value="No", allowed_value=["Yes","No"], description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
-        "fulllength": StrParam(default_value="No", allowed_value=["Yes","No"], description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
+        "cross-species": StrParam(default_value="No", allowed_values=["Yes","No"], description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
+        "alt-start-codons": StrParam(default_value="No", allowed_values=["Yes","No"], description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
+        "fulllength": StrParam(default_value="No", allowed_values=["Yes","No"], description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
 
     }
    
@@ -100,7 +100,7 @@ class GmapAlign(BaseOmixEnvTask):
             "-d ", genome_index, fa_file,
             " > tmp.gff3 ; gffread tmp.gff3 -T -o tmp.gtf ; gffread tmp.gtf -w ",
             " -g ", genome_fasta,
-            " -o ",self._get_output_file_path(params),,
+            " -o ",self._get_output_file_path(params),
             " ; rm tmp.gtf tmp.gff3 ;"
         ]           
 
