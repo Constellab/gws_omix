@@ -34,9 +34,9 @@ class SalmonQuantStar(BaseOmixEnvTask):
         'Salmon_quant_file': (File,)
     }
     config_specs = {
-        "threads": IntParam(default_value=12, min_value=1, description="Number of threads [Default =  12] "),
-        "sequencing_strategy": StrParam(allowed_values=["I", "O" , "M"], description="To specify sequencing strategy (I = inward, O = outward, M = matching). See https://salmon.readthedocs.io/en/latest/salmon.html#what-s-this-libtype."),
-        "library_protocol" : StrParam(allowed_values=["S", "U"], description="To specify whether the protocol for the read library takes into account strand information [S = stranded U = unstranded]. See https://salmon.readthedocs.io/en/latest/salmon.html#what-s-this-libtype."),
+        "threads": IntParam(default_value=12, min_value=1, short_description="Number of threads [Default =  12] "),
+        "sequencing_strategy": StrParam(allowed_values=["I", "O" , "M"], short_description="To specify sequencing strategy (I = inward, O = outward, M = matching). See https://salmon.readthedocs.io/en/latest/salmon.html#what-s-this-libtype."),
+        "library_protocol" : StrParam(allowed_values=["S", "U"], short_description="To specify whether the protocol for the read library takes into account strand information [S = stranded U = unstranded]. See https://salmon.readthedocs.io/en/latest/salmon.html#what-s-this-libtype."),
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

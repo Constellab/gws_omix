@@ -27,27 +27,28 @@ class GmapIndex(BaseOmixEnvTask):
         'gmap_index_file': (File,)
     }
     config_specs = {
-        "threads": IntParam(default_value=8, min_value=1, description="Number of threads [Default =  8] ")
+        "threads": IntParam(default_value=8, min_value=1, short_description="Number of threads [Default =  8] ")
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
-        result_file.path = self._get_output_file_path(params)
-        return {"salmon_index_file": result_file} 
+        result_file = File(path=self._output_file_path)
+        return {"gmap_index_file": result_file} 
     
-    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-         
+    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:         
         thread = params["threads"]
-        genome_fasta = params["uncompressed_genome_fasta_file"]
+        genome_fasta = inputs["uncompressed_genome_fasta_file"]
+        genome_fasta_name = os.path.basename(genome_fasta.path)
+        self._output_file_path = os.path.join(self.working_dir, self._get_output_file_path(genome_fasta_name))
  
         cmd = [
             "gmap_build -t ", thread,
-            " -D ", self.working_dir,
-            "-d ", self._get_output_file_path(params),
-            genome_fasta
+            " -D ", self._output_file_path,
+            "-d ", self._output_file_path,
+            genome_fasta.path, " 2> tmp.gmap_index.log ; mv tmp.gmap_index.log ",
+            self._output_file_path
         ]           
-
         return cmd
 
-    def _get_output_file_path(self, params):
-        return params["uncompressed_genome_fasta_file"] + ".gmap_index"
+    def _get_output_file_path(self, fasta_name):
+        return  fasta_name + ".gmap_index"

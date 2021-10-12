@@ -1,0 +1,1 @@
+blastx -db $1 -query $2 -evalue $3 -num_threads $4 -qcov_hsp_perc $4 -num_alignments $5 -outfmt "7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore" -show_gis -task "blastp-fast" -out $6

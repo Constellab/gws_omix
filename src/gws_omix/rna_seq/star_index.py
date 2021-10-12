@@ -33,9 +33,9 @@ class STARIndex(BaseOmixEnvTask):
         'STAR_index': (File,)
     }
     config_specs = {
-        "threads": IntParam(default_value=12, min_value=6, description="Number of threads [Default =  12] "),
-        "memory": IntParam(default_value=48000000000, min_value=8000000000, description="Memory (RAM in Bytes) usage" ),
-        "read_size": IntParam(description="Reads size minus 1 (in bp; ex.: 150pb reads --> 149)")  
+        "threads": IntParam(default_value=12, min_value=6, short_description="Number of threads [Default =  12] "),
+        "memory": IntParam(default_value=48000000000, min_value=8000000000, short_description="Memory (RAM in Bytes) usage" ),
+        "read_size": IntParam(short_description="Reads size minus 1 (in bp; ex.: 150pb reads --> 149)")  
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

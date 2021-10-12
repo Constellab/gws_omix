@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-
+import json
 from gws_core import File, Settings, BaseTestCase, TaskTester, GTest
 from gws_omix import BlastEC
 
@@ -19,25 +19,39 @@ class TestBlastEC(BaseTestCase):
         settings = Settings.retrieve()
         testdata_dir = settings.get_variable("gws_omix:testdata_dir")
 
-        # run BlastEC
+        # Running BlastEC.py
         tester = TaskTester(
             params = {'taxonomy': 'fungi', "uniprot_db_dir": os.path.join(testdata_dir, "uniprot_kb")},
             inputs = {'fasta_file': file},
             task_type = BlastEC
         )
         outputs = await tester.run()
-        f = outputs['filtered_blast_ec_file']
-        result_content = f.read()
+        blast_ec_file = outputs['filtered_blast_ec_file']
+        result_content = blast_ec_file.read()
 
-        print("----")
-        print(result_content)
-        print("----")
-        
-        expected_file_path = os.path.join(data_dir, "blast.output.pipe_sep.txt")
-        with open(expected_file_path) as fp:
+
+        # Get the expected file output       
+        expected_file_path = os.path.join(data_dir, "results.test.blast.csv")
+
+        with open(expected_file_path, 'r') as fp:
             expected_result_content = fp.read()
+            print("----")
+            print(result_content)
+            print("----")
             print(expected_result_content)
+            print("----")
+            # Comparing results
             self.assertEqual( result_content, expected_result_content  )
+
+
+        text_view = blast_ec_file.view_head_as_raw_text()
+        text_view_dict = text_view.to_dict(page=1, page_size=500)
+        print(json.dumps(text_view_dict, indent=2))
+        self.assertEqual( text_view_dict["total_number_of_pages"], 5 )
+
+
+### Oldies ###
+
 
 #     def test_BlastEC(self):
         

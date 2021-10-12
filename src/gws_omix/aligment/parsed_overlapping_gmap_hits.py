@@ -28,8 +28,8 @@ class ParsedOverlappingGmapHits(BaseOmixEnvTask):
         'Parsed_Gmap_gtf_file': (GTFFile,)
     }
     config_specs = {
-        "A_overlap": FloatParam(default_value=0.5, min_value=0.0, max_value=1.0, description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
-        "B_overlap": FloatParam(default_value=0.5, min_value=0.0, max_value=1.0, description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
+        "A_overlap": FloatParam(default_value=0.5, min_value=0.0, max_value=1.0, short_description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
+        "B_overlap": FloatParam(default_value=0.5, min_value=0.0, max_value=1.0, short_description="Proportion of feature A overlapped by feature B (default=0.5, 0.0 would means no overlap)."),
     }   
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()

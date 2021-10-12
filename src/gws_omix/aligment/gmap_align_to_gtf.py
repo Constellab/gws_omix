@@ -40,27 +40,26 @@ class GmapAlignGTF(BaseOmixEnvTask):
     """
     input_specs = {
         'uncompressed_genome_fasta_file': (FastaFile,),
-        'genome_gmap_index_name': (File,),
         'cdna_or_cds_fasta_file': (FastaFile,)          
     }
     output_specs = {
         'gmap_gtf_file': (GTFFile,)
     }
     config_specs = {
-        "threads": IntParam(default_value=8, min_value=1, description="Number of threads [Default =  8] "),
-        "min-identity": FloatParam(default_value=0.7, max_value=1.0, min_value=0.0, description="Do not print alignments with identity less this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
-        "min-trimmed-coverage": FloatParam(default_value=0.7, min_value=0.0, max_value=1.0, description="Do not print alignments with trimmed coverage less than this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
-        "max-hit-number": IntParam(default_value=5, min_value=0, description="Maximum number of hits to show (default 5).  If set to 1, GMAP will not report chimeric alignments, since those imply two hits. If you want a single alignment plus chimeric alignments, then set this to be 0. [Default =  5] "),
-        "cross-species": StrParam(default_value="No", allowed_values=["Yes","No"], description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
-        "alt-start-codons": StrParam(default_value="No", allowed_values=["Yes","No"], description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
-        "fulllength": StrParam(default_value="No", allowed_values=["Yes","No"], description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
+        "threads": IntParam(default_value=8, min_value=1, short_description="Number of threads [Default =  8] "),
+        "min-identity": FloatParam(default_value=0.7, max_value=1.0, min_value=0.0, short_description="Do not print alignments with identity less this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
+        "min-trimmed-coverage": FloatParam(default_value=0.7, min_value=0.0, max_value=1.0, short_description="Do not print alignments with trimmed coverage less than this value (default=0.7, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. "),
+        "max-hit-number": IntParam(default_value=5, min_value=0, short_description="Maximum number of hits to show (default 5).  If set to 1, GMAP will not report chimeric alignments, since those imply two hits. If you want a single alignment plus chimeric alignments, then set this to be 0. [Default =  5] "),
+        "cross-species": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
+        "alt-start-codons": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
+        "fulllength": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
 
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result_file = File()
-        result_file.path = self._get_output_file_path(params)
+        result_file = GTFFile(path=self._output_file_path)
         return {"gmap_gtf_file": result_file} 
+
    
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
@@ -77,31 +76,61 @@ class GmapAlignGTF(BaseOmixEnvTask):
         else:
             alt_start = " "
         if params["cross-species"] == "Yes":
-            full_lght = " --fulllength "
+            full_lgth = " --fulllength "
         else:
-            full_lght = " "
+            full_lgth = " "
 
-        genome_fasta = params["uncompressed_genome_fasta_file"]
-        genome_index = params["genome_gmap_index_name"]
-        genome_fai_file = genome_fasta + ".fai" 
-        fa_file = params["cdna_or_cds_fasta_file"]
 
+        genome_fasta = inputs["uncompressed_genome_fasta_file"]
+        genome_fasta_file_name = os.path.basename(genome_fasta.path)
+        fa_file = inputs["cdna_or_cds_fasta_file"]
+        fasta_file_name = os.path.basename(fa_file.path)
+        self._output_file_path = self._get_output_file_path(fasta_file_name, genome_fasta_file_name)
+        script_file_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
-            "$( samtools faidx ", genome_fasta, 
-            "cat", genome_fai_file,
-            " | cut -f2 | awk '{res+=$0}END{if(res<4000000000){print \"gmap\"}if(res>=4000000000){print \"gmapl\"}}' ) -t ", thread,
-            " -f 2 --npaths ", hit_nbr,
-            " --min-identity ", idt,
-            " --min-trimmed-coverage ", cov,
-            " ", crs_species,
-            " ", alt_start,
-            " ", full_lght,            
-            " -D ", self.working_dir,
-            "-d ", genome_index, fa_file,
-            " > tmp.gff3 ; gffread tmp.gff3 -T -o ", self._get_output_file_path(params),
-            " ; rm tmp.gff3 ; "
-        ]           
+            "bash", 
+            os.path.join(script_file_dir, "./sh/gmap_gff3_cmd.sh"),
+            thread,
+            idt,
+            cov,
+            hit_nbr,
+            crs_species,
+            alt_start,
+            full_lgth,
+            genome_fasta,
+            fa_file,
+            self._output_file_path            
+        ]
         return cmd
 
-    def _get_output_file_path(self, params):
-        return params["cdna_or_cds_fasta_file"]+ ".alligned_on." + params["uncompressed_genome_fasta_file"] + ".gmap_alignment.gtf"
+    def _get_output_file_path(self, fasta, genome):
+        return fasta + ".alligned_on." + genome + ".gmap_alignment.gtf"
+
+
+
+###
+
+    #     genome_fasta = params["uncompressed_genome_fasta_file"]
+    #     genome_index = params["genome_gmap_index_name"]
+    #     genome_fai_file = genome_fasta + ".fai" 
+    #     fa_file = params["cdna_or_cds_fasta_file"]
+
+    #     cmd = [
+    #         "$( samtools faidx ", genome_fasta, 
+    #         "cat", genome_fai_file,
+    #         " | cut -f2 | awk '{res+=$0}END{if(res<4000000000){print \"gmap\"}if(res>=4000000000){print \"gmapl\"}}' ) -t ", thread,
+    #         " -f 2 --npaths ", hit_nbr,
+    #         " --min-identity ", idt,
+    #         " --min-trimmed-coverage ", cov,
+    #         " ", crs_species,
+    #         " ", alt_start,
+    #         " ", full_lght,            
+    #         " -D ", self.working_dir,
+    #         "-d ", genome_index, fa_file,
+    #         " > tmp.gff3 ; gffread tmp.gff3 -T -o ", self._get_output_file_path(params),
+    #         " ; rm tmp.gff3 ; "
+    #     ]           
+    #     return cmd
+
+    # def _get_output_file_path(self, params):
+    #     return params["cdna_or_cds_fasta_file"]+ ".alligned_on." + params["uncompressed_genome_fasta_file"] + ".gmap_alignment.gtf"

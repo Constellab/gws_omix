@@ -40,8 +40,8 @@ class SalmonQuantMerge(BaseOmixEnvTask):
         'Salmon_quant_RAW_reads_file': (SalmonReadsQuantmergeOutputFile,)
      }
     config_specs = {
-        "experiment_name": StrParam(default_value="Current_experiment",  description=" Output file names "),
-        "salmon_quant_output_directories" : StrParam(description=" The directory list (output directory from salmon quant) can be written in two ways : ./sample_1 ./sample_2 ... ./sample_n |OR| ./sample_* (for instance, if the first word(s) are shared for ervery samples) ")
+        "experiment_name": StrParam(default_value="Current_experiment",  short_description=" Output file names "),
+        "salmon_quant_output_directories" : StrParam(short_description=" The directory list (output directory from salmon quant) can be written in two ways : ./sample_1 ./sample_2 ... ./sample_n |OR| ./sample_* (for instance, if the first word(s) are shared for ervery samples) ")
     }
    
     def gather_output(self, stdout: str=None):

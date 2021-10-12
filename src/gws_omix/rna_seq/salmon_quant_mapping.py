@@ -30,7 +30,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
         'Salmon_quant_file': (File,) 
     }
     config_specs = {
-        "threads": IntParam(default_value=12, min_value=1, description="Number of threads [Default =  12] ")
+        "threads": IntParam(default_value=12, min_value=1, short_description="Number of threads [Default =  12] ")
      }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

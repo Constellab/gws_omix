@@ -38,18 +38,18 @@ class STARMappingGenomeReads(BaseOmixEnvTask):
     }
 
     output_specs = {
-        'STAR_bam_file': (BAMFile,)
+        'star_bam_file': (BAMFile,)
     }
 
     config_specs = {
-        "threads": IntParam(default_value=12, min_value=6, description="Number of threads [Default =  12] "),
-        "memory": IntParam(default_value=48000000000, min_value=8000000000, description="Memory (RAM in Bytes) usage" )
+        "threads": IntParam(default_value=12, min_value=6, short_description="Number of threads [Default =  12] "),
+        "memory": IntParam(default_value=48000000000, min_value=8000000000, short_description="Memory (RAM in Bytes) usage" )
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
         result_file.path = self._get_output_file_path(params)
-        return {"STAR_bam_file": result_file}
+        return {"star_bam_file": result_file}
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]

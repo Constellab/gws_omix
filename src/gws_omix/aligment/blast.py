@@ -34,13 +34,13 @@ class Blast(BaseOmixEnvTask):
         'filtered_blast_file': (File,)
     }
     config_specs = {
-        "taxo": StrParam(allowed_values=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
-        "alignment_type": StrParam(default_value="PP",allowed_values=["PP","TNP"], description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
-        "num_alignments": IntParam(default_value=10, min_value=1, max_value=250, description="Number of database sequences to show alignments for [Default: 10]"),
-        "e_value": FloatParam(default_value=0.00001, min_value=0.0, description="E-value : Default = 0.00001 (i.e 1e-5)"),
-        "threads": IntParam(default_value=4, min_value=2, description="Number of threads"),
-        "idt": IntParam(default_value=70, min_value=1, max_value=100, description="Similarity/identity minimum percentage threshold to exclude results. [Default = 70]"),
-        "cov": IntParam(default_value=70, min_value=1, max_value=100, description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]")
+        "taxo": StrParam(allowed_values=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  short_description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
+        "alignment_type": StrParam(default_value="PP",allowed_values=["PP","TNP"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
+        "num_alignments": IntParam(default_value=10, min_value=1, max_value=250, short_description="Number of database sequences to show alignments for [Default: 10]"),
+        "e_value": FloatParam(default_value=0.00001, min_value=0.0, short_description="E-value : Default = 0.00001 (i.e 1e-5)"),
+        "threads": IntParam(default_value=4, min_value=2, short_description="Number of threads"),
+        "idt": IntParam(default_value=70, min_value=1, max_value=100, short_description="Similarity/identity minimum percentage threshold to exclude results. [Default = 70]"),
+        "cov": IntParam(default_value=70, min_value=1, max_value=100, short_description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]")
     }
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
