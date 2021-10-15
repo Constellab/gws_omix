@@ -1,0 +1,6 @@
+##gff-version   3
+Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	gene	337	2799	.	+	.	ID=AAC73113.path1;Name=AAC73113;Dir=indeterminate
+Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	mRNA	337	2799	.	+	.	ID=AAC73113.mrna1;Name=AAC73113;Parent=AAC73113.path1;Dir=indeterminate;coverage=100.0;identity=100.0;matches=2463;mismatches=0;indels=0;unknowns=0
+Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	exon	337	2799	100	+	.	ID=AAC73113.mrna1.exon1;Name=AAC73113;Parent=AAC73113.mrna1;Target=AAC73113 2463 1 .
+Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	CDS	337	2799	100	+	0	ID=AAC73113.mrna1.cds1;Name=AAC73113;Parent=AAC73113.mrna1;Target=AAC73113 2463 1 .
+###
