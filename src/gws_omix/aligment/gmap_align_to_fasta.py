@@ -56,29 +56,29 @@ class GmapAlignFasta(BaseOmixEnvTask):
 
     }
    
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result_file = FastaFile(path=self._output_file_path)
-        return {"gmap_fasta_file": result_file} 
 
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        result_file = FastaFile()
+        result_file.path = self._output_file_path
+        return {"gmap_fasta_file": result_file} 
    
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
         idt = params["min-identity"]
         cov = params["min-trimmed-coverage"]
         hit_nbr = params["max-hit-number"]
-
         if params["cross-species"] == "Yes":
-            crs_species = " --cross-species "
+            crs_species = "Y" #" --cross-species "
         else:
-            crs_species = " "
+            crs_species = "N"
         if params["alt-start-codons"] == "Yes":
-            alt_start = " --alt-start-codons "
+            alt_start = "Y" #" --alt-start-codons "
         else:
-            alt_start = " "
+            alt_start = "N"
         if params["cross-species"] == "Yes":
-            full_lgth = " --fulllength "
+            full_lgth = "Y" #" --fulllength "
         else:
-            full_lgth = " "
+            full_lgth = "N"
 
         genome_fasta = inputs["uncompressed_genome_fasta_file"]
         genome_fasta_file_name = os.path.basename(genome_fasta.path)
@@ -88,7 +88,7 @@ class GmapAlignFasta(BaseOmixEnvTask):
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
             "bash", 
-            os.path.join(script_file_dir, "./sh/gmap_gff3_cmd.sh"),
+            os.path.join(script_file_dir, "./sh/gmap_fasta_cmd.sh"),
             thread,
             idt,
             cov,
@@ -96,14 +96,17 @@ class GmapAlignFasta(BaseOmixEnvTask):
             crs_species,
             alt_start,
             full_lgth,
-            genome_fasta,
-            fa_file,
+            genome_fasta.path,
+            fa_file.path,
             self._output_file_path            
         ]
         return cmd
 
     def _get_output_file_path(self, fasta, genome):
-        return fasta + ".alligned_on." + genome + ".gmap_alignment.fasta"
+        return os.path.join(
+            self.working_dir, 
+            fasta + ".alligned_on." + genome + ".gmap_alignment.fasta"
+        )
 
 
 ####

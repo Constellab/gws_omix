@@ -14,7 +14,7 @@ class FastaFile(File):
     ''' Fasta file class'''
 
     @view(human_name="Head And Tail TextView", view_type=TextView, short_description="View of the DeepEC output file first and last lines as raw text")
-    def view_head_tail_as_raw_text(self, **kwargs) -> dict:
+    def view_head_as_raw_text(self, **kwargs) -> dict:
        #Read length: first column = x-axis, second column = y-axis (boxplot)
         cmd = ["head ", self.path, " ; tail ", self.path]
         shell_proxy = ShellEnvProxy(BaseOmixEnvTask)

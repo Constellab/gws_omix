@@ -62,7 +62,7 @@ class STARMappingTranscriptomeReads(BaseOmixEnvTask):
             " --runThreadN ", thread,
             " --limitGenomeGenerateRAM ", ram,
             " -outSAMtype BAM Unsorted --quantMode TranscriptomeSAM --quantTranscriptomeBan Singleend --readFilesIn", reads_forward, reads_reverse,
-            " --outReadsUnmapped None --twopassMode Basic --readFilesCommand \"gunzip -c\" --outSAMstrandField intronMotif --outSAMunmapped Within --chimSegmentMin 12 --chimJunctionOverhangMin 12 --chimOutJunctionFormat 1 --alignSJDBoverhangMin 10 --alignMatesGapMax 100000 --alignIntronMax 100000 --alignSJstitchMismatchNmax 5 -1 5 5 --outSAMattrRGline ID:GRPundef --chimMultimapScoreRange 3 --chimScoreJunctionNonGTAG -4 --chimMultimapNmax 20 --chimNonchimScoreDropMin 10 --peOverlapNbasesMin 12 --peOverlapMMp 0.1 ; rm Aligned.out.bam ; mv Aligned.toTranscriptome.out.bam ", self._get_output_file_path(params)
+            " --outReadsUnmapped None --twopassMode Basic --readFilesCommand \"gunzip -c\" --outSAMstrandField intronMotif --outSAMunmapped Within --chimSegmentMin 12 --chimJunctionOverhangMin 12 --chimOutJunctionFormat 1 --alignSJDBoverhangMin 10 --alignMatesGapMax 100000 --alignIntronMax 100000 --alignSJstitchMismatchNmax 5 -1 5 5 --outSAMattrRGline ID:GRPundef --chimMultimapScoreRange 3 --chimScoreJunctionNonGTAG -4 --chimMultimapNmax 20 --chimNonchimScoreDropMin 10 --peOverlapNbasesMin 12 --peOverlapMMp 0.1 ; rm Aligned.out.sam ; mv Aligned.toTranscriptome.out.bam ", self._get_output_file_path(params)
         ] 
 
         return cmd

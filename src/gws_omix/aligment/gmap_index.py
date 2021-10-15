@@ -7,7 +7,7 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils
+from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Folder
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 
@@ -24,15 +24,15 @@ class GmapIndex(BaseOmixEnvTask):
         'uncompressed_genome_fasta_file': (FastaFile,),      
     }
     output_specs = {
-        'gmap_index_file': (File,)
+        'gmap_index_file': (Folder,)
     }
     config_specs = {
         "threads": IntParam(default_value=8, min_value=1, short_description="Number of threads [Default =  8] ")
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result_file = File()
-        result_file = File(path=self._output_file_path)
+        result_file = Folder()
+        result_file = Folder(path=self._output_file_path)
         return {"gmap_index_file": result_file} 
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:         
