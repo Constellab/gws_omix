@@ -39,12 +39,13 @@ class GmapIndex(BaseOmixEnvTask):
         thread = params["threads"]
         genome_fasta = inputs["uncompressed_genome_fasta_file"]
         genome_fasta_name = os.path.basename(genome_fasta.path)
-        self._output_file_path = os.path.join(self.working_dir, self._get_output_file_path(genome_fasta_name))
+        db_name = self._get_output_file_path(genome_fasta_name)
+        self._output_file_path = os.path.join(self.working_dir, db_name)
  
         cmd = [
             "gmap_build -t ", thread,
             " -D ", self._output_file_path,
-            "-d ", self._output_file_path,
+            "-d ", db_name,
             genome_fasta.path, " 2> tmp.gmap_index.log ; mv tmp.gmap_index.log ",
             self._output_file_path
         ]           

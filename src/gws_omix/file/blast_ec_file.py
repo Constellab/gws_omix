@@ -23,15 +23,22 @@ class BlastECFile(File):
     @view(view_type=TextView, human_name="Get Gene Hits", short_description="Gives hits for queried genes", specs={"genes": ListParam(default_value=[])})
     def view_query_gene_hits_as_csv(self, genes=[], **kwargs) -> dict:
         tab=[]
+
+# if [[ $(grep -L "$user2" /etc/passwd) ]]; then echo "No results for gene" gene;
+#  echo "No results for gene" gene;
+#else
+#   cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" ' ]
+#fi
         for gene in genes:
-            cmd = ["cat ", self.path, " | grep -w ", gene ]
+#            cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" | awk -v var = ' + gene + "\\'{}{if( var == TRUE ){ print $0} else{ print \"#: \"var\" not found\"}}\\'" ]
+            cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" ' ]
             shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
-            text = shell_proxy.check_output(cmd)
-            line = subprocess.check_output(
-                    text,
-                    shell=True
-                )
-            tab.append(line)
+            text = shell_proxy.check_output(cmd) 
+            # line = subprocess.check_output(
+            #         text,
+            #         shell=True
+            #     )
+            tab.append(text)
         text = "\n".join(tab)
         return TextView(data = text, **kwargs)
 

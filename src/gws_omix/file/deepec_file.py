@@ -23,6 +23,11 @@ class DeepECFile(File):
     @view(view_type=TextView, human_name="Get Gene Hits", short_description="Gives EC numbers for queried genes", specs={"genes": ListParam(default_value=[])})
     def view_query_gene_hits_as_csv(self, genes=[], **kwargs) -> dict:
         tab=[]
+# if [[ $(grep -L "$user2" /etc/passwd) ]]; then echo "No results for gene" gene;
+#  echo "No results for gene" gene;
+#else
+#   cmd = ["cat ", self.path, " | grep -w ", gene ]
+#fi
         for gene in genes:
             cmd = ["cat ", self.path, " | grep -w ", gene ]
             shell_proxy = ShellEnvProxy(BaseOmixEnvTask)

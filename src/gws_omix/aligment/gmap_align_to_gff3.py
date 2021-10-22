@@ -27,6 +27,7 @@ class GmapAlignGFF3(BaseOmixEnvTask):
     """
     input_specs = {
         'uncompressed_genome_fasta_file': (FastaFile,),
+#        'uncompressed_genome_fasta_file_index_dir': (Folder,),
         'cdna_or_cds_fasta_file': (FastaFile,)          
     }
     output_specs = {
@@ -71,6 +72,22 @@ class GmapAlignGFF3(BaseOmixEnvTask):
         fasta_file_name = os.path.basename(fa_file.path)
         self._output_file_path = self._get_output_file_path(fasta_file_name, genome_fasta_file_name)
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
+
+
+        # thread = params["threads"]
+        # genome_fasta = inputs["uncompressed_genome_fasta_file"]
+        # genome_fasta_name = os.path.basename(genome_fasta.path)
+        # db_name = self._get_output_file_path(genome_fasta_name)
+        # self._output_file_path = os.path.join(self.working_dir, db_name)
+ 
+        # cmd = [
+        #     "gmap_build -t ", thread,
+        #     " -D ", self._output_file_path,
+        #     "-d ", db_name,
+        #     genome_fasta.path, " 2> tmp.gmap_index.log ; mv tmp.gmap_index.log ",
+        #     self._output_file_path
+        # ]           
+
         cmd = [
             "bash", 
             os.path.join(script_file_dir, "./sh/gmap_gff3_cmd.sh"),
