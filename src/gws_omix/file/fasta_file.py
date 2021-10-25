@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy #, CsvView
 
 from ..base.omix_env_task import BaseOmixEnvTask
 
@@ -13,13 +13,13 @@ from ..base.omix_env_task import BaseOmixEnvTask
 class FastaFile(File):
     ''' Fasta file class'''
 
-    @view(human_name="Head And Tail TextView", view_type=CsvView, short_description="View of the DeepEC output file first and last lines as raw text")
+    @view(human_name="Head And Tail TextView", view_type=TextView, short_description="View of the DeepEC output file first and last lines as raw text")
     def view_head_as_raw_text(self, **kwargs) -> dict:
        #Read length: first column = x-axis, second column = y-axis (boxplot)
         cmd = ["head ", self.path, " ; tail ", self.path]
         shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
-        return CsvView(data = text, **kwargs)
+        return TextView(data = text, **kwargs)
 
 
     @view(human_name="Get Fasta Sequence", 

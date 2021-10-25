@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy #, CsvView
 
 from ..base.omix_env_task import BaseOmixEnvTask
 
@@ -13,12 +13,12 @@ from ..base.omix_env_task import BaseOmixEnvTask
 class ECListFile(File):
     ''' EC list file class'''
 
-    @view(human_name="Text View", view_type=CsvView, short_description="View of the EC list file ")
+    @view(human_name="Text View", view_type=TextView, short_description="View of the EC list file ")
     def view_as_raw_text(self, **kwargs) -> dict:
         cmd = ["cat ", self.path ]
         shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
-        return CsvView(data = text, **kwargs)
+        return TextView(data = text, **kwargs)
 ##
 
     # @view(human_name="TextView", view_type=TextView, short_description="View of the EC list file ")

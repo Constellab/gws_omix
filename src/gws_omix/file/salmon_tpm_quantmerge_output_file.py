@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy #, CsvView
 
 from ..base.omix_env_task import BaseOmixEnvTask
 
@@ -12,12 +12,12 @@ from ..base.omix_env_task import BaseOmixEnvTask
                     short_description="Output file from Salmon Quantmerge (expression in TPM)")
 class SalmonTpmQuantmergeOutputFile(File):
     """salmon_tpm_quantmerge_output_file class"""
-    @view(view_type=CsvView, human_name="Text View", short_description="View of the expression file first and last lines as raw text")
+    @view(view_type=TextView, human_name="Text View", short_description="View of the expression file first and last lines as raw text")
     def view_head_as_raw_text(self, **kwargs) -> dict:
         cmd = ["head ", self.path, " ; tail ", self.path ]
         shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
-        return CsvView(data = text, **kwargs)
+        return TextView(data = text, **kwargs)
 
     # @view(view_type=TextView, human_name="Expression In Tpm Per Samples", short_description="Summary of genes expression (in TPM) per samples")
     # def view_tpm_per_columns_as_box_plot(self) -> dict:
@@ -31,7 +31,7 @@ class SalmonTpmQuantmergeOutputFile(File):
     #     )
     #     return TextView(data = csv)
 
-    @view(view_type=CsvView, human_name="Get Gene Expression", short_description="Gives gene expression values for queried genes", specs={"genes": ListParam(default_value=[])})
+    @view(view_type=TextView, human_name="Get Gene Expression", short_description="Gives gene expression values for queried genes", specs={"genes": ListParam(default_value=[])})
     def view_query_gene_tpm_as_csv(self, genes=[], **kwargs) -> dict:
         tab=[]
         for gene in genes:
@@ -44,7 +44,7 @@ class SalmonTpmQuantmergeOutputFile(File):
             #     )
             tab.append(text)
         text = "\n".join(tab)
-        return CsvView(data = text, **kwargs)
+        return TextView(data = text, **kwargs)
 
 
 
