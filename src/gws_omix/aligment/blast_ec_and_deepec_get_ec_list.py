@@ -38,7 +38,6 @@ class ECListMerger(BaseOmixEnvTask):
         uniq_ec={}
         deepec_ec = deepec_output_file
         blast_ec = blast_output_file
-
         with open(deepec_ec, 'r') as lines: 
             li_deepec=lines.readlines()
             for line in li_deepec:
