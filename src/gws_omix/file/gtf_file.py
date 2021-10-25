@@ -21,7 +21,7 @@ class GTFFile(File):
         text = shell_proxy.check_output(cmd)
         return CsvView(data = text, **kwargs)
 
-    @view(view_type=TextView, human_name="Get Annotation features", short_description="Gives annotation for queried genes", specs={"genes": ListParam(default_value=[])})
+    @view(view_type=CsvView, human_name="Get Annotation features", short_description="Gives annotation for queried genes", specs={"genes": ListParam(default_value=[])})
     def view_query_gene_hits_as_csv(self, genes=[], **kwargs) -> dict:
         tab=[]
         for gene in genes:

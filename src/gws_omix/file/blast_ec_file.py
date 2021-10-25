@@ -18,7 +18,7 @@ class BlastECFile(File):
         cmd = ["head ", self.path, " ; tail ", self.path ]
         shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
-        return TextView(data = text, **kwargs)
+        return CsvView(data = text, **kwargs)
 
     @view(view_type=CsvView, human_name="Get Gene Hits", short_description="Gives hits for queried genes", specs={"genes": ListParam(default_value=[])})
     def view_query_gene_hits_as_csv(self, genes=[], **kwargs) -> dict:
