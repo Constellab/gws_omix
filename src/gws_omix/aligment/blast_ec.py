@@ -42,7 +42,7 @@ class BlastEC(BaseOmixEnvTask):
         "threads": IntParam(default_value=4, min_value=2, short_description="Number of threads"),
         "idt": IntParam(default_value=70, min_value=1, max_value=100, short_description="Similarity/identity minimum percentage threshold to exclude results. [Default = 70]"),
         "cov": IntParam(default_value=70, min_value=1, max_value=100, short_description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]"),
-        "uniprot_db_dir": StrParam(default_value="", short_description="Location of the UniProtKB database"), # TODO: set protected
+        "uniprot_db_dir": StrParam(default_value="", short_description="Location of the UniProtKB database") # TODO: set protected
     }
     
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

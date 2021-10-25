@@ -11,10 +11,10 @@ from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, Confi
 from ..file.fastq_file import FastqFile
 
 
-@task_decorator("FastqLoader")
-class FastqLoader(Task):
+@task_decorator("FastqPairedLoader")
+class FastqPairedLoader(Task):
     """
-    FastqLoader Class. To load fasta file 
+    FastqLoader Class. To load fastq paired files
 
     """
     config_specs = {

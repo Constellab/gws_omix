@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, ListParam
+from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, ListParam, CsvView
 
 from ..base.omix_env_task import BaseOmixEnvTask
 
@@ -13,14 +13,14 @@ from ..base.omix_env_task import BaseOmixEnvTask
 class DeepECFile(File):
     ''' DeepEc file class'''
 
-    @view(view_type=TextView, human_name="Text View", short_description="View of the DeepEC output file first and last lines as raw text")
+    @view(view_type=CsvView, human_name="Raw output", short_description="View of the DeepEC output file first and last lines as raw text")
     def view_as_raw_text(self, **kwargs) -> dict:
         cmd = ["head ", self.path, " ; tail ", self.path ]
         shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
-        return TextView(data = text, **kwargs)
+        return CsvView(data = text, **kwargs)
 
-    @view(view_type=TextView, human_name="Get Gene Hits", short_description="Gives EC numbers for queried genes", specs={"genes": ListParam(default_value=[])})
+    @view(view_type=CsvView, human_name="Get Gene Hits", short_description="Gives EC numbers for queried genes", specs={"genes": ListParam(default_value=[])})
     def view_query_gene_hits_as_csv(self, genes=[], **kwargs) -> dict:
         tab=[]
 # if [[ $(grep -L "$user2" /etc/passwd) ]]; then echo "No results for gene" gene;
@@ -32,13 +32,13 @@ class DeepECFile(File):
             cmd = ["cat ", self.path, " | grep -w ", gene ]
             shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
             text = shell_proxy.check_output(cmd)
-            line = subprocess.check_output(
-                    text,
-                    shell=True
-                )
-            tab.append(line)
+            # line = subprocess.check_output(
+            #         text,
+            #         shell=True
+            #     )
+            tab.append(text)
         text = "\n".join(tab)
-        return TextView(data = text, **kwargs)
+        return CsvView(data = text, **kwargs)
 
 
 ##
