@@ -18,10 +18,12 @@ crsSpecies=$( echo $5 | awk '{if($0 == "Y"){ print "--cross-species" }else{ prin
 altStart=$( echo $6 | awk '{if($0 == "Y"){ print "--alt-start-codons" }else{ print "  " }}')
 fullLght=$( echo $7 | awk '{if($0 == "Y"){ print "--fulllength" }else{ print "  " }}')
 genomeFasta=$8
-genome_dir=$(echo -e $genomeFasta".gmap_index")
-genome_index_name=$(echo -e $( basename $genomeFasta)".gmap_index")
+#genome_dir=$(echo -e $genomeFasta".gmap_index")
+#genome_index_name=$(echo -e $( basename $genomeFasta)".gmap_index")
 fastaFile=$9
 outputFile=${10}
+genome_dir=${11}
+genome_index_name=$(echo -e $( basename ${11})".gmap_index")
 
 echo $outputFile $fastaFile
 

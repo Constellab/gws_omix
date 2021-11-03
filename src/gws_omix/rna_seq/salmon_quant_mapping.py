@@ -49,7 +49,8 @@ class SalmonQuantMapping(BaseOmixEnvTask):
             " -p ",thread,
             "-l A -1", reads_forward,
             "-2", reads_reverse,
-            "--validateMappings -o ", self._get_output_file_path(params)
+            "--validateMappings -o tmp.dir ",
+            " ; mv ./tmp.dir/quant.sf ./  ; rm -rf ./tmp.dir ; mv quant.sf ",  self._get_output_file_path(params)
         ] 
 
         return cmd

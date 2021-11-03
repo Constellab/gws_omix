@@ -28,3 +28,9 @@ from .file.gff3_file import GFF3File
 from .aligment.gmap_align_to_gtf import GmapAlignGTF
 from .file.gtf_file import GTFFile
 from .aligment.gmap_align_to_fasta import GmapAlignFasta
+
+
+
+# Merge EC List
+from .rna_seq.salmon_quant_mapping import SalmonQuantMapping
+from .rna_seq.salmon_index import SalmonIndex

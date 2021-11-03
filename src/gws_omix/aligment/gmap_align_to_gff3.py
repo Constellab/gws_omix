@@ -7,7 +7,7 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils
+from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Folder
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gff3_file import GFF3File
@@ -27,7 +27,7 @@ class GmapAlignGFF3(BaseOmixEnvTask):
     """
     input_specs = {
         'uncompressed_genome_fasta_file': (FastaFile,),
-#        'uncompressed_genome_fasta_file_index_dir': (Folder,),
+        'uncompressed_genome_fasta_file_index_dir': (Folder,),
         'cdna_or_cds_fasta_file': (FastaFile,)          
     }
     output_specs = {
@@ -68,6 +68,9 @@ class GmapAlignGFF3(BaseOmixEnvTask):
 
         genome_fasta = inputs["uncompressed_genome_fasta_file"]
         genome_fasta_file_name = os.path.basename(genome_fasta.path)
+        genome_fasta_dir = inputs["uncompressed_genome_fasta_file"]
+        genome_fasta_dir_name = os.path.basename(genome_fasta_dir.path)
+
         fa_file = inputs["cdna_or_cds_fasta_file"]
         fasta_file_name = os.path.basename(fa_file.path)
         self._output_file_path = self._get_output_file_path(fasta_file_name, genome_fasta_file_name)
@@ -100,7 +103,8 @@ class GmapAlignGFF3(BaseOmixEnvTask):
             full_lgth,
             genome_fasta.path,
             fa_file.path,
-            self._output_file_path            
+            self._output_file_path,
+            genome_fasta_dir.path         
         ]
         return cmd
 

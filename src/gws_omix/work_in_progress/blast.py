@@ -11,7 +11,7 @@ from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, Confi
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 
-@task_decorator("Blast")
+@task_decorator("Blast", hide=True)
 class Blast(BaseOmixEnvTask):
     """
     Blast class. Represents a process that wraps NCBI blast program. This version !!! DOES NOT ALLOWED !!! to get EC numbers for digital twins reconstruction.

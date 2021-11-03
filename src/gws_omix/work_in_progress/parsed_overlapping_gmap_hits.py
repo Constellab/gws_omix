@@ -12,7 +12,7 @@ from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.gff3_file import GFF3File
 from ..file.gtf_file import GTFFile
 
-@task_decorator("ParsedOverlappingGmapHits")
+@task_decorator("ParsedOverlappingGmapHits", hide=True)
 class ParsedOverlappingGmapHits(BaseOmixEnvTask):
     """
     ParsedOverlappingGmapHits class. Represents a process that wraps bedtools tools to select a gene feature when multiple are overlapping. To use with gmap output gff3 file.

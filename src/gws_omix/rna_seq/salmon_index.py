@@ -7,7 +7,7 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils
+from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Folder
 from ..base.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gtf_file import GTFFile
@@ -26,7 +26,7 @@ class SalmonIndex(BaseOmixEnvTask):
         'gtf_annotation': (GTFFile,)          
     }
     output_specs = {
-        'salmon_index_file': (File,)
+        'salmon_index_folder': (Folder,)
     }
     config_specs = {
         "threads": IntParam(default_value=12, min_value=1, short_description="Number of threads [Default =  12] ")
@@ -35,7 +35,7 @@ class SalmonIndex(BaseOmixEnvTask):
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
         result_file.path = self._get_output_file_path(params)
-        return {"salmon_index_file": result_file} 
+        return {"salmon_index_folder": result_file} 
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
