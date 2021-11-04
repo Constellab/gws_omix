@@ -39,8 +39,8 @@ class SalmonIndex(BaseOmixEnvTask):
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
-        genome_fasta = params["uncompressed_genome_file"]
-        annot = params["gtf_annotation"]   
+        genome_fasta = inputs["uncompressed_genome_file"]
+        annot = inputs["gtf_annotation"]   
         cmd = [
             "gffread -w transcripto.tmp.fa -g ",genome_fasta, annot,
             " ; cat transcripto.tmp.fa  | cut -d " " -f 1 > transcripto.tmp.2.fa ; rm transcripto.tmp.fa ; grep \"^>\" ", genome_fasta,
