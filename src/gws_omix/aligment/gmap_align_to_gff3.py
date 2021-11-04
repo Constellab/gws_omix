@@ -7,8 +7,9 @@ import os
 import re
 import csv
 
-from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Folder
-from ..base.omix_env_task import BaseOmixEnvTask
+from gws_core import (task_decorator, File, IntParam, StrParam, FloatParam, 
+                        ConfigParams, TaskInputs, TaskOutputs, Utils, Folder, OptionalIn, BoolParam)
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gff3_file import GFF3File
 
@@ -16,9 +17,11 @@ from ..file.gff3_file import GFF3File
 @task_decorator("GmapAlignGFF3")
 class GmapAlignGFF3(BaseOmixEnvTask):
     """
-    Gmap alignment tool class. Represents a process that wraps Gmap aligment tool. Gmap index is Mandatory to use Gmap tools.
+    GmapAlignGFF3 class. 
     
-    Configuration options
+    Represents a task that wraps Gmap aligment tool. Gmap index is Mandatory to use Gmap tools.
+    
+    Configuration options:
         * `threads`: Multi threading options: number of threads to use. [Default =  8]
         * `min-identity"`: Do not print alignments with identity less this value (default=70.0, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. 
         * `min-trimmed-coverage`: Do not print alignments with trimmed coverage less than this value (default=70.0, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. 
@@ -27,7 +30,7 @@ class GmapAlignGFF3(BaseOmixEnvTask):
     """
     input_specs = {
         'uncompressed_genome_fasta_file': (FastaFile,),
-        'uncompressed_genome_fasta_file_index_dir': (Folder,),
+        'uncompressed_genome_fasta_file_index_dir': OptionalIn(Folder,),
         'cdna_or_cds_fasta_file': (FastaFile,)          
     }
     output_specs = {
@@ -40,7 +43,8 @@ class GmapAlignGFF3(BaseOmixEnvTask):
         "max-hit-number": IntParam(default_value=5, min_value=0, short_description="Maximum number of hits to show (default 5).  If set to 1, GMAP will not report chimeric alignments, since those imply two hits. If you want a single alignment plus chimeric alignments, then set this to be 0. [Default =  5] "),
         "cross-species": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Use a more sensitive search for canonical splicing, which helps especially for cross-species alignments and other difficult cases (genome for a far-related species/family...). [Default =  No]"),
         "alt-start-codons": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Also, use the alternate initiation codons (see http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi). By default, without this option, only ATG is considered an initiation codon [Default =  No]"),
-        "fulllength": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]")
+        "fulllength": StrParam(default_value="No", allowed_values=["Yes","No"], short_description="Assume full-length protein, starting with Met (ATG codon). [Default =  No]"),
+        "use_default_index_dirs": BoolParam(default_value=True, visibility="protected", short_description="True to use the default index dirs provided by us. False to use the index provided as input. In any case, if an index is provided in inputs, it is used.")
     }
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -69,27 +73,11 @@ class GmapAlignGFF3(BaseOmixEnvTask):
         genome_fasta = inputs["uncompressed_genome_fasta_file"]
         genome_fasta_file_name = os.path.basename(genome_fasta.path)
         genome_fasta_dir = inputs["uncompressed_genome_fasta_file"]
-        genome_fasta_dir_name = os.path.basename(genome_fasta_dir.path)
 
         fa_file = inputs["cdna_or_cds_fasta_file"]
         fasta_file_name = os.path.basename(fa_file.path)
         self._output_file_path = self._get_output_file_path(fasta_file_name, genome_fasta_file_name)
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
-
-
-        # thread = params["threads"]
-        # genome_fasta = inputs["uncompressed_genome_fasta_file"]
-        # genome_fasta_name = os.path.basename(genome_fasta.path)
-        # db_name = self._get_output_file_path(genome_fasta_name)
-        # self._output_file_path = os.path.join(self.working_dir, db_name)
- 
-        # cmd = [
-        #     "gmap_build -t ", thread,
-        #     " -D ", self._output_file_path,
-        #     "-d ", db_name,
-        #     genome_fasta.path, " 2> tmp.gmap_index.log ; mv tmp.gmap_index.log ",
-        #     self._output_file_path
-        # ]           
 
         cmd = [
             "bash", 
@@ -104,7 +92,7 @@ class GmapAlignGFF3(BaseOmixEnvTask):
             genome_fasta.path,
             fa_file.path,
             self._output_file_path,
-            genome_fasta_dir.path         
+            genome_fasta_dir.path
         ]
         return cmd
 
@@ -113,35 +101,3 @@ class GmapAlignGFF3(BaseOmixEnvTask):
             self.working_dir, 
             fasta + ".alligned_on." + genome + ".gmap_alignment.gff3"
         )
-
-
-#####
-
-# gmap_build -t 7  -D ./ -d INDEX.e_coli_K12.genome.fna.fasta e_coli_K12.genome.fna.fasta
-#This program gmapl is designed for large genomes.
-#For small genomes of less than 2^32 (4 billion) bp, please run gmap instead. --> samtools faidx -> regarder taille genome dans fai
-#cat e_coli_K12.genome.fna.fasta.fai
-#Chromosome	4641652	12	70	71
-#samtools faidx Z_tritici.IPO323.complete_genome_and_mitochondria.fna
-#cat Z_tritici.IPO323.complete_genome_and_mitochondria.fna.fai | cut -f2 | awk '{res+=$0}END{print res}'	
-#--npaths 
-#--min-trimmed-coverage Float
-# --min-identity float
-#--cross-species
-# gmap -t 7 -f 2 -D ./ -d INDEX.e_coli_K12.genome.fna.fasta output.2.fa 1> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 2> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.log
-# gffread output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 -T -o output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ; grep "path1\";" output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf > output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.best_hit.gtf ; rm output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ;
-
-
-        #     "$( samtools faidx ", genome_fasta, 
-        #     "cat", genome_fai_file,
-        #     " | cut -f2 | awk '{res+=$0}END{if(res<4000000000){print \"gmap\"}if(res>=4000000000){print \"gmapl\"}}' ) -t ", thread,
-        #     " -f 2 --npaths ", hit_nbr,
-        #     " --min-identity ", idt,
-        #     " --min-trimmed-coverage ", cov,
-        #     " ", crs_species,
-        #     " ", alt_start,
-        #     " ", full_lght,            
-        #     " -D ", self.working_dir,
-        #     "-d ", genome_index, fa_file,
-        #     " >  ", self._get_output_file_path(params),
-        # ]           

@@ -6,33 +6,29 @@
 import os
 import json
 
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest
-from gws_omix import BlastEcGetEcList
-from gws_omix import BlastECFile
-#from ..file.ec_list_file import ECListFile
+from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
+from gws_omix import DeepECListExtractor
+from gws_omix import DeepECFile
 
-
-class TestBlastEC(BaseTestCase):
+class TestDeepEC(BaseTestCase):
     
-    async def test_BlastEcGetEcList(self):
+    async def test_BlastECListExtractor(self):
         settings = Settings.retrieve()
         data_dir = settings.get_variable("gws_omix:testdata_dir")
-        file = BlastECFile()
-        file.path = os.path.join(data_dir, "results.test.blast.csv")
+        file = DeepECFile()
+        file.path = os.path.join(data_dir, "DeepEC_Result.txt")
 
-
-
-        # run BlastEcGetEcList
+        # run BlastECListExtractor
         tester = TaskTester(
-            inputs = {'blastec_file': file},
-            task_type = BlastEcGetEcList
+            inputs = {'deepec_file': file},
+            task_type = DeepECListExtractor
         )
         outputs = await tester.run()
         f = outputs['ec_list_file']
         result_content = f.read()
 
         # Get the expected file output       
-        expected_file_path = os.path.join(data_dir, "results.test.blast.ec_list.txt")
+        expected_file_path = os.path.join(data_dir, "results.test.deepec.ec_list.txt")
 
         with open(expected_file_path, 'r') as fp:
             expected_result_content = fp.read()
@@ -45,6 +41,6 @@ class TestBlastEC(BaseTestCase):
             self.assertEqual( result_content, expected_result_content  )
 
         text_view = f.view_as_raw_text()
-        text_view_dict = text_view.to_dict(page=1, page_size=500)
+        text_view_dict = tester.to_dict(params={"page":1, "page_size":1000})
         print(json.dumps(text_view_dict, indent=2))
         self.assertEqual( text_view_dict["total_number_of_pages"], 1 )

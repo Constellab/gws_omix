@@ -5,7 +5,7 @@
 
 import os
 import json
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest
+from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
 from gws_omix import GmapAlignGTF
 from gws_omix import GTFFile
 from gws_omix import FastaFile
@@ -48,8 +48,11 @@ class TestGmapGTF(BaseTestCase):
 
 
         text_view = gff3_file.view_head_as_raw_text()
-        text_view_dict = text_view.to_dict(page=1, page_size=500)
+        tester = ViewTester(view=text_view)
+        text_view_dict = tester.to_dict(params={"page":1, "page_size":1000})
         print(json.dumps(text_view_dict, indent=2))
-        self.assertEqual( text_view_dict["total_number_of_pages"], 2 )
+        self.assertEqual( text_view_dict["total_number_of_pages"], 1 )
+        self.assertEqual( text_view_dict["total_number_of_items"], 780 )
+
 
 

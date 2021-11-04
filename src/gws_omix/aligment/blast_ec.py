@@ -8,14 +8,16 @@ import re
 import csv
 
 from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Settings
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.blast_ec_file import BlastECFile
 
 @task_decorator("BlastEC")
 class BlastEC(BaseOmixEnvTask):
     """
-    BlastEC class. Represents a process that wraps NCBI blast program. This version !!! ALLOWED !!! to get EC numbers for digital twins reconstruction.
+    BlastEC class. 
+    
+    Represents a process that wraps NCBI blast program. This version !!! ALLOWED !!! to get EC numbers for digital twins reconstruction.
     
     Configuration options
         * `taxo`: Kingdom name. Specify taxonomic groups to select a specific sub-set database (Faster) = bacteria, archaea, eukaryota, metazoa, chordata, mammalia, fungi, viridiplantae. [Default = all] = Slower.
@@ -119,8 +121,6 @@ class BlastEC(BaseOmixEnvTask):
                         gene_ec[li_split[0]]="NA\n"                   
                     else:
                         gene_ec[li_split[0]]=li_split[7]                    
-
-#        for current_line in blast_output_file:
 
         filtered_file_path = blast_output_file + ".filtered.csv"
 

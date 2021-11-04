@@ -8,7 +8,7 @@ import re
 import csv
 
 from gws_core import task_decorator, File, FloatParam, IntParam, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gtf_file import GTFFile
 
@@ -26,10 +26,12 @@ from ..file.gtf_file import GTFFile
 # gmap -t 7 -f 2 -D ./ -d INDEX.e_coli_K12.genome.fna.fasta output.2.fa 1> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 2> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.log
 # gffread output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 -T -o output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ; grep "path1\";" output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf > output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.best_hit.gtf ; rm output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ;
 
-@task_decorator("GmapAlignFasta")
+@task_decorator("GmapAlignFasta",)
 class GmapAlignFasta(BaseOmixEnvTask):
     """
-    Gmap alignment tool class. Represents a process that wraps Gmap aligment tool. Gmap index is Mandatory to use Gmap tools.
+    GmapAlignFasta class. 
+    
+    Represents a task that wraps Gmap aligment tool. Gmap index is mandatory to use Gmap tools.
     
     Configuration options
         * `threads`: Multi threading options: number of threads to use. [Default =  8]
@@ -107,27 +109,3 @@ class GmapAlignFasta(BaseOmixEnvTask):
             self.working_dir, 
             fasta + ".alligned_on." + genome + ".gmap_alignment.fasta"
         )
-
-
-####
-
-        
-        # cmd = [
-        #     "$( samtools faidx ", genome_fasta, 
-        #     "cat", genome_fai_file,
-        #     " | cut -f2 | awk '{res+=$0}END{if(res<4000000000){print \"gmap\"}if(res>=4000000000){print \"gmapl\"}}' ) -t ", thread,
-        #     " -f 2 --npaths ", hit_nbr,
-        #     " --min-identity ", idt,
-        #     " --min-trimmed-coverage ", cov,
-        #     " ", crs_species,
-        #     " ", alt_start,
-        #     " ", full_lght,            
-        #     " -D ", self.working_dir,
-        #     "-d ", genome_index, fa_file,
-        #     " > tmp.gff3 ; gffread ",
-        #     " -g ", genome_fasta,
-        #     " -w ",self._get_output_file_path(params),
-        #     " tmp.gff3 ; rm tmp.gff3 ;"
-        # ]           
-
-        # return cmd

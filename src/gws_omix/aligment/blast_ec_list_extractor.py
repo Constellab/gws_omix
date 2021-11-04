@@ -8,23 +8,27 @@ import re
 import csv
 
 from gws_core import task_decorator, File, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.deepec_file import DeepECFile
 from ..file.blast_ec_file import BlastECFile
 from ..file.ec_list_file import ECListFile
 
 
-@task_decorator("BlastEcGetEcList")
-class BlastEcGetEcList(BaseOmixEnvTask):
+@task_decorator("BlastECListExtractor",
+                short_description="Extracts an EC list from a BlastECFile")
+class BlastECListExtractor(BaseOmixEnvTask):
     """
-    BlastEcGetEcList class. Get EC list File, from Blast_ec output File, for Digital Twins reconstructions. Keeps only the best hit for each previously analysed sequences.
+    BlastECListExtractor class. 
+    
+    Extracts an EC list from a `BlastECFile` for Digital Twins reconstructions. 
+    Keeps only the best hit for each previously analysed sequence.
 
-    # blastec output file format (18 Columns) : qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore alignment_type ec_number (NO header in file)
-sp|P87228|SERA_SCHPO	sp|P87228|SERA_SCHPO	100.000	100	100	466	0	0	1	466	466	1	466	466	0.0	954	BEST_HIT	1.1.1.95; 1.1.1.399
-sp|Q75DK1|SEC14_ASHGO	sp|Q75DK1|SEC14_ASHGO	100.000	100	100	308	0	0	1	308	308	1	308	308	0.0	637	BEST_HIT	NA
-sp|Q75DK1|SEC14_ASHGO	sp|P24859|SEC14_KLULA	82.724	98	98	301	52	0	1	301	308	1	301	301	0.0	528	SECONDARY_HITS	NA
-sp|Q75DK1|SEC14_ASHGO	sp|P53989|SEC14_CANGA	80.066	98	98	301	60	0	1	301	308	1	301	302	0.0	502	SECONDARY_HITS	NA
-sp|A3LZ57|SEC16_PICST	sp|A3LZ57|SEC16_PICST	100.000	100	100	2212	0	0	1	2212	2212	1	2212	2212	0.0	4490	BEST_HIT	NA        
+    # BlastECListExtractor output file format (18 Columns) : qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore alignment_type ec_number (NO header in file)
+    sp|P87228|SERA_SCHPO	sp|P87228|SERA_SCHPO	100.000	100	100	466	0	0	1	466	466	1	466	466	0.0	954	BEST_HIT	1.1.1.95; 1.1.1.399
+    sp|Q75DK1|SEC14_ASHGO	sp|Q75DK1|SEC14_ASHGO	100.000	100	100	308	0	0	1	308	308	1	308	308	0.0	637	BEST_HIT	NA
+    sp|Q75DK1|SEC14_ASHGO	sp|P24859|SEC14_KLULA	82.724	98	98	301	52	0	1	301	308	1	301	301	0.0	528	SECONDARY_HITS	NA
+    sp|Q75DK1|SEC14_ASHGO	sp|P53989|SEC14_CANGA	80.066	98	98	301	60	0	1	301	308	1	301	302	0.0	502	SECONDARY_HITS	NA
+    sp|A3LZ57|SEC16_PICST	sp|A3LZ57|SEC16_PICST	100.000	100	100	2212	0	0	1	2212	2212	1	2212	2212	0.0	4490	BEST_HIT	NA        
 
     """
     input_specs = {

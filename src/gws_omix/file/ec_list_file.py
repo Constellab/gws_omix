@@ -3,9 +3,9 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy #, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, BadRequestException #, CsvView
 
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 
 @resource_decorator("ECListFile",
                     human_name="ECListFile",
@@ -13,11 +13,21 @@ from ..base.omix_env_task import BaseOmixEnvTask
 class ECListFile(File):
     ''' EC list file class'''
 
+    # def open(self, mode: str):
+    #     raise BadRequestException("Cannot be opened")
+
+    # def read(self):
+    #     cmd = ["cat ", self.path]
+    #     shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+    #     text = shell_proxy.check_output(cmd)
+    #     return text
+
+    # def write(self):
+    #     raise BadRequestException("Cannot be altered")
+
     @view(human_name="Text View", view_type=TextView, short_description="View of the EC list file ")
     def view_as_raw_text(self, **kwargs) -> dict:
-        cmd = ["cat ", self.path ]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
-        text = shell_proxy.check_output(cmd)
+        text = self.read()
         return TextView(data = text, **kwargs)
 ##
 

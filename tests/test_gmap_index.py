@@ -29,7 +29,7 @@ class TestGmapIndex(BaseTestCase):
         outputs = await tester.run()
         f = outputs['gmap_index_file']
         result_content = os.path.join(f.path , "tmp.gmap.index.log")
-        print(result_content.path)
+        print(result_content)
         # # Get the expected file output       
         # expected_file_path = os.path.join(data_dir, "tmp.gmap.index.log")
 

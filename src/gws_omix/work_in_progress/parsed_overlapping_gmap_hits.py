@@ -8,7 +8,7 @@ import re
 import csv
 
 from gws_core import task_decorator, File, FloatParam, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.gff3_file import GFF3File
 from ..file.gtf_file import GTFFile
 

@@ -24,6 +24,7 @@ fastaFile=$9
 outputFile=${10}
 genome_dir=${11}
 genome_index_name=$(echo -e $( basename ${11})".gmap_index")
+#genome_index_name=${12}
 
 echo $outputFile $fastaFile
 

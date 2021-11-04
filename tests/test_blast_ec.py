@@ -5,7 +5,7 @@
 
 import os
 import json
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest
+from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
 from gws_omix import BlastEC
 
 class TestBlastEC(BaseTestCase):
@@ -45,55 +45,7 @@ class TestBlastEC(BaseTestCase):
 
 
         text_view = blast_ec_file.view_head_as_raw_text()
-        text_view_dict = text_view.to_dict(page=1, page_size=500)
+        tester = ViewTester(view=text_view)
+        text_view_dict = tester.to_dict(params={"page":1, "page_size":1000})
         print(json.dumps(text_view_dict, indent=2))
-        self.assertEqual( text_view_dict["total_number_of_pages"], 5 )
-
-
-### Oldies ###
-
-
-#     def test_BlastEC(self):
-        
-#         data_dir = settings.get_dir("omix:testdata_dir")
-       
-#         file_path = os.path.join(data_dir, "fungi.uniprotKB.faa") 
-#         with open(file_path, newline='') as f:
-#             fastadb = csv.reader(f, delimiter='\t')
-            
-#         file_path = os.path.join(data_dir, "fungi.uniprotKB.tab") 
-#         with open(file_path, newline='') as f:
-#             tab = csv.reader(f, delimiter='\t')
-
-#         file_path = os.path.join(data_dir, "fasta_subject.faa") 
-#         with open(file_path, newline='') as f:
-#             fastasubject = csv.reader(f, delimiter='\t')
-
-#         file = File()
-#         file.path = file_path
-#         file.save()
-#         blt = BlastEC()
-#         blt.input["fasta_file"] = file
-# #        blt.input["fasta_file"] = file_path       
-
-#         def _on_end(*args, **kwargs):
-#             f = blt.output["filtered_blast_file"]
-            
-#             result_content = f.read()
-            
-            
-#             print("----")
-#             print(result_content)
-            
-#             print("----")
-            
-#             file_path = os.path.join(data_dir, "blast.output.pipe_sep.txt")
-#             with open(file_path) as fp:
-#                 expected_result_content = fp.read()
-#                 print(expected_result_content)
-#                 self.assertEqual( result_content, expected_result_content  )
-            
-        
-#         e = blt.create_experiment(study=GTest.study, user=GTest.user)
-#         e.on_end(_on_end)
-#         asyncio.run( e.run() )
+        self.assertEqual( text_view_dict["total_number_of_pages"], 3 )

@@ -8,7 +8,7 @@ import re
 import csv
 
 from gws_core import task_decorator, File, IntParam, StrParam, ConfigParams, TaskInputs, TaskOutputs, Utils
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.salmon_tpm_quantmerge_output_file import SalmonTpmQuantmergeOutputFile
 from ..file.salmon_reads_quantmerge_output_file import SalmonReadsQuantmergeOutputFile
 

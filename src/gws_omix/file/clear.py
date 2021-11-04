@@ -5,7 +5,7 @@
 import subprocess
 from gws_core import File, resource_decorator, view, IntParam, TextView
 
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 
 @resource_decorator("salmon_reads_quantmerge_output_file",
                     human_name="salmon_reads_quantmerge_output_file",

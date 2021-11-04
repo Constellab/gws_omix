@@ -5,7 +5,10 @@
 import os
 from gws_core import task_decorator, CondaEnvShell
 
-@task_decorator("BaseREnvTask")
-class BaseREnvTask(CondaEnvShell):
-    __cdir = os.path.abspath(os.path.dirname(__file__))
-    env_file_path = os.path.join(__cdir, "r_env.yml")
+@task_decorator("DeepECEnvTask", hide=True)
+class DeepECEnvTask(CondaEnvShell):
+    unique_env_name = "DeepECEnvTask"
+    env_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), 
+        "deepec_env.yml"
+    )

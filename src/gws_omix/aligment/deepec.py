@@ -8,7 +8,7 @@ import re
 import csv
 
 from gws_core import task_decorator, File, ConfigParams, TaskInputs, TaskOutputs, Utils
-from ..base.deepec_env_task import DeepECEnvTask
+from ..base_env.deepec_env_task import DeepECEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.deepec_file import DeepECFile
 

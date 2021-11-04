@@ -8,30 +8,18 @@ import re
 import csv
 
 from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gtf_file import GTFFile
-
-# gmap_build -t 7  -D ./ -d INDEX.e_coli_K12.genome.fna.fasta e_coli_K12.genome.fna.fasta
-#This program gmapl is designed for large genomes.
-#For small genomes of less than 2^32 (4 billion) bp, please run gmap instead. --> samtools faidx -> regarder taille genome dans fai
-#cat e_coli_K12.genome.fna.fasta.fai
-#Chromosome	4641652	12	70	71
-#samtools faidx Z_tritici.IPO323.complete_genome_and_mitochondria.fna
-#cat Z_tritici.IPO323.complete_genome_and_mitochondria.fna.fai | cut -f2 | awk '{res+=$0}END{print res}'	
-#--npaths 
-#--min-trimmed-coverage Float
-# --min-identity float
-#--cross-species
-# gmap -t 7 -f 2 -D ./ -d INDEX.e_coli_K12.genome.fna.fasta output.2.fa 1> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 2> output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.log
-# gffread output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3 -T -o output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ; grep "path1\";" output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf > output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.best_hit.gtf ; rm output.2.fa.INDEX.e_coli_K12.genome.fna.fasta.gmapl.gff3.gtf ;
 
 @task_decorator("GmapAlignGTF")
 class GmapAlignGTF(BaseOmixEnvTask):
     """
-    Gmap alignment tool class. Represents a process that wraps Gmap aligment tool. Gmap index is Mandatory to use Gmap tools.
+    GmapAlignGTF class. 
     
-    Configuration options
+    Represents a task that wraps Gmap aligment tool. Gmap index is Mandatory to use Gmap tools.
+    
+    Configuration options:
         * `threads`: Multi threading options: number of threads to use. [Default =  8]
         * `min-identity"`: Do not print alignments with identity less this value (default=70.0, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. 
         * `min-trimmed-coverage`: Do not print alignments with trimmed coverage less than this value (default=70.0, 0.0 would means no filtering). Note that chimeric alignments will be output regardless of this filter. 
@@ -107,32 +95,3 @@ class GmapAlignGTF(BaseOmixEnvTask):
             self.working_dir, 
             fasta + ".alligned_on." + genome + ".gmap_alignment.gtf"
         )
-
-
-
-###
-
-    #     genome_fasta = params["uncompressed_genome_fasta_file"]
-    #     genome_index = params["genome_gmap_index_name"]
-    #     genome_fai_file = genome_fasta + ".fai" 
-    #     fa_file = params["cdna_or_cds_fasta_file"]
-
-    #     cmd = [
-    #         "$( samtools faidx ", genome_fasta, 
-    #         "cat", genome_fai_file,
-    #         " | cut -f2 | awk '{res+=$0}END{if(res<4000000000){print \"gmap\"}if(res>=4000000000){print \"gmapl\"}}' ) -t ", thread,
-    #         " -f 2 --npaths ", hit_nbr,
-    #         " --min-identity ", idt,
-    #         " --min-trimmed-coverage ", cov,
-    #         " ", crs_species,
-    #         " ", alt_start,
-    #         " ", full_lght,            
-    #         " -D ", self.working_dir,
-    #         "-d ", genome_index, fa_file,
-    #         " > tmp.gff3 ; gffread tmp.gff3 -T -o ", self._get_output_file_path(params),
-    #         " ; rm tmp.gff3 ; "
-    #     ]           
-    #     return cmd
-
-    # def _get_output_file_path(self, params):
-    #     return params["cdna_or_cds_fasta_file"]+ ".alligned_on." + params["uncompressed_genome_fasta_file"] + ".gmap_alignment.gtf"

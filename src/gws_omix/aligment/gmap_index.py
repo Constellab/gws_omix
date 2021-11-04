@@ -8,15 +8,17 @@ import re
 import csv
 
 from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Folder
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 
 @task_decorator("GmapIndex")
 class GmapIndex(BaseOmixEnvTask):
     """
-    GMAP index class. Represents a process that wraps GMAP index tool. Mandatory to use GMAP tools.
+    GmapIndex class. 
     
-    Configuration options
+    Represents a task that wraps GMAP index tool. Mandatory to use GMAP tools.
+    
+    Configuration options:
         * `threads`: Multi threading options: number of threads to use. [Default =  8]
     """
 

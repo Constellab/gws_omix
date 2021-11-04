@@ -5,7 +5,10 @@
 import os
 from gws_core import task_decorator, CondaEnvShell
 
-@task_decorator("BaseOmixEnvTask")
-class BaseOmixEnvTask(CondaEnvShell):
-    __cdir = os.path.abspath(os.path.dirname(__file__))
-    env_file_path = os.path.join(__cdir, "omix_env.yml")
+@task_decorator("TrimFqEnvTask", hide=True)
+class TrimFqEnvTask(CondaEnvShell):
+    unique_env_name = "TrimFqEnvTask"
+    env_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), 
+        "trimfq_env.yml"
+    )

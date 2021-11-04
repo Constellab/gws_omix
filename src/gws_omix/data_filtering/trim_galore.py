@@ -8,7 +8,7 @@ import re
 import csv
 
 from gws_core import task_decorator, File, IntParam, StrParam, FloatParam, ConfigParams, TaskInputs, TaskOutputs, Utils, Settings, Folder
-from ..base.trimfq_env_task import TrimFqEnvTask
+from ..base_env.trimfq_env_task import TrimFqEnvTask
 from ..file.fastq_file import FastqFile
 
 

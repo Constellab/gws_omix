@@ -5,7 +5,7 @@
 import subprocess
 from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, ListParam #, CsvView
 
-from ..base.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import BaseOmixEnvTask
 
 @resource_decorator("DeepECFile",
                     human_name="DeepECFile",
