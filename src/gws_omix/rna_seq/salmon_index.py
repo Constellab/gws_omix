@@ -53,4 +53,4 @@ class SalmonIndex(BaseOmixEnvTask):
         return cmd
     
     def _get_output_file_path(self, params):
-        return params["uncompressed_genome_file"] + ".salmon_index"
+        return inputs["uncompressed_genome_file"] + ".salmon_index"
