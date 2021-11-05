@@ -41,16 +41,22 @@ class SalmonIndex(BaseOmixEnvTask):
         thread = params["threads"]
         genome_fasta = inputs["uncompressed_genome_file"]
         annot = inputs["gtf_annotation"]   
+        self._output_file_path = self._get_output_file_path(genome_fasta)
+
+        script_file_dir = os.path.dirname(os.path.realpath(__file__))
+
         cmd = [
-            "gffread -w transcripto.tmp.fa -g ",genome_fasta, annot,
-            " ; cat transcripto.tmp.fa  | cut -d " " -f 1 > transcripto.tmp.2.fa ; rm transcripto.tmp.fa ; grep \"^>\" ", genome_fasta,
-            " | cut -d \" \" -f 1 > decoys.txt ; sed -i.bak -e 's/>//g' decoys.txt ;  cat transcripto.tmp.2.fa", genome_fasta,
-            "  > gentrome.fa.gz  ;  ",
-            "salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p ", thread,
-            " -i", self._get_output_file_path(params) ,
-            "rm gentrome.fa.gz decoys.txt ;"
+            "bash",
+            os.path.join(script_file_dir, "./sh/salmon_index_cmd.sh"),
+            genome_fasta,
+            annot,
+            thread,
+            self._output_file_path
         ]
         return cmd
     
-    def _get_output_file_path(self, params):
-        return inputs["uncompressed_genome_file"] + ".salmon_index"
+    def _get_output_file_path(self, fasta_file_name):
+        return os.path.join(
+            self.working_dir, 
+            fasta_file_name + ".salmon_index"
+        )

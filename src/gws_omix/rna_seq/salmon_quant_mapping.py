@@ -35,7 +35,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         result_file = File()
-        result_file.path = self._get_output_file_path(params)
+        result_file.path = self._output_file_path
         return {"Salmon_quant_file": result_file}
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
@@ -43,6 +43,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
         reads_forward  = inputs["fastq_files_forward"]
         reads_reverse = inputs["fastq_files_reverse"]
         transcripts_index = inputs["salmon_genome_index"]  
+        self._output_file_path = self._get_output_file_path(reads_forward)
 
         cmd = [
             "salmon quant -i ",transcripts_index,
@@ -50,10 +51,14 @@ class SalmonQuantMapping(BaseOmixEnvTask):
             "-l A -1", reads_forward,
             "-2", reads_reverse,
             "--validateMappings -o tmp.dir ",
-            " ; mv ./tmp.dir/quant.sf ./  ; rm -rf ./tmp.dir ; mv quant.sf ",  self._get_output_file_path(params)
+            " ; mv ./tmp.dir/quant.sf ./  ; rm -rf ./tmp.dir ; mv quant.sf ",  self._output_file_path
         ] 
 
         return cmd
 
-    def _get_output_file_path(self, params):
-        return params["fastq_files_forward"] + ".Salmon_RNAseq_pseudo_mapping.Salmon_counting"
+    def _get_output_file_path(self, fastq_file_name):
+        return os.path.join(
+            self.working_dir, 
+            fastq_file_name + ".Salmon_RNAseq_pseudo_mapping.Salmon_counting.csv"
+        )
+        
