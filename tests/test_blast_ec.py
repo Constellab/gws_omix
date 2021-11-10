@@ -44,8 +44,8 @@ class TestBlastEC(BaseTestCase):
             self.assertEqual( result_content, expected_result_content  )
 
 
-        text_view = blast_ec_file.view_head_as_raw_text()
-        tester = ViewTester(view=text_view)
-        text_view_dict = tester.to_dict(params={"page":1, "page_size":1000})
-        print(json.dumps(text_view_dict, indent=2))
-        self.assertEqual( text_view_dict["total_number_of_pages"], 3 )
+        table_view = blast_ec_file.view_head_as_table(params=None)
+        tester = ViewTester(view=table_view)
+        dic_ = tester.to_dict(params={})
+        print(json.dumps(dic_, indent=2))
+        self.assertEqual( dic_["total_number_of_rows"], 24 )
