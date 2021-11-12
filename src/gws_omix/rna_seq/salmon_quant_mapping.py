@@ -12,6 +12,7 @@ from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.fastq_file import FastqFile
 from ..file.salmon_index_result_folder import SalmonIndexResultFolder
+from ..file.salmon_quant_mapping_output_file  import SalmonQuantMappingFile
 
 @task_decorator("SalmonQuantMapping")
 class SalmonQuantMapping(BaseOmixEnvTask):
@@ -28,7 +29,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
         'salmon_genome_index': (SalmonIndexResultFolder,)       
     }
     output_specs = { 
-        'salmon_quant_file': (TableFile,) 
+        'salmon_quant_file': (SalmonQuantMappingFile,) 
     }
     config_specs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
@@ -36,7 +37,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         path = self._get_output_file_path(inputs)
-        result_file = File(path=path)
+        result_file = SalmonQuantMappingFile(path=path)
         return {"salmon_quant_file": result_file}
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
