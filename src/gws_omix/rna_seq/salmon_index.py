@@ -40,16 +40,17 @@ class SalmonIndex(BaseOmixEnvTask):
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
         genome_fasta = inputs["uncompressed_genome_file"]
+        genome_fasta_file_name = os.path.basename(genome_fasta.path)
         annot = inputs["gtf_annotation"]   
-        self._output_file_path = self._get_output_file_path(genome_fasta)
+        self._output_file_path = self._get_output_file_path(genome_fasta_file_name)
 
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
         cmd = [
             "bash",
             os.path.join(script_file_dir, "./sh/salmon_index_cmd.sh"),
-            genome_fasta,
-            annot,
+            genome_fasta.path,
+            annot.path,
             thread,
             self._output_file_path
         ]

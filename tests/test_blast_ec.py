@@ -11,6 +11,7 @@ from gws_omix import BlastEC
 class TestBlastEC(BaseTestCase):
     
     async def test_BlastEC(self):
+        BlastEC.uninstall()
         settings = Settings.retrieve()
         data_dir = settings.get_variable("gws_omix:testdata_dir")
         file = File()
