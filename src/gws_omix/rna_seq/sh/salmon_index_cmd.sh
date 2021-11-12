@@ -23,13 +23,3 @@ sed -i.bak -e 's/>//g' decoys.txt ;
 cat transcripto.tmp.2.fa $genomeFasta > gentrome.fa.gz  ;
 
 salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p $threads  -i $genomeName".salmon_index" ;
-
-#mv ./$genomeName/* $output ;
-
-#salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p $threads  -i $genomeName ;
-
-#mkdir $output ;
-
-#mv ./$genomeName/* $output ;
-
-#rm gentrome.fa.gz decoys.txt transcripto.tmp.2.fa ;

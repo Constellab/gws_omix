@@ -28,7 +28,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
         'salmon_genome_index': (SalmonIndexResultFolder,)       
     }
     output_specs = { 
-        'Salmon_quant_file': (TableFile,) 
+        'salmon_quant_file': (TableFile,) 
     }
     config_specs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
@@ -37,7 +37,7 @@ class SalmonQuantMapping(BaseOmixEnvTask):
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         path = self._get_output_file_path(inputs)
         result_file = File(path=path)
-        return {"Salmon_quant_file": result_file}
+        return {"salmon_quant_file": result_file}
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
