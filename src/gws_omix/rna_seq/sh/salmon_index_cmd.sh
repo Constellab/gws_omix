@@ -13,16 +13,23 @@
 genomeFasta=$1
 annota=$2
 threads=$3
-output=$4
+genomeName=$4
 
 gffread -w transcripto.tmp.fa -g $genomeFasta $annota ;
-
 cat transcripto.tmp.fa  | cut -d " " -f 1 > transcripto.tmp.2.fa ;
 rm transcripto.tmp.fa ;
 grep "^>" $genomeFasta | cut -d " " -f 1 > decoys.txt ;
 sed -i.bak -e 's/>//g' decoys.txt ;
 cat transcripto.tmp.2.fa $genomeFasta > gentrome.fa.gz  ;
 
-salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p $threads  -i $output ;
+salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p $threads  -i $genomeName".salmon_index" ;
 
-rm gentrome.fa.gz decoys.txt ;
+#mv ./$genomeName/* $output ;
+
+#salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p $threads  -i $genomeName ;
+
+#mkdir $output ;
+
+#mv ./$genomeName/* $output ;
+
+#rm gentrome.fa.gz decoys.txt transcripto.tmp.2.fa ;

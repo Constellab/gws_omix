@@ -11,6 +11,7 @@ from gws_core import task_decorator, File, IntParam, ConfigParams, TaskInputs, T
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gtf_file import GTFFile
+from ..file.salmon_index_result_folder import SalmonIndexResultFolder
 
 @task_decorator("SalmonIndex")
 class SalmonIndex(BaseOmixEnvTask):
@@ -26,38 +27,44 @@ class SalmonIndex(BaseOmixEnvTask):
         'gtf_annotation': (GTFFile,)          
     }
     output_specs = {
-        'salmon_index_folder': (Folder,)
+        'salmon_index_result': (SalmonIndexResultFolder,)
     }
     config_specs = {
         "threads": IntParam(default_value=12, min_value=1, short_description="Number of threads [Default =  12] ")
     }
-   
+    
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result_file = File()
-        result_file.path = self._get_output_file_path(params)
-        return {"salmon_index_folder": result_file} 
+        path = self._get_output_file_path(inputs)
+        result_file = SalmonIndexResultFolder(path=path)
+
+        print("xxxxx")
+        print(path)
+        print(os.path.exists(path))
+
+        return {"salmon_index_result": result_file} 
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
+        annotation = inputs["gtf_annotation"]
         genome_fasta = inputs["uncompressed_genome_file"]
-        genome_fasta_file_name = os.path.basename(genome_fasta.path)
-        annot = inputs["gtf_annotation"]   
-        self._output_file_path = self._get_output_file_path(genome_fasta_file_name)
-
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
         cmd = [
             "bash",
             os.path.join(script_file_dir, "./sh/salmon_index_cmd.sh"),
             genome_fasta.path,
-            annot.path,
+            annotation.path,
             thread,
-            self._output_file_path
+            self._get_fasta_file_name(inputs) 
         ]
         return cmd
     
-    def _get_output_file_path(self, fasta_file_name):
+    def _get_fasta_file_name(self, inputs):
+        genome_fasta = inputs["uncompressed_genome_file"]
+        return os.path.basename(genome_fasta.path)
+
+    def _get_output_file_path(self, inputs):
         return os.path.join(
             self.working_dir, 
-            fasta_file_name + ".salmon_index"
+            self._get_fasta_file_name(inputs) + ".salmon_index"
         )
