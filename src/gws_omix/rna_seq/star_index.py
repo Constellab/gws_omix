@@ -43,7 +43,6 @@ class STARIndex(BaseOmixEnvTask):
         result_file.path = self.working_dir
         return {"STAR_index": result_file}
  
-    
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
         ram = params["memory"]

@@ -36,11 +36,6 @@ class SalmonIndex(BaseOmixEnvTask):
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         path = self._get_output_file_path(inputs)
         result_file = SalmonIndexResultFolder(path=path)
-
-        print("xxxxx")
-        print(path)
-        print(os.path.exists(path))
-
         return {"salmon_index_result": result_file} 
     
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:

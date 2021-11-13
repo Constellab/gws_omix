@@ -53,7 +53,6 @@ class SalmonQuantStar(BaseOmixEnvTask):
         mapping_opt = params["sequencing_strategy"]
         experiment_opt = mapping_opt + "" + lib_strategy                        
 
-
         cmd = [
             " gffread -w transcripto.tmp.fa -g ",genome_fasta,
             annotation," ; cat transcripto.tmp.fa  | cut -d " " -f 1 > transcripto.tmp.2.fa ; rm transcripto.tmp.fa ;",
