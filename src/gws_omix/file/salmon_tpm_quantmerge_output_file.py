@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy #, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellProxy #, CsvView
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -15,7 +15,7 @@ class SalmonTpmQuantmergeOutputFile(File):
     @view(view_type=TextView, human_name="Text View", short_description="View of the expression file first and last lines as raw text")
     def view_head_as_raw_text(self, **kwargs) -> dict:
         cmd = ["head ", self.path, " ; tail ", self.path ]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
         return TextView(data = text, **kwargs)
 
@@ -23,7 +23,7 @@ class SalmonTpmQuantmergeOutputFile(File):
     # def view_tpm_per_columns_as_box_plot(self) -> dict:
     #    #Plotting 1 boxplot per columns (e.g. per samples) without showing the .csv (separator= tab) file
     #     cmd = ["cat ", self.path ]
-    #     shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+    #     shell_proxy = ShellProxy(BaseOmixEnvTask)
     #     text = shell_proxy.check_output(cmd)
     #     csv = subprocess.check_output(
     #         text,
@@ -36,7 +36,7 @@ class SalmonTpmQuantmergeOutputFile(File):
         tab=[]
         for gene in genes:
             cmd = ["cat ", self.path, " | grep -w ", gene ]
-            shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+            shell_proxy = ShellProxy(BaseOmixEnvTask)
             text = shell_proxy.check_output(cmd)
             # line = subprocess.check_output(
             #         text,

@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy, Folder
+from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellProxy, Folder
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 

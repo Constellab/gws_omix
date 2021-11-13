@@ -44,7 +44,7 @@ class TestBlastEC(BaseTestCase):
             self.assertEqual( result_content, expected_result_content  )
 
 
-        table_view = blast_ec_file.view_head_as_table(params=None)
+        table_view = blast_ec_file.view_head_tail_as_table(params=None)
         tester = ViewTester(view=table_view)
         dic_ = tester.to_dict(params={})
         print(json.dumps(dic_, indent=2))

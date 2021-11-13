@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy #, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ShellProxy #, CsvView
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -16,7 +16,7 @@ class BAMToQuantFile(File):
     @view(view_type=TextView, human_name="Head And Tail TextView", short_description="View of the bam file first and last lines as raw text")
     def view_head_and_tail_as_raw_text(self, **kwargs) -> dict:
         cmd = ["samtools view", self.path, "|", "head ; ", "samtools view", self.path, "|", "tail"]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         #run samtools view
         text = shell_proxy.check_output(cmd)
         return TextView(data = text, **kwargs)
@@ -25,7 +25,7 @@ class BAMToQuantFile(File):
     def view_read_length_as_box_plot(self) -> dict:
        #Read length: first column = x-axis, second column = y-axis (boxplot)
         cmd = ["samtools stats", self.path, "|", "grep \"^RL\" | cut -f 2- " ]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         #run samtools stats
         text = shell_proxy.check_output(cmd)
         return TextView(data = text)
@@ -37,7 +37,7 @@ class BAMToQuantFile(File):
         cmd = [" samtools stats", self.path, "|", "| egrep \"^[^#]+TC\" | cut -f 2- | ",
         "awk 'BEGIN{ print \"A\\\tC\\\tG\\\tT\\\tN\"} { for (i=1; i<=NF; ++i) sum[i] += $i; j=NF } END { for (i=1; i <= j; ++i) printf \"%s \", sum[i]; printf \"\\\n\"; }'"
         ]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         #run samtools stats
         csv = shell_proxy.check_output(cmd)
         return TextView(data = csv)

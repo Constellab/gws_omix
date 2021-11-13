@@ -6,7 +6,7 @@ from io import StringIO
 import pandas
 import subprocess
 from gws_core import (File, resource_decorator, view, IntParam, TextView, 
-                        TableView, ListParam, ShellEnvProxy, ConfigParams)
+                        TableView, ListParam, ShellProxy, ConfigParams, Shell)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -16,14 +16,13 @@ from ..base_env.omix_env_task import BaseOmixEnvTask
 class BlastECFile(File):
     ''' BlastEC file class'''
 
-    @view(view_type=TableView, human_name="TableView", short_description="View of the blastEC output file first and last lines as raw text")
-    def view_head_as_table(self, params: ConfigParams) -> dict:
+    @view(view_type=TableView, human_name="HeadTailTableView", short_description="View of the the head and tail of the BlastEC file as table")
+    def view_head_tail_as_table(self, params: ConfigParams) -> dict:
         if self.is_large():
             cmd = ["head ", self.path, " ; tail ", self.path]
         else:
             cmd = ["cat ", self.path]
-
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t", dtype=str, header=None)
@@ -37,39 +36,13 @@ class BlastECFile(File):
     def view_query_gene_hits_as_csv(self, params: ConfigParams) -> dict:
         genes = params["genes"]
         tab=[]
-# if [[ $(grep -L "$user2" /etc/passwd) ]]; then echo "No results for gene" gene;
-#  echo "No results for gene" gene;
-#else
-#   cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" ' ]
-#fi
+
         for gene in genes:
-#            cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" | awk -v var = ' + gene + "\\'{}{if( var == TRUE ){ print $0} else{ print \"#: \"var\" not found\"}}\\'" ]
             cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" ' ]
-            shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+            shell_proxy = ShellProxy(BaseOmixEnvTask)
             text = shell_proxy.check_output(cmd) 
-            # line = subprocess.check_output(
-            #         text,
-            #         shell=True
-            #     )
             tab.append(text)
         text = "\n".join(tab)
         file = StringIO(text)
         df = DataFrame.from_csv(file, sep="\t")
         return TableView(data = df)
-
-##
-
-
-    # def view_query_gene_hits_as_csv(self, genes=[]) -> dict:
-
-    #     tab=[]
-    #     for gene in genes:
-    #         cmd = ["cat ", self.path, " | grep -w ", gene ]
-    #         env_cmd = BaseOmixEnvTask._format_command( cmd )
-    #         line = subprocess.check_output(
-    #                 env_cmd,
-    #                 shell=True
-    #             )
-    #         tab.append(line)
-    #     text = "\n".join(tab)
-    #     return TextView(data = text)

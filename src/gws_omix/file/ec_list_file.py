@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, BadRequestException #, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ShellProxy, BadRequestException #, CsvView
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -18,7 +18,7 @@ class ECListFile(File):
 
     # def read(self):
     #     cmd = ["cat ", self.path]
-    #     shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+    #     shell_proxy = ShellProxy(BaseOmixEnvTask)
     #     text = shell_proxy.check_output(cmd)
     #     return text
 

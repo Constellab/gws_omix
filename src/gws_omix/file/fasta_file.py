@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellEnvProxy #, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellProxy #, CsvView
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -17,7 +17,7 @@ class FastaFile(File):
     def view_head_as_raw_text(self, **kwargs) -> dict:
        #Read length: first column = x-axis, second column = y-axis (boxplot)
         cmd = ["head ", self.path, " ; tail ", self.path]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
         return TextView(data = text, **kwargs)
 
@@ -33,7 +33,7 @@ class FastaFile(File):
         for gene in genes:
             #get fasta sequence
             cmd = ["seqtk subseq ", self.path, " <( echo ",gene," | sed 's/ //g' )  " ]
-            shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+            shell_proxy = ShellProxy(BaseOmixEnvTask)
             text = shell_proxy.check_output(cmd)
             # line = subprocess.check_output(
             #         text,

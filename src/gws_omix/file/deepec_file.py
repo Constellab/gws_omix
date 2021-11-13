@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellEnvProxy, ListParam #, CsvView
+from gws_core import File, resource_decorator, view, IntParam, TextView, ShellProxy, ListParam #, CsvView
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -16,7 +16,7 @@ class DeepECFile(File):
     @view(view_type=TextView, human_name="Raw output", short_description="View of the DeepEC output file first and last lines as raw text")
     def view_as_raw_text(self, **kwargs) -> dict:
         cmd = ["head ", self.path, " ; tail ", self.path ]
-        shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+        shell_proxy = ShellProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
         return TextView(data = text, **kwargs)
 
@@ -30,7 +30,7 @@ class DeepECFile(File):
 #fi
         for gene in genes:
             cmd = ["cat ", self.path, " | grep -w ", gene ]
-            shell_proxy = ShellEnvProxy(BaseOmixEnvTask)
+            shell_proxy = ShellProxy(BaseOmixEnvTask)
             text = shell_proxy.check_output(cmd)
             # line = subprocess.check_output(
             #         text,
