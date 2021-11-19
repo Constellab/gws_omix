@@ -6,7 +6,7 @@
 import os
 import json 
 
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester
 from gws_omix import DeepEC
 from gws_omix import FastaFile
 from gws_omix import DeepECFile
@@ -22,7 +22,7 @@ class TestDeepEc(BaseTestCase):
         file.path = os.path.join(data_dir, "fasta.test.deepec.fasta")
         print(file.path)
         # run DeepEC
-        tester = TaskTester(
+        tester = TaskRunner(
             inputs = {'fasta_file': file},
             task_type = DeepEC
         )

@@ -5,7 +5,7 @@
 
 import os
 import json
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester, Folder, FileHelper
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester, Folder, FileHelper
 from gws_omix import SalmonIndex
 
 class TestSalmonIndex(BaseTestCase):
@@ -21,14 +21,14 @@ class TestSalmonIndex(BaseTestCase):
         testdata_dir = settings.get_variable("gws_omix:testdata_dir")
   
         # Running 
-        tester = TaskTester(
+        tester = TaskRunner(
             params = {'threads': 2},
             inputs = {'uncompressed_genome_file': file, 'gtf_annotation': file_2 },
             task_type = SalmonIndex
         )
         outputs = await tester.run()
 
-        f = outputs['salmon_index_folder']
+        f = outputs['salmon_index_result']
         self.assertTrue(FileHelper.exists_on_os(f.path))
         file = File(path=os.path.join(f.path , "refInfo.json"))
         result_content = file.read()

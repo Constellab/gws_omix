@@ -5,7 +5,7 @@
 
 import os
 import json
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester
 from gws_omix import BlastEC
 
 class TestBlastEC(BaseTestCase):
@@ -20,7 +20,7 @@ class TestBlastEC(BaseTestCase):
         testdata_dir = settings.get_variable("gws_omix:testdata_dir")
 
         # Running BlastEC.py
-        tester = TaskTester(
+        tester = TaskRunner(
             params = {'taxonomy': 'fungi', "uniprot_db_dir": os.path.join(testdata_dir, "uniprot_kb")},
             inputs = {'fasta_file': file},
             task_type = BlastEC

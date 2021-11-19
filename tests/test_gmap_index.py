@@ -5,7 +5,7 @@
 
 import os
 
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest
 from gws_omix import FastaFile
 from gws_omix import GmapIndex
 #from ..file.ec_list_file import ECListFile
@@ -22,7 +22,7 @@ class TestGmapIndex(BaseTestCase):
 
 
         # run Gmap_build
-        tester = TaskTester(
+        tester = TaskRunner(
             inputs = {'uncompressed_genome_fasta_file': file},
             task_type = GmapIndex
         )

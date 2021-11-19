@@ -5,7 +5,7 @@
 
 import os
 import json
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester
 from gws_omix import GmapAlignGTF
 from gws_omix import GTFFile
 from gws_omix import FastaFile
@@ -22,7 +22,7 @@ class TestGmapGTF(BaseTestCase):
 
 #"cross-species":"Yes", "alt-start-codons":"Yes", "fulllength":"Yes"
         # Running BlastEC.py
-        tester = TaskTester(
+        tester = TaskRunner(
             params = {"threads":2, "min-identity":0.0, "min-trimmed-coverage":0.0, "max-hit-number":1 },
             inputs = {'uncompressed_genome_fasta_file': file_1, 'cdna_or_cds_fasta_file': file_2},
             task_type = GmapAlignGTF

@@ -6,7 +6,7 @@
 import os
 import json
 
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester
 from gws_omix import BlastECListExtractor
 from gws_omix import BlastECFile
 #from ..file.ec_list_file import ECListFile
@@ -21,7 +21,7 @@ class TestBlastEC(BaseTestCase):
         file.path = os.path.join(data_dir, "results.test.blast.csv")
 
         # run BlastECListExtractor
-        tester = TaskTester(
+        tester = TaskRunner(
             inputs = {'blastec_file': file},
             task_type = BlastECListExtractor
         )

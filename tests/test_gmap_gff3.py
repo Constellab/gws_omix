@@ -5,7 +5,7 @@
 
 import os
 import json
-from gws_core import File, Settings, BaseTestCase, TaskTester, GTest, ViewTester, Folder
+from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester, Folder
 from gws_omix import GmapAlignGFF3
 from gws_omix import GFF3File
 from gws_omix import FastaFile
@@ -20,7 +20,7 @@ class TestGmapGFF3(BaseTestCase):
         folder_1 = Folder(path = os.path.join(data_dir, "e_coli_K12.genome.fna.fasta.gmap_index"))
 #"cross-species":"Yes", "alt-start-codons":"Yes", "fulllength":"Yes"
         # Running BlastEC.py
-        tester = TaskTester(
+        tester = TaskRunner(
             params = {
                 "threads":2, "min-identity":0.0, 
                 "min-trimmed-coverage":0.0, 
