@@ -1,4 +1,4 @@
-name: renv
+name: .renv
 channels:
   - bioconda
   - conda-forge

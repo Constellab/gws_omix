@@ -28,8 +28,9 @@ class TestGmapGFF3(BaseTestCase):
             },
             inputs = {
                 'uncompressed_genome_fasta_file': file_1, 
-                'cdna_or_cds_fasta_file': file_2,
-                'uncompressed_genome_fasta_file_index_dir': folder_1
+                'cdna_or_cds_fasta_file': file_2
+#                'cdna_or_cds_fasta_file': file_2,
+#                'uncompressed_genome_fasta_file_index_dir': folder_1
             },
             task_type = GmapAlignGFF3
         )

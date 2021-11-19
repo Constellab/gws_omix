@@ -1,4 +1,4 @@
-name: deepec
+name: .deepec
 channels:
   - bioconda
   - conda-forge

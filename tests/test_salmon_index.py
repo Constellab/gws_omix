@@ -5,13 +5,14 @@
 
 import os
 import json
+import re
 from gws_core import File, Settings, BaseTestCase, TaskRunner, GTest, ViewTester, Folder, FileHelper
 from gws_omix import SalmonIndex
 
 class TestSalmonIndex(BaseTestCase):
     
     async def test_SalmonIndex(self):
-#        SalmonIndex.uninstall()
+        #SalmonIndex.uninstall()
         settings = Settings.retrieve()
         data_dir = settings.get_variable("gws_omix:testdata_dir")
         file = File()
@@ -30,15 +31,24 @@ class TestSalmonIndex(BaseTestCase):
 
         f = outputs['salmon_index_result']
         self.assertTrue(FileHelper.exists_on_os(f.path))
-        file = File(path=os.path.join(f.path , "refInfo.json"))
+        file = File(path=os.path.join(f.path , "pre_indexing.log"))
         result_content = file.read()
+        pattern = re.compile("done building index")
+        result_file_ok = ""
+        for line in result_content :
+            for match in re.finditer(pattern, line):
+                result_file_ok = "OK"
 
         # Get the expected file output       
-        expected_file_path = File(path=os.path.join(data_dir, "refInfo.json"))
+        expected_file_path = File(path=os.path.join(data_dir, "e_coli_K12.genome.fna.fasta.salmon_index/pre_indexing.log"))
         expected_result_content = expected_file_path.read()
+        expected_result_file_ok = ""
+        for line_2 in expected_result_content :
+            for match in re.finditer(pattern, line_2):
+                expected_result_file_ok = "OK"
 
         print("----")
         print(result_content)
         print("----")
         print(expected_result_content)
-        self.assertEqual( result_content, expected_result_content  )
+        self.assertEqual( result_file_ok, expected_result_file_ok  )

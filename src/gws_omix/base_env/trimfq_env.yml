@@ -1,4 +1,4 @@
-name: trimfqenv
+name: .trimfqenv
 channels:
   - bioconda
 dependencies:

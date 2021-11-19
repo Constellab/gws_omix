@@ -30,7 +30,7 @@ class GmapAlignGFF3(BaseOmixEnvTask):
     """
     input_specs = {
         'uncompressed_genome_fasta_file': (FastaFile,),
-        'uncompressed_genome_fasta_file_index_dir': OptionalIn(Folder,),
+#        'uncompressed_genome_fasta_file_index_dir': OptionalIn(Folder,),
         'cdna_or_cds_fasta_file': (FastaFile,)          
     }
     output_specs = {

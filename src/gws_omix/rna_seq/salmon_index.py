@@ -30,11 +30,20 @@ class SalmonIndex(BaseOmixEnvTask):
         'salmon_index_result': (SalmonIndexResultFolder,)
     }
     config_specs = {
-        "threads": IntParam(default_value=12, min_value=1, short_description="Number of threads [Default =  12] ")
+        "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
     }
     
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         path = self._get_output_file_path(inputs)
+
+        print("xxxxx")
+        print(path)
+        print(os.listdir(os.path.join(path)))
+        print("---")
+        with open(os.path.join(path, "ref_indexing.log")) as fp:
+            print(fp.read())
+        print("---")
+
         result_file = SalmonIndexResultFolder(path=path)
         return {"salmon_index_result": result_file} 
     

@@ -4,11 +4,11 @@ channels:
   - conda-forge
 dependencies:
   - python=3.8
-  - blast
-  - star
-  - salmon
-  - gffread
-  - samtools
-  - gmap
-  - bedtools
-  - seqtk
+  - blast=2.12.0
+  - star=2.7.9a
+  - salmon=1.15.2
+  - gffread=0.12.7
+  - samtools=1.14
+  - gmap=2021.08.25
+  - bedtools=2.30.0
+  - seqtk=1.3

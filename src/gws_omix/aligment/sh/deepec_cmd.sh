@@ -16,7 +16,7 @@ outputFile=$3
 
 mkdir tmp_results ;
 
-python /lab/user/bricks/gws_omix/tests/deepec/deepec.py -i $fastaFile -o ./tmp_results ;
+python deepec.py -i $fastaFile -o ./tmp_results ;
 
 ls ./tmp_results ;
 
