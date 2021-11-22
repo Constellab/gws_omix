@@ -6,7 +6,7 @@ dependencies:
   - python=3.8
   - blast=2.12.0
   - star=2.7.9a
-  - salmon=1.15.2
+  - salmon
   - gffread=0.12.7
   - samtools=1.14
   - gmap=2021.08.25
