@@ -37,9 +37,11 @@ class DeepEC(DeepECEnvTask):
         self._output_file_path = self._get_output_file_path(fasta_file_name)
 
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
+        deepec_py = "/lab/.sys/lib/deepec/deepec.py" #TODO use a variable
         cmd = [ 
             " bash ", 
-            os.path.join(script_file_dir, "./sh/deepec_cmd.sh"),         
+            os.path.join(script_file_dir, "./sh/deepec_cmd.sh"),    
+            deepec_py,       
             fasta_file.path, 
             self.working_dir,
             self._output_file_path

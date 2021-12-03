@@ -10,14 +10,14 @@
 # Arguments are given inside the build_command() in the cmd array
 #
 
-fastaFile=$1
-workingDir=$2
-outputFile=$3
+deepec_py=$1
+fasta_file=$2
+working_dir=$3
+output_file=$4
 
 mkdir tmp_results ;
+python $deepec_py -i $fasta_file -o ./tmp_results ;
+mv ./tmp_results/log_files/DeepEC_Result_DL.txt $output_file ;
 
-python deepec.py -i $fastaFile -o ./tmp_results ;
-
-ls ./tmp_results ;
-
-cat ./tmp_results/log_files/DeepEC_Result_DL.txt > $outputFile ;
+#ls ./tmp_results ;
+#cat ./tmp_results/log_files/DeepEC_Result_DL.txt > $output_file ;

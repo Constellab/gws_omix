@@ -72,7 +72,7 @@ class TrimGalore(TrimFqEnvTask):
             qual,
             max_unsequenced_nucleotides,
             paired,
-            self._output_file_path
+            self._output_dir_path 
         ]                 
 
         return cmd

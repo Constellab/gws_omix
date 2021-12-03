@@ -23,6 +23,12 @@
                 "packages":[
                     "gws_core[commit=latest, branch=develop]"
                 ]
+            },
+            {
+                "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/lib",
+                "packages":[
+                    "deepec"
+                ]
             }
         ],
         "variables":{
