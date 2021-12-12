@@ -3,7 +3,7 @@
     "author"       : "Gencovery",
     "version"      : "0.1.0",
     "variables":{
-        "gws_omix:testdata_dir" : "{CURRENT_DIR}/tests/testdata",
+        "gws_omix:testdata_dir" : "${CURRENT_DIR}/tests/testdata",
         "gws_omix:uniprot_db_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata"
     },
     "environment":{
