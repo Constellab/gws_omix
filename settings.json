@@ -21,13 +21,13 @@
             {
                 "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/core",
                 "packages":[
-                    "gws_core[commit=latest, branch=develop]"
+                    {"name": "gws_core", "commit": "latest", "branch": "", "is_brick": true}
                 ]
             },
             {
                 "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/lib",
                 "packages":[
-                    "deepec"
+                    {"name": "deepec", "is_brick": false}
                 ]
             }
         ],
