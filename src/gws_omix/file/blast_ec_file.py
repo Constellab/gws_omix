@@ -1,22 +1,22 @@
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from io import StringIO 
+from io import StringIO
+
 import pandas
-import subprocess
-from gws_core import (File, resource_decorator, view, IntParam, TextView, 
-                        TableView, ListParam, ShellProxy, ConfigParams, Shell)
+from gws_core import (ConfigParams, File, ListParam, ShellProxy, Table,
+                      TableView, resource_decorator, view)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
-@resource_decorator("BlastECFile",
-                    human_name="BlastECFile",
-                    short_description="BlastEC File")
+
+@resource_decorator("BlastECFile", human_name="BlastECFile", short_description="BlastEC File")
 class BlastECFile(File):
     ''' BlastEC file class'''
 
-    @view(view_type=TableView, human_name="HeadTailTableView", short_description="View of the the head and tail of the BlastEC file as table")
+    @view(view_type=TableView, human_name="HeadTailTableView",
+          short_description="View of the the head and tail of the BlastEC file as table")
     def view_head_tail_as_table(self, params: ConfigParams) -> dict:
         if self.is_large():
             cmd = ["head ", self.path, " ; tail ", self.path]
@@ -26,23 +26,24 @@ class BlastECFile(File):
         text = shell_proxy.check_output(cmd)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t", dtype=str, header=None)
-        return TableView(data = df)
+        table = Table(df)
+        return TableView(table)
 
-    @view(view_type=TableView, 
-            human_name="Gene Hits", 
-            short_description="Gives hits for queried genes", 
-            specs={"genes": ListParam(default_value=[])}
-    )
+    @view(view_type=TableView,
+          human_name="GeneHitsTableView",
+          short_description="Gives hits for queried genes",
+          specs={"genes": ListParam(default_value=[])}
+          )
     def view_query_gene_hits_as_csv(self, params: ConfigParams) -> dict:
         genes = params["genes"]
-        tab=[]
-
+        tab = []
         for gene in genes:
-            cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene +'\\" ' ]
+            cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene + '\\" ']
             shell_proxy = ShellProxy(BaseOmixEnvTask)
-            text = shell_proxy.check_output(cmd) 
+            text = shell_proxy.check_output(cmd)
             tab.append(text)
         text = "\n".join(tab)
         file = StringIO(text)
-        df = DataFrame.from_csv(file, sep="\t")
-        return TableView(data = df)
+        df = pandas.read_csv(file, sep="\t")
+        table = Table(df)
+        return TableView(table)

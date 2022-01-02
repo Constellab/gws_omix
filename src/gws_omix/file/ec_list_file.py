@@ -1,44 +1,18 @@
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ShellProxy, BadRequestException #, CsvView
+from gws_core import (BadRequestException, File, IntParam, ShellProxy,
+                      TextView, resource_decorator, view)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
-@resource_decorator("ECListFile",
-                    human_name="ECListFile",
-                    short_description="File of EC list")
+
+@resource_decorator("ECListFile", human_name="ECListFile", short_description="File of EC list")
 class ECListFile(File):
     ''' EC list file class'''
 
-    # def open(self, mode: str):
-    #     raise BadRequestException("Cannot be opened")
-
-    # def read(self):
-    #     cmd = ["cat ", self.path]
-    #     shell_proxy = ShellProxy(BaseOmixEnvTask)
-    #     text = shell_proxy.check_output(cmd)
-    #     return text
-
-    # def write(self):
-    #     raise BadRequestException("Cannot be altered")
-
-    @view(human_name="Text View", view_type=TextView, short_description="View of the EC list file ")
+    @view(view_type=TextView, human_name="TextView", short_description="View of the EC list file ")
     def view_as_raw_text(self, **kwargs) -> dict:
         text = self.read()
-        return TextView(data = text, **kwargs)
-##
-
-    # @view(human_name="TextView", view_type=TextView, short_description="View of the EC list file ")
-    # def view_head_as_raw_text(self, **kwargs) -> dict:
-
-    #     cmd = ["cat ", self.path, " | sort -u " ]
-    #     env_cmd = BaseOmixEnvTask._format_command( cmd )
-
-    #     csv = subprocess.check_output(
-    #         env_cmd,
-    #         shell=True
-    #     )
-    #     return TextView(data = csv)
+        return TextView(data=text, **kwargs)

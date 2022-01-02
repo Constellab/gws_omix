@@ -1,37 +1,36 @@
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import subprocess
-from gws_core import File, resource_decorator, view, IntParam, TextView, ListParam, ShellProxy #, CsvView
+from gws_core import (ConfigParams, File, IntParam, ListParam, ShellProxy,
+                      TextView, resource_decorator, view)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
 
-@resource_decorator("GFF3File",
-                    human_name="GFF3File",
-                    short_description="GFF3 File")
+@resource_decorator("GFF3File", human_name="GFF3File", short_description="GFF3 File")
 class GFF3File(File):
     ''' GFF3 file class'''
 
-    @view(view_type=TextView, human_name="Text View", short_description="View of the annotation file first and last lines as raw text")
-    def view_head_as_raw_text(self, **kwargs) -> dict:
-        cmd = ["head ", self.path, " ; tail ", self.path ]
+    @view(view_type=TextView, human_name="TextView",
+          short_description="View of the annotation file first and last lines as raw text")
+    def view_head_as_raw_text(self, params: ConfigParams) -> dict:
+        cmd = ["head ", self.path, " ; tail ", self.path]
         shell_proxy = ShellProxy(BaseOmixEnvTask)
         text = shell_proxy.check_output(cmd)
-        return TextView(data = text, **kwargs)
+        return TextView(text)
 
-    @view(view_type=TextView, human_name="Get Annotation features", short_description="Gives annotation for queried genes", specs={"genes": ListParam(default_value=[])})
-    def view_query_gene_hits_as_csv(self, genes=[], **kwargs) -> dict:
-        tab=[]
+    @view(view_type=TextView, human_name="AnnotationTextView",
+          short_description="Gives annotation for queried genes",
+          specs={"genes": ListParam(default_value=[])}
+          )
+    def view_query_gene_hits_as_csv(self, params: ConfigParams) -> dict:
+        tab = []
+        genes = params["genes"]
         for gene in genes:
-            cmd = ["cat ", self.path, " | grep -w ", gene ]
+            cmd = ["cat ", self.path, " | grep -w ", gene]
             shell_proxy = ShellProxy(BaseOmixEnvTask)
             text = shell_proxy.check_output(cmd)
-            # line = subprocess.check_output(
-            #         text,
-            #         shell=True
-            #     )
             tab.append(text)
         text = "\n".join(tab)
-        return TextView(data = text, **kwargs)
+        return TextView(text)
