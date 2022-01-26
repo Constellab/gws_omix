@@ -6,7 +6,7 @@ from io import StringIO
 
 import pandas
 from gws_core import (ConfigParams, File, ListParam, ShellProxy, Table,
-                      TableView, resource_decorator, view)
+                      TablularView, resource_decorator, view)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -15,7 +15,7 @@ from ..base_env.omix_env_task import BaseOmixEnvTask
 class BlastECFile(File):
     ''' BlastEC file class'''
 
-    @view(view_type=TableView, human_name="HeadTailTableView",
+    @view(view_type=TablularView, human_name="Head and Tail table",
           short_description="View of the the head and tail of the BlastEC file as table")
     def view_head_tail_as_table(self, params: ConfigParams) -> dict:
         if self.is_large():
@@ -26,11 +26,12 @@ class BlastECFile(File):
         text = shell_proxy.check_output(cmd)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t", dtype=str, header=None)
-        table = Table(df)
-        return TableView(table)
+        t_view = TablularView()
+        t_view.add_data(data=df)
+        return t_view
 
-    @view(view_type=TableView,
-          human_name="GeneHitsTableView",
+    @view(view_type=TablularView,
+          human_name="Gene hits table",
           short_description="Gives hits for queried genes",
           specs={"genes": ListParam(default_value=[])}
           )
@@ -45,5 +46,6 @@ class BlastECFile(File):
         text = "\n".join(tab)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t")
-        table = Table(df)
-        return TableView(table)
+        t_view = TablularView()
+        t_view.add_data(data=df)
+        return t_view
