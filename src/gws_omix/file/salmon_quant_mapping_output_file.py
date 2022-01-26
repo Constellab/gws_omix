@@ -6,7 +6,7 @@ from io import StringIO
 
 import pandas
 from gws_core import (ConfigParams, File, IntParam, ListParam, ShellProxy,
-                      Table, TablularView, TextView, resource_decorator, view)
+                      Table, TabularView, TextView, resource_decorator, view)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 
@@ -16,7 +16,7 @@ from ..base_env.omix_env_task import BaseOmixEnvTask
 class SalmonQuantMappingFile(File):
     ''' SalmonQuantMappingFile file class'''
 
-    @view(view_type=TablularView, human_name="Table",
+    @view(view_type=TabularView, human_name="Table",
           short_description="View of the SalmonQuantMappingFile output file first and last lines as raw text")
     def view_head_tail_as_table(self, params: ConfigParams) -> dict:
         if self.is_large():
@@ -27,7 +27,7 @@ class SalmonQuantMappingFile(File):
         text = shell_proxy.check_output(cmd)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t", dtype=str, header=None)
-        t_view = TablularView()
-        t_view.add_data(data=df)
+        t_view = TabularView()
+        t_view.set_data(data=df)
         return t_view
 
