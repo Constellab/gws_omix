@@ -1,7 +1,9 @@
 {
-    "name"         : "gws_omix",
-    "author"       : "Gencovery",
-    "version"      : "0.1.0",
+    "name"          : "gws_omix",
+    "author"        : "Gencovery",
+    "author_email"  : "admin@gencovery.com",
+    "version"       : "0.1.0",
+    "description"   : "Gencovery brick for omics data analysis",
     "variables":{
         "gws_omix:testdata_dir" : "${CURRENT_DIR}/tests/testdata",
         "gws_omix:uniprot_db_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata"
