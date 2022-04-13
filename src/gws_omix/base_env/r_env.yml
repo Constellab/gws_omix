@@ -7,3 +7,4 @@ dependencies:
 
   - r-base
   - bioconductor-deseq2
+  - bioconductor-tximport
