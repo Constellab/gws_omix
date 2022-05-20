@@ -2,12 +2,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
+
 from gws_core import (ConfigParams, File, IntParam, TaskInputs, TaskOutputs,
                       task_decorator)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
 from ..file.gtf_file import GTFFile
+from ..file.star_index_folder import StarIndexFolder
 
 
 @task_decorator("STARIndex")
@@ -22,37 +25,41 @@ class STARIndex(BaseOmixEnvTask):
     """
 
     input_specs = {
-        'fasta_genome_sequence': (FastaFile,),
-        'gtf_annotation': (GTFFile,)
+        'genome_file': (FastaFile,),
+        'annotation_file': (GTFFile,)
     }
     output_specs = {
-        'star_index': (File,)
+        'star_index': (StarIndexFolder,)
     }
     config_specs = {
-        "threads": IntParam(default_value=12, min_value=2, short_description="Number of threads [Default =  12] "),
-        "memory": IntParam(default_value=48000000000, min_value=8000000000, short_description="Memory (RAM in Bytes) usage"),
+        "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads [Default =  2] "),
+        "memory": IntParam(default_value=2000000000, min_value=2000000000, short_description="Memory (RAM in Bytes) usage"),
         "read_size": IntParam(short_description="Reads size minus 1 (in bp; ex.: 150pb reads --> 149)")
     }
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result_file = File()
-        result_file.path = self.working_dir
-        return {"star_index": result_file}
+        result_folder = StarIndexFolder()
+        result_folder.path = self._get_output_file_path()
+        return {"star_index": result_folder}
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
+        genome_fasta_file = inputs["genome_file"]
+        annotation_gtf_file = inputs["annotation_file"]
         thread = params["threads"]
-        ram = params["memory"]
-        annotation = params["gtf_annotation"]
-        rd_size = params["read_size"]
-        fa_genome = params["fasta_genome_sequence"]
-
+        ram_mem = params["memory"]
+        reads_size = params["read_size"]
+        script_file_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
-            bin_file,
-            "--runThreadN", thread,
-            "--limitGenomeGenerateRAM", ram,
-            "--runMode genomeGenerate --genomeDir", self.working_dir,
-            "--genomeFastaFiles", fa_genome,
-            "--sjdbGTFfile", annotation,
-            "--sjdbOverhang", rd_size
+            " bash ",
+            os.path.join(script_file_dir, "./sh/star_index_cmd.sh"),
+            thread,
+            ram_mem,
+            genome_fasta_file.path,
+            annotation_gtf_file.path,
+            reads_size
         ]
+
         return cmd
+
+    def _get_output_file_path(self):
+        return os.path.join(self.working_dir, "indexed_genome_folder")
