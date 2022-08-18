@@ -5,10 +5,10 @@
 from io import StringIO
 
 import pandas
-from gws_core import (ConfigParams, File, IntParam, ListParam, ShellProxy,
+from gws_core import (ConfigParams, File, IntParam, ListParam,
                       Table, TabularView, TextView, resource_decorator, view)
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import create_omix_conda_env
 
 
 @resource_decorator("SalmonQuantMappingFile", human_name="SalmonQuantMappingFile",
@@ -23,7 +23,7 @@ class SalmonQuantMappingFile(File):
             cmd = ["head ", self.path, " ; tail ", self.path]
         else:
             cmd = ["cat ", self.path]
-        shell_proxy = ShellProxy(BaseOmixEnvTask)
+        shell_proxy = create_omix_conda_env()
         text = shell_proxy.check_output(cmd)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t", dtype=str, header=None)

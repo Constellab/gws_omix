@@ -2,10 +2,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (ConfigParams, File, ListParam, ShellProxy, TextView,
+from gws_core import (ConfigParams, File, ListParam, TextView,
                       resource_decorator, view)
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import create_omix_conda_env
 
 
 @resource_decorator("SalmonReadsQuantmergeOutputFile",
@@ -18,7 +18,7 @@ class SalmonReadsQuantmergeOutputFile(File):
           short_description="View of the expression file first and last lines as raw text")
     def view_head_as_raw_text(self, params: ConfigParams) -> dict:
         cmd = ["head ", self.path, " ; tail ", self.path]
-        shell_proxy = ShellProxy(BaseOmixEnvTask)
+        shell_proxy = create_omix_conda_env()
         text = shell_proxy.check_output(cmd)
         return TextView(text)
 
@@ -31,7 +31,7 @@ class SalmonReadsQuantmergeOutputFile(File):
         genes = params["params"]
         for gene in genes:
             cmd = ["cat ", self.path, " | grep -w ", gene]
-            shell_proxy = ShellProxy(BaseOmixEnvTask)
+            shell_proxy = create_omix_conda_env()
             text = shell_proxy.check_output(cmd)
             tab.append(text)
         text = "\n".join(tab)

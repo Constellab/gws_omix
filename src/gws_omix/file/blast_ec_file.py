@@ -5,10 +5,10 @@
 from io import StringIO
 
 import pandas
-from gws_core import (ConfigParams, File, ListParam, ShellProxy, Table,
+from gws_core import (ConfigParams, File, ListParam, Table,
                       TabularView, resource_decorator, view)
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import create_omix_conda_env
 
 
 @resource_decorator("BlastECFile", human_name="BlastECFile", short_description="BlastEC File")
@@ -22,7 +22,7 @@ class BlastECFile(File):
             cmd = ["head ", self.path, " ; tail ", self.path]
         else:
             cmd = ["cat ", self.path]
-        shell_proxy = ShellProxy(BaseOmixEnvTask)
+        shell_proxy = create_omix_conda_env()
         text = shell_proxy.check_output(cmd)
         file = StringIO(text)
         df = pandas.read_csv(file, sep="\t", dtype=str, header=None)
@@ -40,7 +40,7 @@ class BlastECFile(File):
         tab = []
         for gene in genes:
             cmd = ["cat ", self.path, " | grep -w ", '\\"' + gene + '\\" ']
-            shell_proxy = ShellProxy(BaseOmixEnvTask)
+            shell_proxy = create_omix_conda_env()
             text = shell_proxy.check_output(cmd)
             tab.append(text)
         text = "\n".join(tab)

@@ -3,7 +3,11 @@
 # About us: https://gencovery.com
 
 import os
-from gws_core import task_decorator, CondaEnvShell
+from gws_core import task_decorator, CondaEnvShell, CondaEnv
+
+def create_omix_conda_env(working_dir: str = None) -> CondaEnv:
+    return CondaEnv(BaseOmixEnvTask.unique_env_name, 
+                    BaseOmixEnvTask.env_file_path, working_dir)
 
 @task_decorator("BaseOmixEnvTask", hide=True)
 class BaseOmixEnvTask(CondaEnvShell):

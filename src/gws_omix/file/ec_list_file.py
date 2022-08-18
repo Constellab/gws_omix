@@ -2,10 +2,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (BadRequestException, File, IntParam, ShellProxy,
+from gws_core import (BadRequestException, File, IntParam,
                       TextView, resource_decorator, view)
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
 
 
 @resource_decorator("ECListFile", human_name="ECListFile", short_description="File of EC list")

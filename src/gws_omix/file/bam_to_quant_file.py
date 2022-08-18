@@ -4,10 +4,10 @@
 
 import subprocess
 
-from gws_core import (File, IntParam, ShellProxy, TextView,  # , CsvView
+from gws_core import (File, IntParam, TextView,  # , CsvView
                       resource_decorator, view)
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
+from ..base_env.omix_env_task import create_omix_conda_env
 
 
 @resource_decorator("BAMToQuantFile", human_name="BAMToQuantFile", short_description="BAMToQuantFile")
@@ -18,7 +18,7 @@ class BAMToQuantFile(File):
           short_description="View of the bam file first and last lines as raw text")
     def view_head_and_tail_as_raw_text(self, **kwargs) -> dict:
         cmd = ["samtools view", self.path, "|", "head ; ", "samtools view", self.path, "|", "tail"]
-        shell_proxy = ShellProxy(BaseOmixEnvTask)
+        shell_proxy = create_omix_conda_env()
         text = shell_proxy.check_output(cmd)
         return TextView(data=text, **kwargs)
 
@@ -26,7 +26,7 @@ class BAMToQuantFile(File):
           short_description="Read length distribution (samtools stats)")
     def view_read_length_as_raw_text(self) -> dict:
         cmd = ["samtools stats", self.path, "|", "grep \"^RL\" | cut -f 2- "]
-        shell_proxy = ShellProxy(BaseOmixEnvTask)
+        shell_proxy = create_omix_conda_env()
         text = shell_proxy.check_output(cmd)
         return TextView(data=text)
 
@@ -36,6 +36,6 @@ class BAMToQuantFile(File):
         cmd = [
             " samtools stats", self.path, "|", "| egrep \"^[^#]+TC\" | cut -f 2- | ",
             "awk 'BEGIN{ print \"A\\\tC\\\tG\\\tT\\\tN\"} { for (i=1; i<=NF; ++i) sum[i] += $i; j=NF } END { for (i=1; i <= j; ++i) printf \"%s \", sum[i]; printf \"\\\n\"; }'"]
-        shell_proxy = ShellProxy(BaseOmixEnvTask)
+        shell_proxy = create_omix_conda_env()
         csv = shell_proxy.check_output(cmd)
         return TextView(data=csv)
