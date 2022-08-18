@@ -29,7 +29,7 @@ class GTFFile(File):
         genes = params["genes"]
         for gene in genes:
             cmd = ["cat ", self.path, " | grep -w ", gene]
-            shell_proxy = create_omix_conda_env())
+            shell_proxy = create_omix_conda_env()
             text = shell_proxy.check_output(cmd)
             tab.append(text)
         text = "\n".join(tab)
