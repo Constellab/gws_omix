@@ -11,6 +11,7 @@ from .aligment.gmap_align_to_gff3 import GmapAlignGFF3
 from .aligment.gmap_align_to_gtf import GmapAlignGTF
 # Gmap indexing
 from .aligment.gmap_index import GmapIndex
+from .data_filtering.trim_galore import TrimGalore
 from .file.blast_ec_file import BlastECFile
 from .file.deepec_file import DeepECFile
 from .file.ec_list_file import ECListFile
