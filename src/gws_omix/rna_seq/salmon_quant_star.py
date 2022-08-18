@@ -2,8 +2,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (ConfigParams, File, IntParam, StrParam, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (File, InputSpec, IntParam, OutputSpec, StrParam,
+                      TaskInputs, TaskOutputs, task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.bam_file import BAMFile
@@ -23,15 +26,15 @@ class SalmonQuantStar(BaseOmixEnvTask):
         See --> https://salmon.readthedocs.io/en/latest/salmon.html#what-s-this-libtype.
     """
 
-    input_specs = {
-        'unsorted_transcriptome_star_bam_file': BAMFile,
-        'fasta_genome_sequence': FastaFile,
-        'gtf_annotation': GTFFile
+    input_specs: InputSpecs = {
+        'unsorted_transcriptome_star_bam_file':  InputSpec(BAMFile, human_name="", short_description=""),
+        'fasta_genome_sequence': InputSpec(FastaFile, human_name="", short_description=""),
+        'gtf_annotation': InputSpec(GTFFile, human_name="", short_description=""),
     }
-    output_specs = {
-        'salmon_quant_file': File
+    output_specs: OutputSpecs = {
+        'salmon_quant_file': OutputSpec(File, human_name="", short_description=""),
     }
-    config_specs = {
+    config_specs: ConfigSpecs = {
         "threads": IntParam(
             default_value=12, min_value=1, short_description="Number of threads [Default = 12]"),
         "sequencing_strategy":

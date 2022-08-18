@@ -4,8 +4,11 @@
 
 import os
 
-from gws_core import (ConfigParams, IntParam, TaskInputs, TaskOutputs,
+from gws_core import (InputSpec, IntParam, OutputSpec, TaskInputs, TaskOutputs,
                       task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fastq_file import FastqFile
@@ -22,15 +25,15 @@ class SalmonQuantMapping(BaseOmixEnvTask):
         * `threads`: Multi threading options: number of threads to use (min=6). [Default =  12].
     """
 
-    input_specs = {
-        'fastq_files_forward': (FastqFile,),
-        'fastq_files_reverse': (FastqFile,),
-        'salmon_genome_index': (SalmonIndexResultFolder,)
+    input_specs : InputSpecs = {
+        'fastq_files_forward': InputSpec(FastqFile, human_name="", short_description=""),
+        'fastq_files_reverse': InputSpec(FastqFile, human_name="", short_description=""),
+        'salmon_genome_index': InputSpec(SalmonIndexResultFolder, human_name="", short_description=""),
     }
-    output_specs = {
-        'salmon_quant_file': (SalmonQuantMappingFile,)
+    output_specs : OutputSpecs = {
+        'salmon_quant_file': OutputSpec(SalmonQuantMappingFile, human_name="", short_description=""),
     }
-    config_specs = {
+    config_specs : ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
     }
 

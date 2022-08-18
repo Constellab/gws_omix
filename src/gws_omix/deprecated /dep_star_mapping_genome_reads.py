@@ -2,8 +2,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (ConfigParams, File, IntParam, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (File, InputSpec, IntParam, OutputSpec, TaskInputs,
+                      TaskOutputs, task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.bam_file import BAMFile
@@ -27,18 +30,18 @@ class STARMappingGenomeReads(BaseOmixEnvTask):
 
     """
 
-    input_specs = {
-        'fastq_files_forward': (FastqFile,),
-        'fastq_files_reverse': (FastqFile,),
-        'fasta_genome_sequence': (FastaFile,),
-        'gtf_annotation': (GTFFile,)
+    input_specs: InputSpecs = {
+        'fastq_files_forward': InputSpec(FastqFile, human_name="", short_description=""),
+        'fastq_files_reverse': InputSpec(FastqFile, human_name="", short_description=""),
+        'fasta_genome_sequence': InputSpec(FastaFile, human_name="", short_description=""),
+        'gtf_annotation': InputSpec(GTFFile, human_name="", short_description="")
     }
 
-    output_specs = {
-        'star_bam_file': (BAMFile,)
+    output_specs: OutputSpecs = {
+        'star_bam_file': OutputSpec(BAMFile, human_name="", short_description="")
     }
 
-    config_specs = {
+    config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=12, min_value=6, short_description="Number of threads [Default =  12] "),
         "memory": IntParam(default_value=48000000000, min_value=8000000000, short_description="Memory (RAM in Bytes) usage")
     }

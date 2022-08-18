@@ -5,14 +5,18 @@
 
 import os
 
-from gws_core import (ConfigParams, File, IntParam, Settings, StrParam, Table,
-                      TableImporter, TableRowAnnotatorHelper, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (File, InputSpec, IntParam, OutputSpec, Settings,
+                      StrParam, Table, TableImporter, TableRowAnnotatorHelper,
+                      TaskInputs, TaskOutputs, task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set import ResourceSet
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.bam_file import BAMFile
 from ..file.fasta_file import FastaFile
+
 
 @task_decorator("GenomeByMappingAssembly", human_name="Genome by mapping assembly pipeline",
                 short_description="Use sequencing data mapped on reference genome to assembled this unassembled genome")
@@ -28,14 +32,14 @@ class GenomeByMappingAssembly(BaseOmixEnvTask):
 
     # Taxo stacked CSS barplot
 
-    input_specs = {
-        'genome_fasta': FastaFile,
-        'mapping_file': BAMFile
+    input_specs: InputSpecs = {
+        'genome_fasta': InputSpec(FastaFile, human_name="", short_description=""),
+        'mapping_file': InputSpec(BAMFile, human_name="", short_description="")
     }
-    output_specs = {
-        'assembly_folder': ResourceSet
+    output_specs: OutputSpecs = {
+        'assembly_folder': OutputSpec(ResourceSet, human_name="", short_description="")
     }
-    config_specs = {
+    config_specs:  ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads"),
         "mapping_quality_filter":
         IntParam(

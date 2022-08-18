@@ -6,10 +6,13 @@
 import glob
 import os
 
-from gws_core import (ConfigParams, File, IntParam, MetadataTable,
-                      MetadataTableImporter, Settings, StrParam, Table,
-                      TableImporter, TableRowAnnotatorHelper, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (File, InputSpec, IntParam, MetadataTable,
+                      MetadataTableImporter, OutputSpec, Settings, StrParam,
+                      Table, TableImporter, TableRowAnnotatorHelper,
+                      TaskInputs, TaskOutputs, task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set import ResourceSet
 
 from ..base_env.r_env_task import BaseREnvTask
@@ -24,14 +27,14 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
     DESeq2DifferentialAnalysis class.
     """
 
-    input_specs = {
-        'salmon_reads_quantmerge_file': SalmonReadsQuantmergeOutputFile,
-        'metadata_file': File
+    input_specs: InputSpecs = {
+        'salmon_reads_quantmerge_file': InputSpec(SalmonReadsQuantmergeOutputFile, human_name="", short_description=""),
+        'metadata_file': InputSpec(File, human_name="", short_description="")
     }
-    output_specs = {
-        'DESeq2_tables': ResourceSet
+    output_specs: OutputSpecs = {
+        'DESeq2_tables': OutputSpec(ResourceSet, human_name="", short_description="")
     }
-    config_specs = {
+    config_specs: ConfigSpecs = {
         # "taxonomic_level":
         # IntParam(
         #     min_value=1, human_name="Taxonomic level",

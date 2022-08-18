@@ -5,8 +5,11 @@
 
 import os
 
-from gws_core import (ConfigParams, IntParam, TaskInputs, TaskOutputs,
+from gws_core import (InputSpec, IntParam, OutputSpec, TaskInputs, TaskOutputs,
                       task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
@@ -23,14 +26,14 @@ class SalmonIndex(BaseOmixEnvTask):
         * `threads`: Multi threading options: number of threads to use. [Default =  12]
     """
 
-    input_specs = {
-        'uncompressed_genome_file': (FastaFile,),
-        'gtf_annotation': (GTFFile,)
+    input_specs: InputSpecs = {
+        'uncompressed_genome_file': InputSpec(FastaFile, human_name="", short_description=""),
+        'gtf_annotation': InputSpec(GTFFile, human_name="", short_description=""),
     }
-    output_specs = {
-        'salmon_index_result': (SalmonIndexResultFolder,)
+    output_specs: OutputSpecs = {
+        'salmon_index_result': OutputSpec(SalmonIndexResultFolder, human_name="", short_description=""),
     }
-    config_specs = {
+    config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
     }
 

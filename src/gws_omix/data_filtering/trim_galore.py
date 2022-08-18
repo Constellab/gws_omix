@@ -6,10 +6,10 @@
 #import json
 import os
 
-from gws_core import (ConfigParams, File, IntParam, MetadataTable,
-                      MetadataTableImporter, Settings, StrParam, Table,
-                      TableImporter, TableRowAnnotatorHelper, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (File, InputSpec, IntParam, MetadataTable,
+                      MetadataTableImporter, OutputSpec, Settings, StrParam,
+                      Table, TableImporter, TableRowAnnotatorHelper,
+                      TaskInputs, TaskOutputs, task_decorator)
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
@@ -35,14 +35,14 @@ class TrimGalore(TrimFqEnvTask):
         "output_dir": StrParam(default_value="filtered_reads", short_description="Name of the output directory, which contained trimmed files and report files")
 
     """
-    input_specs: InputSpecs = {
-        'fastq_folder': InputSpec(FastqFolder)
+    input_specs : InputSpecs = {
+        'fastq_folder': InputSpec(FastqFolder, human_name="", short_description="")
     }
-    output_specs: OutputSpecs = {
-        "cleaned_fastq": OutputSpec(ResourceSet),
-        "cleaning_stats": OutputSpec(File)
+    output_specs : OutputSpecs = {
+        "cleaned_fastq": OutputSpec(ResourceSet, human_name="", short_description=""),
+        "cleaning_stats": OutputSpec(File, human_name="", short_description="")
     }
-    config_specs: ConfigSpecs = {
+    config_specs : ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads"),
         "quality":
         IntParam(

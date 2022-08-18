@@ -5,8 +5,11 @@
 
 import os
 
-from gws_core import (ConfigParams, File, IntParam, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (File, InputSpec, IntParam, OutputSpec, TaskInputs,
+                      TaskOutputs, task_decorator)
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_omix import FastqFolder
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
@@ -29,17 +32,17 @@ class STARMappingTranscriptomeReads(BaseOmixEnvTask):
 
     """
 
-    input_specs = {
-        'fastq_folder': (FastqFolder,),
-        'star_genome_index': (StarIndexFolder,),
-        'metadata_file': (File,)
+    input_specs: InputSpecs = {
+        'fastq_folder': InputSpec(FastqFolder, human_name="", short_description=""),
+        'star_genome_index': InputSpec(StarIndexFolder, human_name="", short_description=""),
+        'metadata_file': InputSpec(File, human_name="Metadata File", short_description="Metadata File"),
     }
 
-    output_specs = {
-        'star_bam_file': (BAMToQuantFile,)
+    output_specs: OutputSpecs = {
+        'star_bam_file': OutputSpec(BAMToQuantFile, human_name="", short_description=""),
     }
 
-    config_specs = {
+    config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads [Default =  2] "),
         "memory": IntParam(default_value=4000000000, min_value=4000000000, short_description="Memory (RAM in Bytes) usage")
     }
