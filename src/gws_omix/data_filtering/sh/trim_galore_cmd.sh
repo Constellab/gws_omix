@@ -16,7 +16,13 @@ qual=$5
 max_n=$6
 min_size=$7
 
-trim_galore --paired --gzip --retain_unpaired --cores $thrds --max_n $max_n --length $min_size -q $qual $fastq_dir/*$fwd*.gz $fastq_dir/*$rvs*.gz ;
+
+#for i in $fastq_dir/*$fwd*.gz ;do echo $i; echo $( echo $i | sed "s/$fwd/$rvs/" ); echo -e "\n######\n" ;done
+
+
+for i in $fastq_dir/*$fwd*.gz ;do echo -e "### Process" $i $( echo $i | sed "s/$fwd/$rvs/" ) "\n####\n"; rvrs=$(echo $i | sed "s/$fwd/$rvs/"); trim_galore --paired --gzip --retain_unpaired --cores $thrds --max_n $max_n --length $min_size -q $qual $i $rvrs ;done
+
+#trim_galore --paired --gzip --retain_unpaired --cores $thrds --max_n $max_n --length $min_size -q $qual $fastq_dir/*$fwd*.gz $fastq_dir/*$rvs*.gz ;
 
 mkdir filtered_fastq_folder
 mkdir singleton_fastq_folder

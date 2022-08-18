@@ -15,6 +15,7 @@ min_size=$6
 
 trim_galore --gzip --cores $thrds --max_n $max_n --length $min_size -q $qual $fastq_dir/*.gz
 
+
 mkdir filtered_fastq_folder
 
 mv *_val_* ./filtered_fastq_folder

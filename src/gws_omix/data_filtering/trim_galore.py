@@ -21,8 +21,8 @@ from ..file.fastq_folder import FastqFolder
 #import re
 
 
-@task_decorator("TrimGalore", human_name="Trim_galore: clipped and trimmed your reads",
-                short_description="This task uses Trim_galore to clip and trimmed yout sequencing datasets")
+@task_decorator("TrimGalore", human_name="TrimGalore cleaning",
+                short_description="This task uses Trim_galore to clip and trimmed your sequencing datasets")
 class TrimGalore(TrimFqEnvTask):
     """
     TrimeGalore class.
