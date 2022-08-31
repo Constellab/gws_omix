@@ -5,7 +5,7 @@
 import os
 from gws_core import task_decorator, CondaEnvShell, CondaShellProxy
 
-def create_omix_conda_env(working_dir: str = None) -> CondaEnv:
+def create_omix_conda_env(working_dir: str = None) -> CondaEnvShell:
     return CondaShellProxy(BaseOmixEnvTask.unique_env_name, 
                     BaseOmixEnvTask.env_file_path, working_dir)
 
