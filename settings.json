@@ -2,7 +2,7 @@
     "name"          : "gws_omix",
     "author"        : "Gencovery",
     "author_email"  : "admin@gencovery.com",
-    "version"       : "0.2.2",
+    "version"       : "0.2.3",
     "description"   : "Gencovery brick for omics data analysis",
     "variables":{
         "gws_omix:testdata_dir" : "${CURRENT_DIR}/tests/testdata",
@@ -23,7 +23,7 @@
             {
                 "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/core",
                 "packages":[
-                    {"name": "gws_core", "version":"0.3.6", "commit": "", "branch": "", "is_brick": true}
+                    {"name": "gws_core", "version":"0.3.16", "commit": "", "branch": "", "is_brick": true}
                 ]
             },
             {
