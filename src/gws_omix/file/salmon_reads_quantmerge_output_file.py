@@ -10,7 +10,7 @@ from ..base_env.omix_env_task import create_omix_conda_env
 
 @resource_decorator("SalmonReadsQuantmergeOutputFile",
                     human_name="Salmon Read counts Quantmerge Output File",
-                    short_description="Output file from Salmon Quantmerge (expression in reads mapped)")
+                    short_description="Output file from Salmon Quantmerge (expression in reads mapped)", hide=False)
 class SalmonReadsQuantmergeOutputFile(File):
     """salmon_Reads_quantmerge_output_file class"""
 

@@ -6,7 +6,16 @@
     "description"   : "Gencovery brick for omics data analysis",
     "variables":{
         "gws_omix:testdata_dir" : "${CURRENT_DIR}/tests/testdata",
-        "gws_omix:uniprot_db_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata"
+        "gws_omix:uniprot_db_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db/",
+        
+        "gws_omix:uniprot_fungi_fasta_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db/uniprot-taxonomy_v1_4751.fasta.gz",
+        "gws_omix:uniprot_fungi_fasta_file": "/data/gws_omix/opendata/uniprot-taxonomy_v1_4751.fasta.gz",
+        
+        "gws_omix:uniprot_fungi_blastdb_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db/uniprot-taxonomy_v1_4751.fasta_blast_index.tar.gz",
+        "gws_omix:uniprot_fungi_blastdb_file": "/data/gws_omix/opendata/uniprot-taxonomy_v1_4751.fasta_blast_index.tar.gz",
+        
+        "gws_omix:uniprot_fungi_tab_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db/uniprot-taxonomy_v1_4751.tab.gz",
+        "gws_omix:uniprot_fungi_tab_file": "/data/gws_omix/opendata/uniprot-taxonomy_v1_4751.tab.gz"
     },
     "environment":{
         "pip":[
