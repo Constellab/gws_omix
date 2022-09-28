@@ -18,5 +18,9 @@ coverage=$5
 hitNbr=$6
 outputFile=$7
 
+dbPath= $blastDb"_blast_index"
+for i in $dbPath ;do ln -s $i ;done
+ln -s $blastDb
+
 blastp -db $blastDb -query $fastaFile -evalue $eValue -num_threads $threadNbr -qcov_hsp_perc $coverage -num_alignments $hitNbr -outfmt  "7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore" -show_gis -task "blastp-fast" -out $outputFile ;
 

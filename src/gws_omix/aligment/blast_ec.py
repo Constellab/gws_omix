@@ -36,7 +36,17 @@ class BlastEC(BaseOmixEnvTask):
         * `cov`: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
 
     """
-
+    TAX_DICT = {
+        "archaea": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2157",
+        "bacteria": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2",
+        "chordata": "/data/gws_omix/opendata/uniprot-taxonomy_v1_7711",
+        "eukaryota": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2759",
+        "fungi": "/data/gws_omix/opendata/uniprot-taxonomy_v1_4751",
+        "mammalia": "/data/gws_omix/opendata/uniprot-taxonomy_v1_40674",
+        "metazoa": "/data/gws_omix/opendata/uniprot-taxonomy_v1_33208",
+        "viridiplantae": "/data/gws_omix/opendata/uniprot-taxonomy_v1_33090",
+        "virus": "/data/gws_omix/opendata/uniprot-taxonomy_v1_10239"
+    }
     input_specs: InputSpecs = {
         'fasta_file': InputSpec(FastaFile, human_name="Fasta File", short_description="Fasta Input File")
     }
@@ -44,7 +54,8 @@ class BlastEC(BaseOmixEnvTask):
         'filtered_blast_ec_file': OutputSpec(BlastECFile, human_name="Blast results", short_description="Blast results")
     }
     config_specs: ConfigSpecs = {
-        "taxonomy": StrParam(allowed_values=["all", "prokaryota", "eukaryota", "animals", "fungi", "plant"],  short_description="Kingdom name : Specify kingdom to select the database (Faster) = prokaryota, eukaryota, animals, fungi or plant"),
+        "taxonomy": StrParam(allowed_values=["fungi"],  short_description="Specify the tax group to select the dedicated database"),
+        # "all", "prokaryota", "eukaryota", "animals", "fungi", "plant"
         "alignment_type": StrParam(default_value="PP", allowed_values=["PP", "TNP"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
         "num_alignments": IntParam(default_value=10, min_value=1, max_value=250, short_description="Number of database sequences to show alignments for [Default: 10]"),
         "e_value": FloatParam(default_value=0.00001, min_value=0.0, short_description="E-value : Default = 0.00001 (i.e 1e-5)"),
@@ -52,16 +63,17 @@ class BlastEC(BaseOmixEnvTask):
         "idt": IntParam(default_value=70, min_value=1, max_value=100, short_description="Similarity/identity minimum percentage threshold to exclude results. [Default = 70]"),
         "cov": IntParam(default_value=70, min_value=1, max_value=100, short_description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]"),
         # TODO: set protected
-        "uniprot_db_dir": StrParam(default_value="", short_description="Location of the UniProtKB database")
+        # "uniprot_db_dir": StrParam(default_value="", short_description="Location of the UniProtKB database")
     }
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # execute blast parsing command and ec number retrieving
         taxo = params["taxonomy"]
         idt = params["idt"]
-        local_uniprot_db_dir = params["uniprot_db_dir"]
-        tab_file = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.tab")
-        filtered_file_path = self._create_filtered_output_file(self._output_file_path, tab_file, idt)
+        #local_uniprot_db_dir = params["uniprot_db_dir"]
+
+        tab_file = os.path.join(self.TAX_DICT[taxo] + ".tab")
+        filtered_file_path = self._create_filtered_output_file(self.output_file_path, tab_file, idt)
         result_file = BlastECFile(path=filtered_file_path)
         return {"filtered_blast_ec_file": result_file}
 
@@ -72,13 +84,15 @@ class BlastEC(BaseOmixEnvTask):
         thread = params["threads"]
         num_alignments = params["num_alignments"]
         cov = params["cov"]
-        local_uniprot_db_dir = params["uniprot_db_dir"]
-
+        #local_uniprot_db_dir = params["uniprot_db_dir"]
         fasta_file = inputs["fasta_file"]
         fasta_file_name = os.path.basename(fasta_file.path)
 
-        datab_file_path = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.faa")
-        self._output_file_path = self._get_output_file_path(params["taxonomy"], fasta_file_name)
+        #datab_file_path = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.faa")
+        # datab_file_path = os.path.join(
+        #     self.TAX_DICT[taxo] + ".fasta_blast_index", self.TAX_DICT[taxo] + ".fasta")
+        datab_file_path = os.path.join(self.TAX_DICT[taxo] + ".fasta")
+        self.output_file_path = self._get_output_file_path(taxo, fasta_file_name)
 
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
         if alignment == "PP":
@@ -91,7 +105,7 @@ class BlastEC(BaseOmixEnvTask):
                 thread,
                 cov,
                 num_alignments,
-                self._output_file_path
+                self.output_file_path
             ]
         else:
             cmd = [
@@ -103,7 +117,7 @@ class BlastEC(BaseOmixEnvTask):
                 thread,
                 cov,
                 num_alignments,
-                self._output_file_path
+                self.output_file_path
             ]
 
         return cmd
