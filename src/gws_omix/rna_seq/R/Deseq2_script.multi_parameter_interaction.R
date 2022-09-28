@@ -20,10 +20,12 @@ if (length(args)==0) { # test if there is at least one argument: if not, return 
   # Default output file
   input_mapping_file = args[1] # raw count table
   metadata_file = args[2] # metadata file
-  metadata_col = args[3] # metadata column name to be used for DE
-  additional_design = paste(args[4])
-  Design = paste(" ~ ",metadata_col,additional_design) # " + " # see: https://cran.r-project.org/doc/manuals/R-intro.html#Formulae-for-statistical-models
-  output_file = args[5] # output file(s)
+  #metadata_col = args[3] # metadata column name to be used for DE
+  additional_design = paste(args[3])
+  ##### DESIGN #####
+  #Design = paste(" ~ ",metadata_col,additional_design) # " + " # see: https://cran.r-project.org/doc/manuals/R-intro.html#Formulae-for-statistical-models
+  Design = paste(" ~ ",additional_design) # " + " # see: https://cran.r-project.org/doc/manuals/R-intro.html#Formulae-for-statistical-models
+  output_file = args[4] # output file(s)
 }
 
 # Create tables
@@ -63,9 +65,9 @@ for (i in 1:length(uniq)){
         dds <- DESeq(DESeq2_matrix)
         res <- results(dds)
         write.table(res, file = paste(output_file,uniq[i],"vs",uniq[j],metadata_col,"and",additional_design,"complete","txt", sep='.'), quote=F, sep="\t")
-        res <- subset(res, res$padj < 0.05) # adjust p-value threshold to only keep differentaily expressed genes in a given condition
+        #res <- subset(res, res$padj < 0.05) # adjust p-value threshold to only keep differentaily expressed genes in a given condition
         # Output files: writing results according to the following filter: adjusted p-value from the Wald test
-        write.table(res, file = paste(output_file,uniq[i],"vs",uniq[j],metadata_col,"and",additional_design,"padj_0.05","txt", sep='.'), quote=F, sep="\t")
+        #write.table(res, file = paste(output_file,uniq[i],"vs",uniq[j],metadata_col,"and",additional_design,"padj_0.05","txt", sep='.'), quote=F, sep="\t")
       }  
     }
   }

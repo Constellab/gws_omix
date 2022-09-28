@@ -61,9 +61,9 @@ for (i in 1:length(uniq)){
         dds <- DESeq(DESeq2_matrix)
         res <- results(dds)
         write.table(res, file = paste(output_file,uniq[i],"vs",uniq[j],metadata_col,"complete","txt", sep='.'), quote=F, sep="\t")
-        res <- subset(res, res$padj < 0.05) # adjust p-value threshold to only keep differentaily expressed genes in a given condition
+        #res <- subset(res, res$padj < 0.05) # adjust p-value threshold to only keep differentaily expressed genes in a given condition
         # Output files: writing results according to the following filter: adjusted p-value from the Wald test
-        write.table(res, file = paste(output_file,uniq[i],"vs",uniq[j],metadata_col,"padj_0.05","txt", sep='.'), quote=F, sep="\t")
+        #write.table(res, file = paste(output_file,uniq[i],"vs",uniq[j],metadata_col,"padj_0.05","txt", sep='.'), quote=F, sep="\t")
       }  
     }
   }
