@@ -82,7 +82,8 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
             " Rscript --vanilla ",
-            os.path.join(script_file_dir, "./R/Deseq2_script.one_parameter.R"),
+            #os.path.join(script_file_dir, "./R/Deseq2_script.one_parameter.R"),
+            os.path.join(script_file_dir, "./R/deseq2.venn_file.R"),
             salmon_merged_matrix.path,
             metadata.path,
             metadata_col,
