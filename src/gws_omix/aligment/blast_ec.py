@@ -19,7 +19,8 @@ from ..file.blast_ec_file import BlastECFile
 from ..file.fasta_file import FastaFile
 
 
-@task_decorator("BlastEC")
+@task_decorator("BlastEC", human_name="Blast to EC-number Annotator",
+                short_description="BlastEC is an homology based EC-number (Enzyme id) annotator which used Blastp/x and UniProtKB-db.")
 class BlastEC(BaseOmixEnvTask):
     """
     BlastEC class.
@@ -27,11 +28,11 @@ class BlastEC(BaseOmixEnvTask):
     Represents a process that wraps NCBI blast program. This version !!! ALLOWED !!! to get EC numbers for digital twins reconstruction.
 
     Configuration options
-        * `taxo`: Kingdom name. Specify taxonomic groups to select a specific sub-set database (Faster) = bacteria, archaea, eukaryota, metazoa, chordata, mammalia, fungi, viridiplantae. [Default = all] = Slower.
+        * `taxonomy`: Specify the tax group to select the dedicated database.
         * `alignement_type`: Alignement type. Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). Respectivly, options = PP, TNP. [Default: PP] ".
         * `num_alignments: Number of database sequences to show alignments for [Default: 10],
         * `evalue`: E-value to exclude results. Default = 0.00001 (i.e 1e-5).
-        * `threads`: Multi threading options: number of threads to use (min=1, max=7). [Default =  4].
+        * `threads`: Multi threading options: number of threads to use (min=1, max=7). [Default =  1].
         * `idt`: Similarity/identity minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
         * `cov`: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
 
