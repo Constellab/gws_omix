@@ -59,7 +59,7 @@ class BlastEC(BaseOmixEnvTask):
         "alignment_type": StrParam(default_value="PP", allowed_values=["PP", "TNP"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
         "num_alignments": IntParam(default_value=10, min_value=1, max_value=250, short_description="Number of database sequences to show alignments for [Default: 10]"),
         "e_value": FloatParam(default_value=0.00001, min_value=0.0, short_description="E-value : Default = 0.00001 (i.e 1e-5)"),
-        "threads": IntParam(default_value=4, min_value=2, short_description="Number of threads"),
+        "threads": IntParam(default_value=1, min_value=1, short_description="Number of threads"),
         "idt": IntParam(default_value=70, min_value=1, max_value=100, short_description="Similarity/identity minimum percentage threshold to exclude results. [Default = 70]"),
         "cov": IntParam(default_value=70, min_value=1, max_value=100, short_description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]"),
         # TODO: set protected
@@ -91,7 +91,7 @@ class BlastEC(BaseOmixEnvTask):
         #datab_file_path = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.faa")
         # datab_file_path = os.path.join(
         #     self.TAX_DICT[taxo] + ".fasta_blast_index", self.TAX_DICT[taxo] + ".fasta")
-        datab_file_path = os.path.join(self.TAX_DICT[taxo] + ".fasta")
+        datab_file_path = os.path.join(self.TAX_DICT[taxo])
         self.output_file_path = self._get_output_file_path(taxo, fasta_file_name)
 
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -133,8 +133,7 @@ class BlastEC(BaseOmixEnvTask):
         hit_parsed = {}
 
         with open(tabular_file, 'r') as lines:  # Create dict. containing genes with their corresponding EC number(s)
-            li = lines.readlines()
-            for _, line in enumerate(li):
+            for line in lines:
                 if re.match("^#", line):
                     pass
                 else:
@@ -150,11 +149,11 @@ class BlastEC(BaseOmixEnvTask):
             with open(blast_output_file, 'r') as raw_fp:
                 # Create dict. containing for each lines of the blast output
                 # (which are over the identity threshold): Hit gene's EC numbers and Best hit information
-                li = raw_fp.readlines()
+                #li = raw_fp.readlines()
                 best_hit_lines = {}
                 cpt = 0
-
-                for _, line in enumerate(li):
+                for line in raw_fp:
+                    # for _, line in enumerate(li):
                     if re.match("^#", line):
                         pass
                     else:
@@ -162,8 +161,8 @@ class BlastEC(BaseOmixEnvTask):
                         if float(li_split[2]) >= float(id):  # Parsing blast hit according to the identity threshold
                             cpt += 1
                             hit_gene_ids = li_split[1]
-                            gene_uniprotKB_ID = hit_gene_ids.split('|')
-                            gene_name = str(gene_uniprotKB_ID[1])
+                            # gene_uniprotKB_ID = hit_gene_ids  # hit_gene_ids.split('|')
+                            gene_name = str(hit_gene_ids)  # str(gene_uniprotKB_ID[1])
                             key = str(li_split[0])
                             # Give information about the best hit for each assessed gene -> Output dict.
                             if key in best_hit_lines:
