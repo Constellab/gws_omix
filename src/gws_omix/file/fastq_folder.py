@@ -28,7 +28,7 @@ class FastqFolder(Folder):
                 break
 
         if bz2_exists:
-            cmd = ["for f in *.bz2 ;do bzcat < \"$f\" | pigz -9 -c >\"${f%.*}.gz\" ;done ; rm *.bz2 ;"]
+            cmd = ["for f in *.bz2 ;do bzcat < \"$f\" | gzip -9 -c - >\"${f%.*}.gz\" ;done ; rm *.bz2 ;"]  # pigz
 #            cmd = [ "parallel --dry-run 'bzcat < {} | pigz -9 -c > {.}.gz' ::: *bz2 > tmp.sh ; bash tmp.sh ; rm tmp.sh ; rm *.bz2 ;" ]
             shell_proxy = ShellProxy(self.path)
             try:

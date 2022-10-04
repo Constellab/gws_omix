@@ -17,6 +17,9 @@ from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.blast_ec_file import BlastECFile
 from ..file.fasta_file import FastaFile
+from ..utils._requests import Requests
+
+# from ..utils._settings import Settings
 
 
 @task_decorator("BlastEC", human_name="Blast to EC-number Annotator",
@@ -37,6 +40,7 @@ class BlastEC(BaseOmixEnvTask):
         * `cov`: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
 
     """
+    OPENDATA_DIR = "/data/gws_omix/opendata"
     TAX_DICT = {
         "archaea": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2157",
         "bacteria": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2",
@@ -71,54 +75,104 @@ class BlastEC(BaseOmixEnvTask):
         # execute blast parsing command and ec number retrieving
         taxo = params["taxonomy"]
         idt = params["idt"]
-        #local_uniprot_db_dir = params["uniprot_db_dir"]
+        fasta_file = inputs["fasta_file"]
+        fasta_file_name = os.path.basename(fasta_file.path)
+        # local_uniprot_db_dir = params["uniprot_db_dir"]
 
-        tab_file = os.path.join(self.TAX_DICT[taxo] + ".tab")
-        filtered_file_path = self._create_filtered_output_file(self.output_file_path, tab_file, idt)
+        tab_file_path = os.path.join(self.TAX_DICT[taxo] + ".tab")
+        output_file_path = os.path.join(
+            self.working_dir,
+            fasta_file_name + ".alligned_on." + taxo + ".blast_output")
+        filtered_file_path = self._create_filtered_output_file(output_file_path, tab_file_path, idt)
         result_file = BlastECFile(path=filtered_file_path)
         return {"filtered_blast_ec_file": result_file}
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
+        settings = Settings.retrieve()
         taxo = params["taxonomy"]
         alignment = params["alignment_type"]
         evalue = params["e_value"]
         thread = params["threads"]
         num_alignments = params["num_alignments"]
         cov = params["cov"]
-        #local_uniprot_db_dir = params["uniprot_db_dir"]
+        # local_uniprot_db_dir = params["uniprot_db_dir"]
+
+        # Check for DB existance
+        test_filename = "gws_omix:uniprot_" + taxo + "_fasta_file"
+        test_filename_2 = "gws_omix:uniprot_" + taxo + "_tab_file"
+        test_filename_3 = "gws_omix:uniprot_" + taxo + "_blastdb_file"
+        # test_path = settings["variables"][test_filename]
+        test_path = settings.get_variable(test_filename)
+        test_path = test_path.replace('.fasta.gz', '.fasta')
+        test_path_2 = settings.get_variable(test_filename_2)
+        test_path_2 = test_path_2.replace('.tab.gz', '.tab')
+        test_path_3 = settings.get_variable(test_filename_3)
+        test_path_3 = test_path_3.replace('.fasta_blast_index.tar.gz', '.fasta_blast_index')
+
+        if os.path.exists(test_path) and os.path.exists(test_path_2) and os.path.exists(test_path_3):  # Pull BLASTdb
+            print("# This DB already exists : start performing BLASTEC")
+        else:
+            print("# This DB does not exists : start downloading")
+            # UniProtKB taxa_level selected DB
+
+            # Get fasta
+            taxa_prefix = "gws_omix:uniprot_" + taxo
+            url_taxa_name = taxa_prefix + "_fasta_url"
+            file_taxa_name = taxa_prefix + "_fasta_file"
+            url = settings.get_variable(url_taxa_name)
+            dest_path = settings.get_variable(file_taxa_name)
+            Requests.download(url, dest_path)
+
+            # Get blast DB
+            taxa_prefix = "gws_omix:uniprot_" + taxo
+            url_taxa_name = taxa_prefix + "_blastdb_url"
+            file_taxa_name = taxa_prefix + "_blastdb_file"
+            url = settings.get_variable(url_taxa_name)
+            dest_path = settings.get_variable(file_taxa_name)
+            Requests.download(url, dest_path)
+
+            # Get EC tab file
+            taxa_prefix = "gws_omix:uniprot_" + taxo
+            url_taxa_name = taxa_prefix + "_tab_url"
+            file_taxa_name = taxa_prefix + "_tab_file"
+            url = settings.get_variable(url_taxa_name)
+            dest_path = settings.get_variable(file_taxa_name)
+            Requests.download(url, dest_path)
+
         fasta_file = inputs["fasta_file"]
         fasta_file_name = os.path.basename(fasta_file.path)
 
-        #datab_file_path = os.path.join(local_uniprot_db_dir, taxo + ".uniprotKB.faa")
-        # datab_file_path = os.path.join(
-        #     self.TAX_DICT[taxo] + ".fasta_blast_index", self.TAX_DICT[taxo] + ".fasta")
-        datab_file_path = os.path.join(self.TAX_DICT[taxo])
-        self.output_file_path = self._get_output_file_path(taxo, fasta_file_name)
+        datab_prefix_path = os.path.join(self.TAX_DICT[taxo])
+        output_file_path = os.path.join(
+            self.working_dir,
+            fasta_file_name + ".alligned_on." + taxo + ".blast_output")
 
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
         if alignment == "PP":
             cmd = [
                 "bash",
                 os.path.join(script_file_dir, "./sh/blastp_cmd.sh"),
-                datab_file_path,
+                datab_prefix_path,
                 fasta_file.path,
                 evalue,
                 thread,
                 cov,
                 num_alignments,
-                self.output_file_path
+                output_file_path,
+                self.OPENDATA_DIR
             ]
         else:
             cmd = [
                 "bash",
                 os.path.join(script_file_dir, "./sh/blastx_cmd.sh"),
-                datab_file_path,
+                datab_prefix_path,
                 fasta_file.path,
                 evalue,
                 thread,
                 cov,
                 num_alignments,
-                self.output_file_path
+                output_file_path,
+                self.OPENDATA_DIR
             ]
 
         return cmd
@@ -150,7 +204,7 @@ class BlastEC(BaseOmixEnvTask):
             with open(blast_output_file, 'r') as raw_fp:
                 # Create dict. containing for each lines of the blast output
                 # (which are over the identity threshold): Hit gene's EC numbers and Best hit information
-                #li = raw_fp.readlines()
+                # li = raw_fp.readlines()
                 best_hit_lines = {}
                 cpt = 0
                 for line in raw_fp:
