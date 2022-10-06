@@ -43,7 +43,7 @@ class BlastECListExtractor(BaseOmixEnvTask):
         'ec_list_file': OutputSpec(ECListFile, human_name="", short_description="")
     }
 
-    def gather_outputs(self, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         ec_fi = inputs["blastec_file"]
         result_file = ECListFile()
         result_file.path = self._create_ec_list_from_blast_output_file(ec_fi)
