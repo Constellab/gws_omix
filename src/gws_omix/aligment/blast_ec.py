@@ -196,7 +196,7 @@ class BlastEC(BaseOmixEnvTask):
                     if re.match("^$", str(li_split[7])):
                         gene_ec[li_split[0]] = "NA\n"
                     else:
-                        gene_ec[li_split[0]] = li_split[7]
+                        gene_ec[li_split[0]] = li_split[7] + "\n"  # ! : missing+ "\n"
 
         filtered_file_path = blast_output_file + ".filtered.csv"
 
