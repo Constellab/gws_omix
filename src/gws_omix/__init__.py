@@ -7,7 +7,7 @@ from .aligment.deepec_ec_list_extractor import DeepECListExtractor
 # Merge EC List
 from .aligment.ec_list_merger import ECListMerger
 # Gmap alignment
-from .aligment.gmap_align_to_gff3 import GmapAlignGFF3
+#from .aligment.gmap_align_to_gff3 import GmapAlignGFF3
 from .aligment.gmap_align_to_gtf import GmapAlignGTF
 # Gmap indexing
 from .aligment.gmap_index import GmapIndex
