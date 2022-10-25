@@ -7,7 +7,7 @@ import copy
 import numpy as np
 from gws_core import (BarPlotView, BoolParam, BoxPlotView, ConfigParams, File,
                       IntParam, StackedBarPlotView, StrParam, Table,
-                      TableImporter, TableUnfolderHelper, TableVennDiagramView,
+                      TableImporter, TableUnfolderHelper,
                       TableView, TagsParam, importer_decorator,
                       resource_decorator, view)
 
@@ -18,40 +18,40 @@ class Deseq2SummaryTable(Table):
     """
     TaxonomyTable class
     """
+# TODO commented by Benjamin
+    # @view(view_type=TableVennDiagramView, human_name='Venn_diagram_diffExp',
+    #       short_description='Venn diagram of differentialy expressed genes',
+    #       specs={}, default_view=False)
+    # def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
 
-    @view(view_type=TableVennDiagramView, human_name='Venn_diagram_diffExp',
-          short_description='Venn diagram of differentialy expressed genes',
-          specs={}, default_view=False)
-    def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
+    #     s_view = TableVennDiagramView()
+    #     data = self.get_data()
 
-        s_view = TableVennDiagramView()
-        data = self.get_data()
+    #     s_view.normalize = True
+    #     for i in range(0, data.shape[1]):
+    #         if isinstance(data.iat[0, i], str):
+    #             continue
+    #         y = data.iloc[:, i].values.tolist()
+    #         s_view.add_series(y=y, name=data.columns[i])
+    #     s_view.x_tick_labels = data.index.to_list()  # data.iloc[:, 0].values.tolist()
+    #     return s_view
 
-        s_view.normalize = True
-        for i in range(0, data.shape[1]):
-            if isinstance(data.iat[0, i], str):
-                continue
-            y = data.iloc[:, i].values.tolist()
-            s_view.add_series(y=y, name=data.columns[i])
-        s_view.x_tick_labels = data.index.to_list()  # data.iloc[:, 0].values.tolist()
-        return s_view
+    # @view(view_type=StackedBarPlotView, human_name='Taxonomy stacked barplot normalised (TSS)',
+    #       short_description='Normalised stacked barplots of the taxonomic composition',
+    #       specs={}, default_view=True)
+    # def view_as_noramlised_taxo_stacked_bar_plot(self, params: ConfigParams) -> StackedBarPlotView:
 
-    @view(view_type=StackedBarPlotView, human_name='Taxonomy stacked barplot normalised (TSS)',
-          short_description='Normalised stacked barplots of the taxonomic composition',
-          specs={}, default_view=True)
-    def view_as_noramlised_taxo_stacked_bar_plot(self, params: ConfigParams) -> StackedBarPlotView:
+    #     s_view = StackedBarPlotView(normalize=False)
+    #     data = self.get_data()
 
-        s_view = StackedBarPlotView(normalize=False)
-        data = self.get_data()
+    #     for i in range(0, data.shape[1]):
+    #         if isinstance(data.iat[0, i], str):
+    #             continue
+    #         y = data.iloc[:, i].values.tolist()
+    #         s_view.add_series(y=y, name=data.columns[i])
+    #     s_view.x_tick_labels = data.index.to_list()  # data.iloc[:, 0].values.tolist()
 
-        for i in range(0, data.shape[1]):
-            if isinstance(data.iat[0, i], str):
-                continue
-            y = data.iloc[:, i].values.tolist()
-            s_view.add_series(y=y, name=data.columns[i])
-        s_view.x_tick_labels = data.index.to_list()  # data.iloc[:, 0].values.tolist()
-
-        return s_view
+    #     return s_view
 
     # @view(view_type=StackedBarPlotView, human_name='Stackedbarplot column tags',
     #       short_description='Grouping Stacked bar plot view with column tags',
@@ -122,8 +122,8 @@ class Deseq2SummaryTable(Table):
 
         return lp_view
 
-
-@importer_decorator(unique_name="TaxonomyTableImporter", human_name="Taxonomy Table importer",
-                    target_type=TaxonomyTable, supported_extensions=Table.ALLOWED_FILE_FORMATS, hide=True)
-class TaxonomyTableImporter(TableImporter):
-    pass
+# TODO commented by Benjamin
+# @importer_decorator(unique_name="TaxonomyTableImporter", human_name="Taxonomy Table importer",
+#                     target_type=TaxonomyTable, supported_extensions=Table.ALLOWED_FILE_FORMATS, hide=True)
+# class TaxonomyTableImporter(TableImporter):
+#     pass
