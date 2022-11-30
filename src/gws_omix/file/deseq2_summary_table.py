@@ -7,7 +7,7 @@ import copy
 import numpy as np
 from gws_core import (BarPlotView, BoolParam, BoxPlotView, ConfigParams, File,
                       IntParam, StackedBarPlotView, StrParam, Table,
-                      TableImporter, TableUnfolderHelper, TableVennDiagramView,
+                      TableImporter, TableUnfolderHelper, VennDiagramView,
                       TableView, TagsParam, importer_decorator,
                       resource_decorator, view)
 
@@ -19,12 +19,12 @@ class Deseq2SummaryTable(Table):
     TaxonomyTable class
     """
 
-    @view(view_type=TableVennDiagramView, human_name='Venn_diagram_diffExp',
+    @view(view_type=VennDiagramView, human_name='Venn_diagram_diffExp',
           short_description='Venn diagram of differentialy expressed genes',
           specs={}, default_view=False)
-    def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
+    def view_as_venn_diagram(self, params: ConfigParams) -> VennDiagramView:
 
-        s_view = TableVennDiagramView()
+        s_view = VennDiagramView()
         data = self.get_data()
 
         s_view.normalize = True
