@@ -1,0 +1,5 @@
+name: .htseqenv
+channels:
+  - bioconda
+dependencies:
+  - htseq

@@ -25,3 +25,4 @@ from .rna_seq.salmon_index import SalmonIndex
 #from .aligment.gmap_align_to_fasta import GmapAlignFasta
 # Merge EC List
 from .rna_seq.salmon_quant_mapping import SalmonQuantMapping
+from .rna_seq.htseq_count import HTSeqCount

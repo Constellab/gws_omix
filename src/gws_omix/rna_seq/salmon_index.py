@@ -27,7 +27,7 @@ class SalmonIndex(BaseOmixEnvTask):
     """
 
     input_specs: InputSpecs = {
-        'protein_file': InputSpec(FastaFile, human_name="FastaFile", short_description="Proteins fasta file (compressed in gz)")
+        'cdna_file': InputSpec(FastaFile, human_name="FastaFile", short_description="cDNA fasta file (compressed in gz)")
         # 'genome_file': InputSpec(FastaFile, human_name="FastaFile", short_description="Genome fasta file (compressed in gz)"),
         # 'gtf_annotation': InputSpec(GTFFile, human_name="GTFfile", short_description="Genome annotation file (compressed in gz)"),
     }
