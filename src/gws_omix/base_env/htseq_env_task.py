@@ -3,16 +3,7 @@
 # About us: https://gencovery.com
 
 import os
-from gws_core import task_decorator, CondaEnvShell, CondaShellProxy
-
-
-@task_decorator("HTSeqEnvTask", hide=True)
-class HTSeqEnvTask(CondaEnvShell):
-    unique_env_name = "HTSeqEnvTask"
-    env_file_path = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)),
-        "htseq_env.yml"
-    )
+from gws_core import CondaShellProxy, MessageDispatcher, PipShellProxy
 
 
 class HTSeqShellProxyHelper():
@@ -22,6 +13,13 @@ class HTSeqShellProxyHelper():
         "htseq_env.yml"
     )
 
+    PIP_ENV_DIR_NAME = "HTSeqShellProxyPip"
+    PIP_ENV_FILE_PATH = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)),
+        "htseq_env_2.txt"
+    )
+
     @classmethod
-    def create_proxy(cls):
-        return CondaShellProxy(cls.ENV_DIR_NAME, cls.ENV_FILE_PATH)
+    def create_proxy(cls, message_dispatcher: MessageDispatcher = None):
+        return PipShellProxy(cls.ENV_DIR_NAME, cls.ENV_FILE_PATH,
+                             message_dispatcher=message_dispatcher)

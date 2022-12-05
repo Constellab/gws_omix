@@ -10,14 +10,26 @@
 # Arguments are given inside the build_command() in the cmd array
 #
 
-bam_folder=$1
+bamFolder=$1
 annotation=$2
 thrds=$3
 
-htseq-count --help
+# htseq-count --help
 
-for i in $bam_folder/*.bam
-do
-    htseq-count --stranded=no -m intersection-nonempty $i $annotation | awk -v sample=$(basename $i) 'BEGIN{print "Name\t"sample}{print $0;}'  > $(basename $i).htseq-count.txt ; 
+# for i in $bam_folder/*.bam
+# do
+#     htseq-count --stranded=no -m intersection-nonempty $i $annotation | awk -v sample=$(basename $i) 'BEGIN{print "Name\t"sample}{print $0;}'  > $(basename $i).htseq-count.txt ; 
     
+# done
+
+for i in $bamFolder/*.bam
+do
+    ln -s $i
 done
+
+featureCounts -T $thrds -s 0 \
+  -a $annotation \
+  -o featurecounts-output.txt \
+  *.bam
+
+

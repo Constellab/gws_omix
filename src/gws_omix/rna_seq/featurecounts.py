@@ -16,14 +16,14 @@ from ..file.bam_to_quant_folder import BAMToQuantFolder
 from ..file.gtf_file import GTFFile
 from ..file.salmon_reads_quantmerge_output_file import SalmonReadsQuantmergeOutputFile
 
-from ..base_env.htseq_env_task import HTSeqShellProxyHelper
+from ..base_env.subread_env_task import SubreadShellProxyHelper
 
 
-@task_decorator("HTSeqCount",  human_name="HTSeqCount",
+@task_decorator("FeatureCounts",  human_name="Feature Counts",
                 short_description="Genes expression count based on bam files containing folder")
-class HTSeqCount(Task):
+class FeatureCounts(Task):
     """
-    HTSeqCount class.
+    featureCounts class.
 
     This task generate genes expression count merged files with bam containing folder. This output is compatible with DESEQ2 task.
 
@@ -33,8 +33,8 @@ class HTSeqCount(Task):
         'gtf_file': InputSpec(GTFFile)
     }
     output_specs: OutputSpecs = {
-        'gene_expression_file': OutputSpec(SalmonReadsQuantmergeOutputFile),
-        'unmapped_stats': OutputSpec(Table)
+        'gene_expression_file': OutputSpec(SalmonReadsQuantmergeOutputFile)  # ,
+        # 'summary_stats': OutputSpec(Table)
     }
     config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")
@@ -47,7 +47,7 @@ class HTSeqCount(Task):
         thrd = params["threads"]
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
-        shell_proxy = HTSeqShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = SubreadShellProxyHelper.create_proxy(self.message_dispatcher)
 
         outputs = self.run_cmd_lines(shell_proxy,
                                      script_file_dir,
@@ -70,21 +70,20 @@ class HTSeqCount(Task):
 
         cmd_1 = [
             " . ",
-            os.path.join(script_file_dir, "./sh/1_htseq_count.sh"),
+            os.path.join(script_file_dir, "./sh/1_featurecounts.sh"),
             bam_folder_path,
             annotation_file,
             thrd
         ]
-        self.log_info_message("HTSeq gene expression counting")
+        self.log_info_message("featureCounts gene expression counting")
         res = shell_proxy.run(cmd_1)
         if res != 0:
             raise Exception("First step did not finished")
         self.update_progress_value(90, "Done")
 
-        # This script perform Qiime2 demux , quality assessment
         cmd_2 = [
             ".",
-            os.path.join(script_file_dir, "./sh/2_htseq_count_output_formating.sh")
+            os.path.join(script_file_dir, "./sh/2_featurecounts_output_formating.sh")
         ]
         self.log_info_message("Formating output files")
         res = shell_proxy.run(cmd_2)
@@ -98,10 +97,10 @@ class HTSeqCount(Task):
 
     def outputs_annotation(self, output_folder_path: str) -> None:
         result_file = SalmonReadsQuantmergeOutputFile()
-        result_file_stat = Table()
-        result_file.path = os.path.join(output_folder_path, "merged.htseq-count.txt")
-        result_file_stat.path = os.path.join(output_folder_path, "unmapped_stats.txt")
+        #result_file_stat = Table()
+        result_file.path = os.path.join(output_folder_path, "featurecounts.gene_expression_matrix.txt")
+        #result_file_stat.path = os.path.join(output_folder_path, "featurecounts.summary.txt")
         return {
-            "gene_expression_file": result_file,
-            "unmapped_stats": result_file_stat
+            "gene_expression_file": result_file  # ,
+            # "summary_stats": result_file_stat
         }

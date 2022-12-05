@@ -1,0 +1,11 @@
+[[source]]
+url = 'https://pypi.python.org/simple'
+verify_ssl = true
+name = 'pypi'
+
+[requires]
+python_version = '3.8'
+
+[packages]
+htseq = '==2.0.2'
+pysam = '==0.20.0'
