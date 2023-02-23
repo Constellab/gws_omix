@@ -1,0 +1,5 @@
+name: .venv
+channels:
+  - bioconda
+dependencies:
+  - gseapy=1.0.4
