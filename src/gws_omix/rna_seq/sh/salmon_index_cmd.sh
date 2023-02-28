@@ -11,15 +11,21 @@
 #
 
 genomeFasta=$1
-annota=$2
-threads=$3
-genomeName=$4
+#annota=$2
+threads=$2
+genomeName=$3
 
-gffread -w transcripto.tmp.fa -g $genomeFasta $annota ;
-cat transcripto.tmp.fa  | cut -d " " -f 1 > transcripto.tmp.2.fa ;
-rm transcripto.tmp.fa ;
-grep "^>" $genomeFasta | cut -d " " -f 1 > decoys.txt ;
-sed -i.bak -e 's/>//g' decoys.txt ;
-cat transcripto.tmp.2.fa $genomeFasta > gentrome.fa.gz  ;
+# gffread -w transcripto.tmp.fa -g $genomeFasta $annota ;
+# cat transcripto.tmp.fa  | cut -d " " -f 1 > transcripto.tmp.2.fa ;
+# rm transcripto.tmp.fa ;
+#grep "^>" $genomeFasta | cut -d " " -f 1 > decoys.txt ;
+#sed -i.bak -e 's/>//g' decoys.txt ;
+#cat transcripto.tmp.2.fa $genomeFasta > gentrome.fa.gz  ;
 
-salmon index -k 31 -t gentrome.fa.gz -d decoys.txt -p $threads  -i $genomeName".salmon_index" ;
+#mkdir salmon_index_folder
+
+salmon index -k 31 -t $genomeFasta -p $threads -i salmon_index ; # -d decoys.txt  -t gentrome.fa.gz -
+
+#mv *.salmon_index salmon_index_folder
+
+

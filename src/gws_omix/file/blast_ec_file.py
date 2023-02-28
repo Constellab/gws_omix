@@ -5,15 +5,22 @@
 from io import StringIO
 
 import pandas
-from gws_core import (ConfigParams, File, ListParam, Table,
-                      TabularView, resource_decorator, view)
+from gws_core import (ConfigParams, File, ListParam, Table, TableImporter,
+                      TabularView, importer_decorator, resource_decorator,
+                      view)
 
 from ..base_env.omix_env_task import create_omix_conda_env
 
 
 @resource_decorator("BlastECFile", human_name="BlastECFile", short_description="BlastEC File")
-class BlastECFile(File):
+class BlastECFile(File):  # File
     ''' BlastEC file class'''
+
+
+# @importer_decorator(unique_name="BlastECFileImporter", human_name="BlastEC File Importer",
+#                     target_type=BlastECFile, supported_extensions=Table.ALLOWED_FILE_FORMATS, hide=True)
+# class BlastECFileImporter(TableImporter):
+#     pass
 
     @view(view_type=TabularView, human_name="Head and Tail table",
           short_description="View of the the head and tail of the BlastEC file as table")

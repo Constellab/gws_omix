@@ -8,13 +8,13 @@ import os
 import re
 
 from gws_core import (File, FloatParam, InputSpec, IntParam, OutputSpec,
-                      Settings, StrParam, TaskInputs, TaskOutputs, Utils,
-                      task_decorator)
+                      Settings, StrParam, Table, TaskInputs, TaskOutputs,
+                      Utils, task_decorator)
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
+from ..base_env.interproscan_env_task import InterProScanEnvTask
 from ..file.blast_ec_file import BlastECFile
 from ..file.fasta_file import FastaFile
 from ..utils._requests import Requests
@@ -22,41 +22,18 @@ from ..utils._requests import Requests
 # from ..utils._settings import Settings
 
 
-@task_decorator("BlastEC", human_name="Blast to EC-number Annotator",
-                short_description="BlastEC is an homology based EC-number (Enzyme id) annotator which used Blastp/x and UniProtKB-db.")
-class BlastEC(BaseOmixEnvTask):
+@task_decorator("InterProScan", human_name="InterProScan Annotator",
+                short_description="InterProScan is an homology based protein annotator (see https://www.ebi.ac.uk/interpro/search/sequence/ )")
+class InterProScan(InterProScanEnvTask):
     """
-    BlastEC class.
-
-    Represents a process that wraps NCBI blast program. This version !!! ALLOWED !!! to get EC numbers for digital twins reconstruction.
-
-    Configuration options
-        * `taxonomy`: Specify the tax group to select the dedicated database.
-        * `alignement_type`: Alignement type. Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). Respectivly, options = PP, TNP. [Default: PP] ".
-        * `num_alignments: Number of database sequences to show alignments for [Default: 10],
-        * `evalue`: E-value to exclude results. Default = 0.00001 (i.e 1e-5).
-        * `threads`: Multi threading options: number of threads to use (min=1, max=7). [Default =  1].
-        * `idt`: Similarity/identity minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
-        * `cov`: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
+    InterProScan class.
 
     """
-    OPENDATA_DIR = "/data/gws_omix/opendata"
-    TAX_DICT = {
-        "archaea": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2157",
-        "bacteria": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2",
-        "chordata": "/data/gws_omix/opendata/uniprot-taxonomy_v1_7711",
-        "eukaryota": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2759",
-        "fungi": "/data/gws_omix/opendata/uniprot-taxonomy_v1_4751",
-        "mammalia": "/data/gws_omix/opendata/uniprot-taxonomy_v1_40674",
-        "metazoa": "/data/gws_omix/opendata/uniprot-taxonomy_v1_33208",
-        "viridiplantae": "/data/gws_omix/opendata/uniprot-taxonomy_v1_33090",
-        "virus": "/data/gws_omix/opendata/uniprot-taxonomy_v1_10239"
-    }
     input_specs: InputSpecs = {
         'fasta_file': InputSpec(FastaFile, human_name="Fasta File", short_description="Fasta Input File")
     }
     output_specs: OutputSpecs = {
-        'filtered_blast_ec_file': OutputSpec(BlastECFile, human_name="Blast results", short_description="Blast results")
+        'output_table': OutputSpec(Table, human_name="Interproscan_results", short_description="Interproscan results")
     }
     config_specs: ConfigSpecs = {
         "taxonomy": StrParam(allowed_values=["fungi"],  short_description="Specify the tax group to select the dedicated database"),

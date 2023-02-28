@@ -1,0 +1,5 @@
+name: .subreadenv
+channels:
+  - bioconda
+dependencies:
+  - subread

@@ -7,7 +7,7 @@ from .aligment.deepec_ec_list_extractor import DeepECListExtractor
 # Merge EC List
 from .aligment.ec_list_merger import ECListMerger
 # Gmap alignment
-from .aligment.gmap_align_to_gff3 import GmapAlignGFF3
+#from .aligment.gmap_align_to_gff3 import GmapAlignGFF3
 from .aligment.gmap_align_to_gtf import GmapAlignGTF
 # Gmap indexing
 from .aligment.gmap_index import GmapIndex
@@ -20,7 +20,9 @@ from .file.fasta_file import FastaFile
 from .file.fastq_folder import FastqFolder
 from .file.gff3_file import GFF3File
 from .file.gtf_file import GTFFile
+from .rna_seq.deseq2_differential_expression import DESeq2DifferentialAnalysis
 from .rna_seq.salmon_index import SalmonIndex
 #from .aligment.gmap_align_to_fasta import GmapAlignFasta
 # Merge EC List
 from .rna_seq.salmon_quant_mapping import SalmonQuantMapping
+from .rna_seq.htseq_count import HTSeqCount

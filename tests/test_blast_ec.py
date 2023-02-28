@@ -24,7 +24,7 @@ class TestBlastEC(BaseTestCase):
 
         # Running BlastEC.py
         tester = TaskRunner(
-            params={'taxonomy': 'fungi', "uniprot_db_dir": os.path.join(testdata_dir, "uniprot_kb")},
+            params={'taxonomy': 'fungi'},  # "uniprot_db_dir": os.path.join(testdata_dir, "uniprot_kb")
             inputs={'fasta_file': file},
             task_type=BlastEC
         )

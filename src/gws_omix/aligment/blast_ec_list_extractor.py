@@ -43,7 +43,7 @@ class BlastECListExtractor(BaseOmixEnvTask):
         'ec_list_file': OutputSpec(ECListFile, human_name="", short_description="")
     }
 
-    def gather_outputs(self, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         ec_fi = inputs["blastec_file"]
         result_file = ECListFile()
         result_file.path = self._create_ec_list_from_blast_output_file(ec_fi)
@@ -66,11 +66,13 @@ class BlastECListExtractor(BaseOmixEnvTask):
                         else:
                             if re.search(';', str(li_split[17])):
                                 ec_split = re.split(';\s', li_split[17])
-                                ec_list.write("\n".join(str(ec) for ec in ec_split))
+                                #ec_list.write("\n".join(str(ec) for ec in ec_split))
+                                ec_list.write("\n".join(li_split[0]+"\t"+str(ec) for ec in ec_split))
                             elif re.match("NA", str(li_split[17])):
                                 pass
                             else:
-                                ec_split = li_split[17]
+                                #ec_split = li_split[17]
+                                ec_split = li_split[0]+"\t"+li_split[17]
                                 ec_list.write(ec_split)
 #                                uniq_ec[ec]=1
                 # for ec in uniq_ec:
