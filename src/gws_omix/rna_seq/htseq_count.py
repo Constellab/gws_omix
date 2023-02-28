@@ -6,7 +6,7 @@
 import os
 
 from gws_core import (ConfigParams, File, IntParam, MetadataTableImporter,
-                      Table, TableImporter, TableRowAnnotatorHelper,
+                      Table, TableImporter,
                       TaskInputs, TaskOutputs, task_decorator, Task, ShellProxy)
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
