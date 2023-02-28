@@ -8,7 +8,7 @@ import os
 
 from gws_core import (File, InputSpec, IntParam, MetadataTable,
                       MetadataTableImporter, OutputSpec, Settings, StrParam,
-                      Table, TableImporter, TableRowAnnotatorHelper,
+                      Table, TableImporter, TableAnnotatorHelper,
                       TaskInputs, TaskOutputs, task_decorator)
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -66,7 +66,7 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
 
             # for output_file_path in self.deseq2_output_file_paths.items():
             table = TableImporter.call(File(path=output_file_path), {'delimiter': 'tab', "index_column": 0})
-            table_annotated = TableRowAnnotatorHelper.annotate(table, metadata_table)
+            table_annotated = TableAnnotatorHelper.annotate_rows(table, metadata_table)
             basename = os.path.basename(output_file_path)
             table_annotated.name = basename
             resource_table_set.add_resource(table_annotated)
