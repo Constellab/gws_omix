@@ -4,10 +4,7 @@
 
 import os
 
-from gws_core import File, IntParam, TaskInputs, TaskOutputs, task_decorator
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core import (IntParam, TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile

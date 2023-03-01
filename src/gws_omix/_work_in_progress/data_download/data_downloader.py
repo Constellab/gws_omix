@@ -6,14 +6,8 @@
 #import json
 import os
 
-from gws_core import (File, InputSpec, IntParam, MetadataTable,
-                      MetadataTableImporter, OutputSpec, Settings, StrParam,
-                      Table, TableImporter,
-                      TaskInputs, TaskOutputs, task_decorator)
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
-from gws_core.resource.resource_set import ResourceSet
+from gws_core import (File, InputSpec, OutputSpec, StrParam,
+                      TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs, ResourceSet)
 
 from ..base_env.data_download_env import DataDownloadEnvTask
 from ..file.fastq_folder import FastqFolder

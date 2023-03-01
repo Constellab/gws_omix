@@ -2,12 +2,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
 
-from gws_core import (BarPlotView, ConfigParams, File, Folder,
-                      StackedBarPlotView, StrParam, StrRField, Table,
-                      TableImporter, resource_decorator, view)
-from gws_core.extra import TableView
+from gws_core import (Folder, resource_decorator)
 
 
 @resource_decorator("BAMToQuantFolder", human_name="BAMToQuantFolder",

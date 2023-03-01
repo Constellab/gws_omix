@@ -2,18 +2,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import csv
-import json
 import os
 import re
 
-from gws_core import (File, FloatParam, InputSpec, IntParam, OutputSpec,
+from gws_core import (FloatParam, InputSpec, IntParam, OutputSpec,
                       Settings, StrParam, Table, TaskInputs, TaskOutputs,
-                      Utils, task_decorator)
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
-
+                      task_decorator, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs, ConfigParams)
 from ..base_env.interproscan_env_task import InterProScanEnvTask
 from ..file.blast_ec_file import BlastECFile
 from ..file.fasta_file import FastaFile

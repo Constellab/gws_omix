@@ -6,14 +6,10 @@
 import glob
 import os
 
-from gws_core import (File, InputSpec, IntParam, MetadataTable,
-                      MetadataTableImporter, OutputSpec, Settings, StrParam,
+from gws_core import (File, InputSpec, OutputSpec, StrParam,
                       Table, TableImporter, TableAnnotatorHelper,
-                      TaskInputs, TaskOutputs, task_decorator)
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
-from gws_core.resource.resource_set import ResourceSet
+                      TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs,
+                      ResourceSet)
 
 from ..base_env.r_env_task import BaseREnvTask
 #from ..file.deseq2_summary_table import Deseq2SummaryTable

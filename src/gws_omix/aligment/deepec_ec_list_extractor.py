@@ -2,16 +2,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import csv
-import json
 import os
 import re
 
-from gws_core import (File, InputSpec, OutputSpec, StrParam, TaskInputs,
-                      TaskOutputs, Utils, task_decorator)
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core import (InputSpec, OutputSpec, TaskInputs,
+                      TaskOutputs, task_decorator, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.deepec_file import DeepECFile

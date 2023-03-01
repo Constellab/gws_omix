@@ -3,10 +3,7 @@
 # About us: https://gencovery.com
 
 from gws_core import (File, InputSpec, IntParam, OutputSpec, StrParam,
-                      TaskInputs, TaskOutputs, task_decorator)
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+                      TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.bam_file import BAMFile
