@@ -9,7 +9,7 @@ import os
 from gws_core import (File, InputSpec, OutputSpec, StrParam,
                       Table, TableImporter, TableAnnotatorHelper,
                       TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs,
-                      ResourceSet)
+                      ResourceSet, Folder, FloatParam)
 
 from ..base_env.r_env_task import BaseREnvTask
 #from ..file.deseq2_summary_table import Deseq2SummaryTable

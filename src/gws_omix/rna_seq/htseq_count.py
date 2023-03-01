@@ -7,7 +7,7 @@ import os
 
 from gws_core import (ConfigParams, IntParam,
                       TaskInputs, TaskOutputs, task_decorator, Task, ShellProxy,
-                      ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+                      ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs, Table)
 
 from ..file.bam_to_quant_folder import BAMToQuantFolder
 from ..file.gtf_file import GTFFile
