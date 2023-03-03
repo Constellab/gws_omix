@@ -5,15 +5,15 @@
 
 import os
 
-from gws_core import (ConfigParams, IntParam,
-                      TaskInputs, TaskOutputs, task_decorator, Task, ShellProxy, 
-                      ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
-
-from ..file.bam_to_quant_folder import BAMToQuantFolder
-from ..file.gtf_file import GTFFile
-from ..file.salmon_reads_quantmerge_output_file import SalmonReadsQuantmergeOutputFile
+from gws_core import (ConfigParams, ConfigSpecs, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, ShellProxy, Task,
+                      TaskInputs, TaskOutputs, task_decorator)
 
 from ..base_env.subread_env_task import SubreadShellProxyHelper
+from ..file.bam_to_quant_folder import BAMToQuantFolder
+from ..file.gtf_file import GTFFile
+from ..file.salmon_reads_quantmerge_output_file import \
+    SalmonReadsQuantmergeOutputFile
 
 
 @task_decorator("FeatureCounts",  human_name="Feature Counts",
@@ -37,7 +37,7 @@ class FeatureCounts(Task):
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         bam_folder = inputs["bam_folder"]
         bam_folder_path = bam_folder.path
         annotation_file: GTFFile = inputs["gtf_file"]
@@ -94,9 +94,9 @@ class FeatureCounts(Task):
 
     def outputs_annotation(self, output_folder_path: str) -> None:
         result_file = SalmonReadsQuantmergeOutputFile()
-        #result_file_stat = Table()
+        # result_file_stat = Table()
         result_file.path = os.path.join(output_folder_path, "featurecounts.gene_expression_matrix.txt")
-        #result_file_stat.path = os.path.join(output_folder_path, "featurecounts.summary.txt")
+        # result_file_stat.path = os.path.join(output_folder_path, "featurecounts.summary.txt")
         return {
             "gene_expression_file": result_file  # ,
             # "summary_stats": result_file_stat

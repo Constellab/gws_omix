@@ -6,14 +6,13 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, File, GTest, Settings, TaskRunner,
-                      ViewTester)
+from gws_core import BaseTestCase, Settings, TaskRunner
 from gws_omix import DeepECFile, DeepECListExtractor
 
 
 class TestDeepEC(BaseTestCase):
 
-    async def test_BlastECListExtractor(self):
+    def test_BlastECListExtractor(self):
         settings = Settings.retrieve()
         data_dir = settings.get_variable("gws_omix:testdata_dir")
         file = DeepECFile()
@@ -24,7 +23,7 @@ class TestDeepEC(BaseTestCase):
             inputs={'deepec_file': file},
             task_type=DeepECListExtractor
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         f = outputs['ec_list_file']
         result_content = f.read()
 

@@ -6,16 +6,16 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, GTest, Settings,
-                      TaskRunner, ViewTester)
-from gws_omix import DeepEC, DeepECFile, FastaFile
+from gws_core import (BaseTestCase, ConfigParams, Settings, TaskRunner,
+                      ViewTester)
+from gws_omix import DeepEC, FastaFile
 
-#from ..file.ec_list_file import ECListFile
+# from ..file.ec_list_file import ECListFile
 
 
 class TestDeepEc(BaseTestCase):
 
-    async def test_DeepEc(self):
+    def test_DeepEc(self):
         settings = Settings.retrieve()
         data_dir = settings.get_variable("gws_omix:testdata_dir")
         file = FastaFile()
@@ -26,7 +26,7 @@ class TestDeepEc(BaseTestCase):
             inputs={'fasta_file': file},
             task_type=DeepEC
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         f = outputs['deepec_file']
         result_content = f.read()
 

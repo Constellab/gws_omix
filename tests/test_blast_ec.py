@@ -6,14 +6,14 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, GTest, Settings,
-                      TaskRunner, ViewTester)
+from gws_core import (BaseTestCase, ConfigParams, File, Settings, TaskRunner,
+                      ViewTester)
 from gws_omix import BlastEC
 
 
 class TestBlastEC(BaseTestCase):
 
-    async def test_BlastEC(self):
+    def test_BlastEC(self):
         settings = Settings.retrieve()
         data_dir = settings.get_variable("gws_omix:testdata_dir")
         file = File()
@@ -28,7 +28,7 @@ class TestBlastEC(BaseTestCase):
             inputs={'fasta_file': file},
             task_type=BlastEC
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         blast_ec_file = outputs['filtered_blast_ec_file']
         result_content = blast_ec_file.read()
 
