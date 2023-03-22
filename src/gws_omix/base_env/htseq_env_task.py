@@ -3,7 +3,7 @@
 # About us: https://gencovery.com
 
 import os
-from gws_core import CondaShellProxy, MessageDispatcher, PipShellProxy
+from gws_core import  MessageDispatcher, PipShellProxy
 
 
 class HTSeqShellProxyHelper():

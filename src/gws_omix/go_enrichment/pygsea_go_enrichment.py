@@ -12,7 +12,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set import ResourceSet
 
-from ..base_env.pygsea_env_task import PyGSEAShellProxyHelper
+from ..base_env.pygsea_pip_env import PygseaPipShellProxyHelper
 
 # from gws_omix import GeneList, GeneUniverse
 
@@ -67,42 +67,47 @@ class GseaGoTerm(Task):
         'GO_term_enrichment': OutputSpec(ResourceSet)
     }
     config_specs: ConfigSpecs = {"Top_results_number": IntParam(
-        default_value=10, min_value=1, short_description="Number of the best enriched GO term to include in the top list")}
+        default_value=10, min_value=1, short_description="Number of the best enriched GO term to include in the top list"),
+        "Threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         gene_universe = inputs["Gene_universe"]
         gene_list = inputs["Gene_list"]
         top_threshold = params["Top_results_number"]
+        threads = params["Threads"]
 
         gene_universe_path = gene_universe.path
         gene_list_file_path = gene_list.path
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
-        shell_proxy = PyGSEAShellProxyHelper.create_proxy()
+        shell_proxy = PygseaPipShellProxyHelper.create_proxy(self.message_dispatcher)
 
         outputs = self.run_gsea_go(shell_proxy,
                                    script_file_dir,
                                    gene_universe_path,
                                    gene_list_file_path,
-                                   top_threshold
+                                   top_threshold,
+                                   threads
                                    )
         return outputs
 
-    def run_gsea_go(self, shell_proxy: PyGSEAShellProxyHelper,
+    def run_gsea_go(self, shell_proxy: PygseaPipShellProxyHelper,
                     script_file_dir: str,
                     gene_universe: str,
                     gene_list: str,
-                    top_number: int) -> None:
+                    top_number: int,
+                    thrds: int) -> None:
 
         cmd = [
-            " bash ", os.path.join(script_file_dir, "./py/gsea_cmd.py"),
-            gene_universe,
+            "python", os.path.join(script_file_dir, "./py/_gsea_cmd.py"),
             gene_list,
-            top_number
+            gene_universe,
+            top_number,
+            thrds
         ]
 
-        shell_proxy.run(cmd)
-
+        shell_proxy.run(cmd, shell_mode=True)
+        # shell_proxy.run_with_proxy(cmd, params=ConfigParams, inputs=TaskInputs, shell_proxy=PygseaPipShellProxyHelper)
         # Resource set
         resource_table: ResourceSet = ResourceSet()
         resource_table.name = "GO Term Enrichment Results"

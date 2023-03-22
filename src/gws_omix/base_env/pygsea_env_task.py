@@ -4,7 +4,8 @@
 
 import os
 
-from gws_core import CondaEnvShell, CondaShellProxy, task_decorator
+from gws_core import (CondaEnvShell, CondaShellProxy, MessageDispatcher,
+                      task_decorator)
 
 
 @task_decorator("PyGSEAEnvTask", hide=True)
@@ -23,6 +24,9 @@ class PyGSEAShellProxyHelper():
         "pygsea_env.yml"
     )
 
+    # @classmethod
+    # def create_proxy(cls):
+    #     return CondaShellProxy(cls.ENV_DIR_NAME, cls.ENV_FILE_PATH)
     @classmethod
-    def create_proxy(cls):
-        return CondaShellProxy(cls.ENV_DIR_NAME, cls.ENV_FILE_PATH)
+    def create_proxy(cls, message_dispatcher: MessageDispatcher = None):
+        return CondaShellProxy(cls.ENV_DIR_NAME, cls.ENV_FILE_PATH, message_dispatcher=message_dispatcher)

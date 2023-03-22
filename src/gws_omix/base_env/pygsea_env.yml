@@ -1,5 +1,6 @@
 name: .venv
 channels:
+  - conda-forge 
   - bioconda
 dependencies:
-  - gseapy=1.0.4
+  - gseapy

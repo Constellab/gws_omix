@@ -1,0 +1,6 @@
+name: .topgoenv
+channels:
+  - bioconda
+dependencies:
+  - bioconductor-topgo
+
