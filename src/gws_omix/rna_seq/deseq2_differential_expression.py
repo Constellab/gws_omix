@@ -6,13 +6,13 @@
 import glob
 import os
 
-from gws_core import (File, InputSpec, OutputSpec, StrParam,
-                      Table, TableImporter, TableAnnotatorHelper,
-                      TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs,
-                      ResourceSet, Folder, FloatParam)
+from gws_core import (ConfigParams, ConfigSpecs, File, FloatParam, Folder,
+                      InputSpec, InputSpecs, OutputSpec, OutputSpecs,
+                      ResourceSet, StrParam, Table, TableAnnotatorHelper,
+                      TableImporter, TaskInputs, TaskOutputs, task_decorator)
 
 from ..base_env.r_env_task import BaseREnvTask
-#from ..file.deseq2_summary_table import Deseq2SummaryTable
+# from ..file.deseq2_summary_table import Deseq2SummaryTable
 from ..file.salmon_reads_quantmerge_output_file import \
     SalmonReadsQuantmergeOutputFile
 
@@ -65,10 +65,10 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
         result_folder = Folder()
         result_folder.path = os.path.join(self.working_dir)
         result_folder.name = "Output Folder"
-        #result_file = Table()
+        # result_file = Table()
         for path in glob.glob(os.path.join(self.working_dir, "SummaryTable.csv")):
             result_file = TableImporter.call(File(path=path), {'delimiter': 'tab'})
-            #basename = os.path.basename(path)
+            # basename = os.path.basename(path)
             result_file.name = output_file_id+".summary_table.csv"
         # Create ressource set containing differnetial analysis results tables
         resource_table_set: ResourceSet = ResourceSet()
@@ -81,7 +81,8 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
 
             # for output_file_path in self.deseq2_output_file_paths.items():
             table = TableImporter.call(File(path=output_file_path), {'delimiter': 'tab', "index_column": 0})
-            table_annotated = TableAnnotatorHelper.annotate_rows(table, metadata_table)
+            metadata_table = TableImporter.call(File(path=path), {'delimiter': 'tab'})
+            table_annotated = TableAnnotatorHelper.annotate_rows(table, metadata_table, use_table_row_names_as_ref=True)
             basename = os.path.basename(output_file_path)
             table_annotated.name = basename
             resource_table_set.add_resource(table_annotated)
@@ -98,7 +99,7 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
         metadata_col = params["metadata_column"]
         output_file_id = params["output_file_names"]
         threshold = params["summary_threshold"]
-        #design_formula = params["design_formula"]
+        # design_formula = params["design_formula"]
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
             "bash ",
