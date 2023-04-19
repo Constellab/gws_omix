@@ -23,7 +23,7 @@
     ],
     "git": [
       {
-        "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/lib",
+        "source": "https://deepec-reader:glpat-i-2xNnAFytDjr5PW9PNp@gitlab.com/constellab/public/lib/deepec.git",
         "packages": [
           {
             "name": "deepec"
