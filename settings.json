@@ -1,42 +1,40 @@
 {
-    "name"          : "gws_omix",
-    "author"        : "Gencovery",
-    "author_email"  : "admin@gencovery.com",
-    "version"       : "0.5.0-beta.1",
-    "description"   : "Gencovery brick for omics data analysis",
-    "variables":{
-        "gws_omix:testdata_dir" : "${CURRENT_DIR}/tests/testdata",
-        "gws_omix:uniprot_db_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db/"
-    },
-    "environment":{
-        "pip":[
-            {
-                "source": "https://pypi.python.org/simple",
-                "packages":[]
-            },
-            {
-                "source": "https://$GWS_PIP_PACKAGE_TOKEN@gitlab.com/api/.../packages/pypi",
-                "packages":[]
-            }
-        ],
-        "git":[
-            {
-                "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/core",
-                "packages":[
-                    {"name": "gws_core", "version":"0.5.0-beta.1", "is_brick": true}
-                ]
-            },
-            {
-                "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/lib",
-                "packages":[
-                    {"name": "deepec", "is_brick": false}
-                ]
-            }
-        ],
-        "variables":{
-            "GWS_GIT_LOGIN": "",
-            "GWS_GIT_PWD": "",
-            "GWS_PIP_PACKAGE_TOKEN": ""
-        }
+  "name": "gws_omix",
+  "author": "Gencovery",
+  "author_email": "admin@gencovery.com",
+  "version": "0.5.0",
+  "description": "Gencovery brick for omics data analysis",
+  "variables": {
+    "gws_omix:testdata_dir": "${CURRENT_DIR}/tests/testdata",
+    "gws_omix:uniprot_db_url": "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db/"
+  },
+  "environment": {
+    "bricks": [
+      {
+        "name": "gws_core",
+        "version": "0.5.0"
+      }
+    ],
+    "pip": [
+      {
+        "source": "https://pypi.python.org/simple",
+        "packages": []
+      }
+    ],
+    "git": [
+      {
+        "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/lib",
+        "packages": [
+          {
+            "name": "deepec"
+          }
+        ]
+      }
+    ],
+    "variables": {
+      "GWS_GIT_LOGIN": "",
+      "GWS_GIT_PWD": "",
+      "GWS_PIP_PACKAGE_TOKEN": ""
     }
+  }
 }
