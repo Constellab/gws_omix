@@ -23,7 +23,7 @@
     ],
     "git": [
       {
-        "source": "https://deepec-reader:glpat-i-2xNnAFytDjr5PW9PNp@gitlab.com/constellab/public/lib/deepec.git",
+        "source": "https://public-lib-reader:glpat-dzcjGnwmXX-_TWqRVEdG@gitlab.com/constellab/public/lib",
         "packages": [
           {
             "name": "deepec"
