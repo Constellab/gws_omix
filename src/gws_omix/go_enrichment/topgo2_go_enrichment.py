@@ -5,12 +5,10 @@
 
 import os
 
-from gws_core import (ConfigParams, File, IntParam, StrParam, TableImporter,
-                      Task, TaskInputs, TaskOutputs, task_decorator)
-from gws_core.config.config_types import ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
-from gws_core.resource.resource_set import ResourceSet
+from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, ResourceSet, StrParam,
+                      TableImporter, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 
 from ..base_env.topgo2_env_task import TopGO2ShellProxyHelper
 
@@ -92,7 +90,8 @@ class ToGO2GoTerm(Task):
         gene_list_file_path = gene_list.path
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
-        shell_proxy = TopGO2ShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = TopGO2ShellProxyHelper.create_proxy(
+            self.message_dispatcher)
 
         outputs = self.run_gsea_go(shell_proxy,
                                    script_file_dir,
@@ -117,7 +116,8 @@ class ToGO2GoTerm(Task):
                 gene_universe
             ]
             shell_proxy.run(cmd, shell_mode=True)
-            topgo_gene_universe = os.path.join(shell_proxy.working_dir, "TopGO2_gene_universe.csv")
+            topgo_gene_universe = os.path.join(
+                shell_proxy.working_dir, "TopGO2_gene_universe.csv")
             cmd_2 = [
                 "Rscript --vanilla ",
                 os.path.join(script_file_dir, "./R/topgo2_script.R"),
@@ -142,13 +142,16 @@ class ToGO2GoTerm(Task):
         resource_table: ResourceSet = ResourceSet()
         resource_table.name = "TopGO2 GO Term Enrichment"
 
-        path = os.path.join(shell_proxy.working_dir, "TopGO2.GO_enrichment_results.tsv")
+        path = os.path.join(shell_proxy.working_dir,
+                            "TopGO2.GO_enrichment_results.tsv")
         result_file = File(path=path)
         result_file.name = "TopGO2 GO Enrichment - All results"
         resource_table.add_resource(result_file)
 
-        path = os.path.join(shell_proxy.working_dir, "TopGO2.top_results.pvalue_0.05.csv")
-        table = TableImporter.call(File(path=path), {'delimiter': 'tab', "index_column": 0})
+        path = os.path.join(shell_proxy.working_dir,
+                            "TopGO2.top_results.pvalue_0.05.csv")
+        table = TableImporter.call(
+            File(path=path), {'delimiter': 'tab', "index_column": 0})
         table.name = "TopGO2 GO Enrichment - Top results (Fisher Test pvalue >= 0.05)"
         resource_table.add_resource(table)
 

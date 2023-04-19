@@ -5,12 +5,10 @@
 
 import os
 
-from gws_core import (ConfigParams, File, IntParam, TableImporter, Task,
-                      TaskInputs, TaskOutputs, task_decorator)
-from gws_core.config.config_types import ConfigSpecs
-from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
-from gws_core.resource.resource_set import ResourceSet
+from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, ResourceSet,
+                      TableImporter, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 
 from ..base_env.pygsea_pip_env import PygseaPipShellProxyHelper
 
@@ -80,7 +78,8 @@ class GseaGoTerm(Task):
         gene_list_file_path = gene_list.path
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
-        shell_proxy = PygseaPipShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = PygseaPipShellProxyHelper.create_proxy(
+            self.message_dispatcher)
 
         outputs = self.run_gsea_go(shell_proxy,
                                    script_file_dir,
@@ -113,11 +112,13 @@ class GseaGoTerm(Task):
         resource_table.name = "GO Term Enrichment Results"
 
         path = os.path.join(shell_proxy.working_dir, "All_results.txt")
-        table = TableImporter.call(File(path=path), {'delimiter': 'tab', "index_column": 0})
+        table = TableImporter.call(
+            File(path=path), {'delimiter': 'tab', "index_column": 0})
         table.name = "PyGSEA GO Enrichment - All results"
         resource_table.add_resource(table)
         path = os.path.join(shell_proxy.working_dir, "Top_list.txt")
-        table = TableImporter.call(File(path=path), {'delimiter': 'tab', "index_column": 0})
+        table = TableImporter.call(
+            File(path=path), {'delimiter': 'tab', "index_column": 0})
         table.name = "PyGSEA GO Enrichment - Top results based on the normalized enrichment score (nes)"
         resource_table.add_resource(table)
 
