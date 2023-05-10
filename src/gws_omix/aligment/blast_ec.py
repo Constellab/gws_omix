@@ -5,21 +5,21 @@
 import os
 import re
 
-from gws_core import (FloatParam, InputSpec, IntParam, OutputSpec,
-                      Settings, StrParam, TaskInputs, TaskOutputs,
-                      task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, FloatParam,
+                      InputSpec, InputSpecs, IntParam, OutputSpec, OutputSpecs,
+                      StrParam, Task, TaskFileDownloader, TaskInputs,
+                      TaskOutputs, task_decorator)
+from gws_omix.base_env.omix_env_task import BaseOmixEnvHelper
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.blast_ec_file import BlastECFile
 from ..file.fasta_file import FastaFile
-from ..utils._requests import Requests
 
 # from ..utils._settings import Settings
 
 
 @task_decorator("BlastEC", human_name="Blast to EC-number Annotator",
                 short_description="BlastEC is an homology based EC-number (Enzyme id) annotator which used Blastp/x and UniProtKB-db.")
-class BlastEC(BaseOmixEnvTask):
+class BlastEC(Task):
     """
     BlastEC class.
 
@@ -35,18 +35,22 @@ class BlastEC(BaseOmixEnvTask):
         * `cov`: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
 
     """
-    OPENDATA_DIR = "/data/gws_omix/opendata"
+
+    DB_LOCATION = 'https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/omix/db'
     TAX_DICT = {
-        "archaea": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2157",
-        "bacteria": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2",
-        "chordata": "/data/gws_omix/opendata/uniprot-taxonomy_v1_7711",
-        "eukaryota": "/data/gws_omix/opendata/uniprot-taxonomy_v1_2759",
-        "fungi": "/data/gws_omix/opendata/uniprot-taxonomy_v1_4751",
-        "mammalia": "/data/gws_omix/opendata/uniprot-taxonomy_v1_40674",
-        "metazoa": "/data/gws_omix/opendata/uniprot-taxonomy_v1_33208",
-        "viridiplantae": "/data/gws_omix/opendata/uniprot-taxonomy_v1_33090",
-        "virus": "/data/gws_omix/opendata/uniprot-taxonomy_v1_10239"
+        "archaea": "uniprot-taxonomy_v1_2157",
+        "bacteria": "uniprot-taxonomy_v1_2",
+        "chordata": "uniprot-taxonomy_v1_7711",
+        "eukaryota": "uniprot-taxonomy_v1_2759",
+        "fungi": "uniprot-taxonomy_v1_4751",
+        "mammalia": "uniprot-taxonomy_v1_40674",
+        "metazoa": "uniprot-taxonomy_v1_33208",
+        "viridiplantae": "uniprot-taxonomy_v1_33090",
+        "virus": "uniprot-taxonomy_v1_10239"
     }
+
+    OUT_FMT = '7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore'
+
     input_specs: InputSpecs = {
         'fasta_file': InputSpec(FastaFile, human_name="Fasta File", short_description="Fasta Input File")
     }
@@ -66,24 +70,10 @@ class BlastEC(BaseOmixEnvTask):
         # "uniprot_db_dir": StrParam(default_value="", short_description="Location of the UniProtKB database")
     }
 
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        # execute blast parsing command and ec number retrieving
-        taxo = params["taxonomy"]
-        idt = params["idt"]
-        fasta_file = inputs["fasta_file"]
-        fasta_file_name = os.path.basename(fasta_file.path)
-        # local_uniprot_db_dir = params["uniprot_db_dir"]
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        shell_proxy: CondaShellProxy = BaseOmixEnvHelper.create_proxy(
+            self.message_dispatcher)
 
-        tab_file_path = os.path.join(self.TAX_DICT[taxo] + ".tab")
-        output_file_path = os.path.join(
-            self.working_dir,
-            fasta_file_name + ".alligned_on." + taxo + ".blast_output")
-        filtered_file_path = self._create_filtered_output_file(output_file_path, tab_file_path, idt)
-        result_file = BlastECFile(path=filtered_file_path)
-        return {"filtered_blast_ec_file": result_file}
-
-    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        settings = Settings.retrieve()
         taxo = params["taxonomy"]
         alignment = params["alignment_type"]
         evalue = params["e_value"]
@@ -92,97 +82,105 @@ class BlastEC(BaseOmixEnvTask):
         cov = params["cov"]
         # local_uniprot_db_dir = params["uniprot_db_dir"]
 
-        # Check for DB existance
-        test_filename = "gws_omix:uniprot_" + taxo + "_fasta_file"
-        test_filename_2 = "gws_omix:uniprot_" + taxo + "_tab_file"
-        test_filename_3 = "gws_omix:uniprot_" + taxo + "_blastdb_file"
-        # test_path = settings["variables"][test_filename]
-        test_path = settings.get_variable(test_filename)
-        test_path = test_path.replace('.fasta.gz', '.fasta')
-        test_path_2 = settings.get_variable(test_filename_2)
-        test_path_2 = test_path_2.replace('.tab.gz', '.tab')
-        test_path_3 = settings.get_variable(test_filename_3)
-        test_path_3 = test_path_3.replace('.fasta_blast_index.tar.gz', '.fasta_blast_index')
+        # DB location
+        file_prefix = self.TAX_DICT[taxo]
 
-        if os.path.exists(test_path) and os.path.exists(test_path_2) and os.path.exists(test_path_3):  # Pull BLASTdb
-            print("# This DB already exists : start performing BLASTEC")
-        else:
-            print("# This DB does not exists : start downloading")
-            # UniProtKB taxa_level selected DB
+        fasta_file_path = self._download_fasta(file_prefix)
+        blastdb_folder_path = self._download_blastdb(file_prefix)
 
-            # Get fasta
-            taxa_prefix = "gws_omix:uniprot_" + taxo
-            url_taxa_name = taxa_prefix + "_fasta_url"
-            file_taxa_name = taxa_prefix + "_fasta_file"
-            url = settings.get_variable(url_taxa_name)
-            dest_path = settings.get_variable(file_taxa_name)
-            Requests.download(url, dest_path)
+        # add fasta file path, and blastdb_folder_path to working dir using symlink
+        # because blast command need to have the fasta file and the blastdb in the same folder
+        shell_proxy.run(["ln", "-s", fasta_file_path, './'])
+        shell_proxy.run(["ln", "-s", blastdb_folder_path + '/*', './'])
 
-            # Get blast DB
-            taxa_prefix = "gws_omix:uniprot_" + taxo
-            url_taxa_name = taxa_prefix + "_blastdb_url"
-            file_taxa_name = taxa_prefix + "_blastdb_file"
-            url = settings.get_variable(url_taxa_name)
-            dest_path = settings.get_variable(file_taxa_name)
-            Requests.download(url, dest_path)
-
-            # Get EC tab file
-            taxa_prefix = "gws_omix:uniprot_" + taxo
-            url_taxa_name = taxa_prefix + "_tab_url"
-            file_taxa_name = taxa_prefix + "_tab_file"
-            url = settings.get_variable(url_taxa_name)
-            dest_path = settings.get_variable(file_taxa_name)
-            Requests.download(url, dest_path)
-
-        fasta_file = inputs["fasta_file"]
+        fasta_file: FastaFile = inputs["fasta_file"]
         fasta_file_name = os.path.basename(fasta_file.path)
 
-        datab_prefix_path = os.path.join(self.TAX_DICT[taxo])
         output_file_path = os.path.join(
-            self.working_dir,
+            shell_proxy.working_dir,
             fasta_file_name + ".alligned_on." + taxo + ".blast_output")
 
-        script_file_dir = os.path.dirname(os.path.realpath(__file__))
         if alignment == "PP":
             cmd = [
-                "bash",
-                os.path.join(script_file_dir, "./sh/blastp_cmd.sh"),
-                datab_prefix_path,
-                fasta_file.path,
-                evalue,
-                thread,
-                cov,
-                num_alignments,
-                output_file_path,
-                self.OPENDATA_DIR
+                "blastp",
+                "-db", "uniprot*.fasta",
+                "-query", fasta_file_name,
+                "-evalue", evalue,
+                "-num_threads", thread,
+                "-qcov_hsp_perc", cov,
+                "-num_alignments", num_alignments,
+                "-outfmt", self.OUT_FMT,
+                "show_gis",
+                "-task", "balstp-fast",
+                "-out", output_file_path
             ]
         else:
             cmd = [
-                "bash",
-                os.path.join(script_file_dir, "./sh/blastx_cmd.sh"),
-                datab_prefix_path,
-                fasta_file.path,
-                evalue,
-                thread,
-                cov,
-                num_alignments,
-                output_file_path,
-                self.OPENDATA_DIR
+                "blastx",
+                "-db", "uniprot*.fasta",
+                "-query", fasta_file_name,
+                "-evalue", evalue,
+                "-num_threads", thread,
+                "-qcov_hsp_perc", cov,
+                "-num_alignments", num_alignments,
+                "-outfmt", self.OUT_FMT,
+                "show_gis",
+                "-task", "balstp-fast",
+                "-out", output_file_path
             ]
 
-        return cmd
+        # call the command
+        shell_proxy.run(cmd, shell_mode=True)
 
-    def _get_output_file_path(self, taxonomy, fasta_file_name):
-        return os.path.join(
-            self.working_dir,
-            fasta_file_name + ".alligned_on." + taxonomy + ".blast_output"
-        )
+        # execute blast parsing command and ec number retrieving
+        idt = params["idt"]
 
-    def _create_filtered_output_file(self, blast_output_file, tabular_file, id):
+        tab_file_path = self._download_tab(file_prefix)
+        filtered_file_path = self._create_filtered_output_file(
+            output_file_path, tab_file_path, idt)
+        result_file = BlastECFile(path=filtered_file_path)
+
+        return {"filtered_blast_ec_file": result_file}
+
+    def _download_fasta(self, file_prefix: str) -> str:
+        file_downloader = TaskFileDownloader(
+            BlastEC.get_brick_name(), self.message_dispatcher)
+
+        # Gest fasta
+        self.log_info_message("Downloading fasta file")
+        fasta_file_name = file_prefix + '.fasta.gz'
+        db_location = os.path.join(self.DB_LOCATION)
+        return file_downloader.download_file_if_missing(
+            db_location, fasta_file_name, unzip_file=True)
+
+    def _download_tab(self, file_prefix: str) -> str:
+        file_downloader = TaskFileDownloader(
+            BlastEC.get_brick_name(), self.message_dispatcher)
+
+        # Get tab
+        self.log_info_message("Downloading tab file")
+        tab_file_name = file_prefix + '.tab.gz'
+        db_location = os.path.join(self.DB_LOCATION, tab_file_name)
+        return file_downloader.download_file_if_missing(
+            db_location, tab_file_name, unzip_file=True)
+
+    def _download_blastdb(self, file_prefix: str) -> str:
+        file_downloader = TaskFileDownloader(
+            BlastEC.get_brick_name(), self.message_dispatcher)
+
+        # Get blastdb
+        self.log_info_message("Downloading blastdb file")
+        blastdb_file_name = file_prefix + '.fasta_blast_index.tar.gz'
+        db_location = os.path.join(self.DB_LOCATION, blastdb_file_name)
+        return file_downloader.download_file_if_missing(
+            db_location, blastdb_file_name, unzip_file=True)
+
+    def _create_filtered_output_file(self, blast_output_file: str, tabular_file: str, id):
         gene_ec = {}
         hit_parsed = {}
 
-        with open(tabular_file, 'r') as lines:  # Create dict. containing genes with their corresponding EC number(s)
+        # Create dict. containing genes with their corresponding EC number(s)
+        with open(tabular_file, 'r') as lines:
             for line in lines:
                 if re.match("^#", line):
                     pass
@@ -191,7 +189,8 @@ class BlastEC(BaseOmixEnvTask):
                     if re.match("^$", str(li_split[7])):
                         gene_ec[li_split[0]] = "NA\n"
                     else:
-                        gene_ec[li_split[0]] = li_split[7] + "\n"  # ! : missing+ "\n"
+                        gene_ec[li_split[0]] = li_split[7] + \
+                            "\n"  # ! : missing+ "\n"
 
         filtered_file_path = blast_output_file + ".filtered.csv"
 
@@ -208,18 +207,22 @@ class BlastEC(BaseOmixEnvTask):
                         pass
                     else:
                         li_split = line.split("\t")
-                        if float(li_split[2]) >= float(id):  # Parsing blast hit according to the identity threshold
+                        # Parsing blast hit according to the identity threshold
+                        if float(li_split[2]) >= float(id):
                             cpt += 1
                             hit_gene_ids = li_split[1]
                             # gene_uniprotKB_ID = hit_gene_ids  # hit_gene_ids.split('|')
-                            gene_name = str(hit_gene_ids)  # str(gene_uniprotKB_ID[1])
+                            # str(gene_uniprotKB_ID[1])
+                            gene_name = str(hit_gene_ids)
                             key = str(li_split[0])
                             # Give information about the best hit for each assessed gene -> Output dict.
                             if key in best_hit_lines:
-                                hit_parsed = "{}\t{}\t{}".format(line.rstrip(), "SECONDARY_HITS", gene_ec[gene_name])
+                                hit_parsed = "{}\t{}\t{}".format(
+                                    line.rstrip(), "SECONDARY_HITS", gene_ec[gene_name])
                             else:
                                 best_hit_lines[key] = 1
-                                hit_parsed = "{}\t{}\t{}".format(line.rstrip(), "BEST_HIT", gene_ec[gene_name])
+                                hit_parsed = "{}\t{}\t{}".format(
+                                    line.rstrip(), "BEST_HIT", gene_ec[gene_name])
 
                             # filtered_dict[cpt]=hit_parsed
                             filtered_file_fp.write(hit_parsed)
