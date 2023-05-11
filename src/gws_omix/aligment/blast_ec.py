@@ -151,7 +151,7 @@ class BlastEC(Task):
         fasta_file_name = file_prefix + '.fasta.gz'
         db_location = os.path.join(self.DB_LOCATION)
         return file_downloader.download_file_if_missing(
-            db_location, fasta_file_name, unzip_file=True)
+            db_location, fasta_file_name, decompress_file=True)
 
     def _download_tab(self, file_prefix: str) -> str:
         file_downloader = TaskFileDownloader(
@@ -162,7 +162,7 @@ class BlastEC(Task):
         tab_file_name = file_prefix + '.tab.gz'
         db_location = os.path.join(self.DB_LOCATION, tab_file_name)
         return file_downloader.download_file_if_missing(
-            db_location, tab_file_name, unzip_file=True)
+            db_location, tab_file_name, decompress_file=True)
 
     def _download_blastdb(self, file_prefix: str) -> str:
         file_downloader = TaskFileDownloader(
@@ -173,7 +173,7 @@ class BlastEC(Task):
         blastdb_file_name = file_prefix + '.fasta_blast_index.tar.gz'
         db_location = os.path.join(self.DB_LOCATION, blastdb_file_name)
         return file_downloader.download_file_if_missing(
-            db_location, blastdb_file_name, unzip_file=True)
+            db_location, blastdb_file_name, decompress_file=True)
 
     def _create_filtered_output_file(self, blast_output_file: str, tabular_file: str, id):
         gene_ec = {}

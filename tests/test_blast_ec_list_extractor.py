@@ -9,9 +9,8 @@ import os
 from gws_core import BaseTestCase, Settings, TaskRunner, ViewTester
 from gws_omix import BlastECFile, BlastECListExtractor
 
-# from ..file.ec_list_file import ECListFile
 
-
+# test_blast_ec_list_extractor
 class TestBlastEC(BaseTestCase):
 
     def test_BlastECListExtractor(self):
@@ -30,7 +29,8 @@ class TestBlastEC(BaseTestCase):
         result_content = f.read()
 
         # Get the expected file output
-        expected_file_path = os.path.join(data_dir, "results.test.blast.ec_list.txt")
+        expected_file_path = os.path.join(
+            data_dir, "results.test.blast.ec_list.txt")
 
         with open(expected_file_path, 'r') as fp:
             expected_result_content = fp.read()

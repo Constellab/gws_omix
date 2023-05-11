@@ -4,8 +4,8 @@
 import os
 import re
 
-from gws_core import (InputSpec, OutputSpec, TaskInputs,
-                      TaskOutputs, task_decorator, ConfigParams, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, TaskInputs, TaskOutputs, task_decorator)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.blast_ec_file import BlastECFile
@@ -59,12 +59,13 @@ class BlastECListExtractor(BaseOmixEnvTask):
                         else:
                             if re.search(';', str(li_split[17])):
                                 ec_split = re.split(';\s', li_split[17])
-                                #ec_list.write("\n".join(str(ec) for ec in ec_split))
-                                ec_list.write("\n".join(li_split[0]+"\t"+str(ec) for ec in ec_split))
+                                # ec_list.write("\n".join(str(ec) for ec in ec_split))
+                                ec_list.write(
+                                    "\n".join(li_split[0]+"\t"+str(ec) for ec in ec_split))
                             elif re.match("NA", str(li_split[17])):
                                 pass
                             else:
-                                #ec_split = li_split[17]
+                                # ec_split = li_split[17]
                                 ec_split = li_split[0]+"\t"+li_split[17]
                                 ec_list.write(ec_split)
 #                                uniq_ec[ec]=1
