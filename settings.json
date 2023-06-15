@@ -2,7 +2,7 @@
   "name": "gws_omix",
   "author": "Gencovery",
   "author_email": "admin@gencovery.com",
-  "version": "0.5.1-beta.1",
+  "version": "0.5.1",
   "description": "Gencovery brick for omics data analysis",
   "variables": {
     "gws_omix:testdata_dir": "${CURRENT_DIR}/tests/testdata",
