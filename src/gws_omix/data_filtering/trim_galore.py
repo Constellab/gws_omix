@@ -2,18 +2,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-#import csv
-#import json
+# import csv
+# import json
 import os
 
-from gws_core import (File, InputSpec, IntParam, OutputSpec, StrParam,
-                      ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs,
-                      TaskInputs, TaskOutputs, task_decorator, ResourceSet)
+from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, ResourceSet, StrParam,
+                      TaskInputs, TaskOutputs, task_decorator)
 
 from ..base_env.trimfq_env_task import TrimFqEnvTask
 from ..file.fastq_folder import FastqFolder
 
-#import re
+# import re
 
 
 @task_decorator("TrimGalore", human_name="TrimGalore cleaning",
@@ -30,14 +30,14 @@ class TrimGalore(TrimFqEnvTask):
         "output_dir": StrParam(default_value="filtered_reads", short_description="Name of the output directory, which contained trimmed files and report files")
 
     """
-    input_specs : InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'fastq_folder': InputSpec(FastqFolder, human_name="", short_description="")
-    }
-    output_specs : OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         "cleaned_fastq": OutputSpec(ResourceSet, human_name="", short_description=""),
         "cleaning_stats": OutputSpec(File, human_name="", short_description="")
-    }
-    config_specs : ConfigSpecs = {
+    })
+    config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads"),
         "quality":
         IntParam(
@@ -99,14 +99,14 @@ class TrimGalore(TrimFqEnvTask):
         thread = params["threads"]
         qual = params["quality"]
         seq_type = params["sequencing_type"]
-        #hard_trim_5 = params["hard_trimming_5prime"]
-        #hard_trim_3 = params["hard_trimming_3prime"]
+        # hard_trim_5 = params["hard_trimming_5prime"]
+        # hard_trim_3 = params["hard_trimming_3prime"]
         max_unsequenced_nucleotides = params["filter_reads_with_unsequenced_nucl"]
         min_sz = params["min_size"]
 
-        #trimgalore_dir = params["output_dir"]
+        # trimgalore_dir = params["output_dir"]
 
-        #self._output_dir_path = self._get_output_dir_path(trimgalore_dir)
+        # self._output_dir_path = self._get_output_dir_path(trimgalore_dir)
 
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 

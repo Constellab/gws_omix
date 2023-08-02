@@ -5,8 +5,9 @@
 
 import os
 
-from gws_core import (File, InputSpec, IntParam, OutputSpec, TaskInputs,
-                      TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, TaskInputs,
+                      TaskOutputs, task_decorator)
 from gws_omix import FastqFolder
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
@@ -29,13 +30,13 @@ class STARMappingTranscriptomeReads(BaseOmixEnvTask):
 
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'fastq_folder': InputSpec(FastqFolder, human_name="Folder_fastq_files", short_description="Folder containing all RNAseq sequecing files (fastq.gz)"),
         'star_transcriptome_index': InputSpec(StarIndexFolder, human_name="STAR_index_folder", short_description="Folder containing STAR index files"),
         'metadata_file': InputSpec(File, human_name="Metadata File", short_description="Metadata File"),
-    }
+    })
 
-    output_specs: OutputSpecs = {
+    output_specs: OutputSpecs = OutputSpecs({
         'star_bam_folder':
         OutputSpec(
             BAMToQuantFolder, human_name="Mapping_output_files",
@@ -48,7 +49,7 @@ class STARMappingTranscriptomeReads(BaseOmixEnvTask):
         # OutputSpec(
         #     SalmonReadsQuantmergeOutputFile, human_name="RawCountMergedFile",
         #     short_description="Raw count genes expression counting files merged in one (see salmon quantmerge documentation)")
-    }
+    })
 
     config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads [Default =  2] "),

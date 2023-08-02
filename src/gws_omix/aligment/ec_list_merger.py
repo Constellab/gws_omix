@@ -5,8 +5,9 @@
 
 import re
 
-from gws_core import (File, InputSpec, OutputSpec, Task, TaskInputs,
-                      TaskOutputs, task_decorator, ConfigParams, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (ConfigParams, File, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 
 from ..file.blast_ec_file import BlastECFile
 from ..file.deepec_file import DeepECFile
@@ -17,13 +18,13 @@ from ..file.ec_list_file import ECListFile
                 human_name="ECListMerger",
                 short_description="Merges DeepECFile and BlastECFile files")
 class ECListMerger(Task):
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'deepec_ec_file': InputSpec(DeepECFile, human_name="", short_description=""),
         'blast_ec_file': InputSpec(BlastECFile, human_name="", short_description="")
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'merged_ec_list': OutputSpec(ECListFile, human_name="", short_description="")
-    }
+    })
 
     # def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -4,9 +4,8 @@
 
 import os
 
-from gws_core import (InputSpec, OutputSpec, TaskInputs, TaskOutputs,
-                      task_decorator, ConfigParams, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
-
+from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, TaskInputs, TaskOutputs, task_decorator)
 
 from ..base_env.deepec_env_task import DeepECEnvTask
 from ..file.deepec_file import DeepECFile
@@ -20,12 +19,12 @@ class DeepEC(DeepECEnvTask):
 
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'fasta_file': InputSpec(FastaFile, human_name="", short_description="")
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'deepec_file': OutputSpec(DeepECFile, human_name="", short_description="")
-    }
+    })
 
     def gather_outputs(self,  inputs: TaskInputs) -> TaskOutputs:
         result_file = DeepECFile()

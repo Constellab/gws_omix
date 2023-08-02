@@ -33,7 +33,7 @@ class PygseaPipShellProxyHelper():
 #         "pygsea_pip_env.yml"
 #     )
 
-#     async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
+#     def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
 #         command = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
 #         shell_proxy.run(command, shell_mode=True)
 

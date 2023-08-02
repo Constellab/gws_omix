@@ -5,8 +5,8 @@
 import os
 import re
 
-from gws_core import (InputSpec, OutputSpec, TaskInputs,
-                      TaskOutputs, task_decorator, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (InputSpec, InputSpecs, OutputSpec, OutputSpecs,
+                      TaskInputs, TaskOutputs, task_decorator)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.deepec_file import DeepECFile
@@ -30,12 +30,12 @@ class DeepECListExtractor(BaseOmixEnvTask):
 
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'deepec_file': InputSpec(DeepECFile, human_name="", short_description="")
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'ec_list_file': OutputSpec(ECListFile, human_name="", short_description="")
-    }
+    })
 
     def gather_outputs(self, inputs: TaskInputs) -> TaskOutputs:
         ec_fi = inputs["deepec_file"]

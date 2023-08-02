@@ -53,22 +53,22 @@ class GseaGoTerm(Task):
                 Gene_2305   NA
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'Gene_universe':
         InputSpec(
             File,
             short_description="A gene universe file (.gmt format) containing all annotated genes on the genomic sequence linked to their(s) GO term (see Documentation)",
             human_name="Gene Universe file"),
         'Gene_list': InputSpec(
-            File, short_description="Gene list file to assess (see Documentation)", human_name="Gene List")}
-    output_specs: OutputSpecs = {
+            File, short_description="Gene list file to assess (see Documentation)", human_name="Gene List")})
+    output_specs: OutputSpecs = OutputSpecs({
         'GO_term_enrichment': OutputSpec(ResourceSet)
-    }
+    })
     config_specs: ConfigSpecs = {"Top_results_number": IntParam(
         default_value=10, min_value=1, short_description="Number of the best enriched GO term to include in the top list"),
         "Threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         gene_universe = inputs["Gene_universe"]
         gene_list = inputs["Gene_list"]
         top_threshold = params["Top_results_number"]

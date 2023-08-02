@@ -25,14 +25,14 @@ class FeatureCounts(Task):
     This task generate genes expression count merged files with bam containing folder. This output is compatible with DESEQ2 task.
 
     """
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'bam_folder': InputSpec(BAMToQuantFolder),
         'gtf_file': InputSpec(GTFFile)
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'gene_expression_file': OutputSpec(SalmonReadsQuantmergeOutputFile)  # ,
         # 'summary_stats': OutputSpec(Table)
-    }
+    })
     config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")
     }

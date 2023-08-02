@@ -61,17 +61,18 @@ class ToGO2GoTerm(Task):
                 GO:0050896   NA   Gene_00018 Gene_00019
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'Gene_universe':
         InputSpec(
             File,
             short_description="A gene universe file containing all annotated genes on the genomic sequence linked to their(s) GO term (see Documentation)",
             human_name="Gene Universe file"),
         'Gene_list': InputSpec(
-            File, short_description="Gene list file to assess (see Documentation)", human_name="Gene List")}
-    output_specs: OutputSpecs = {
+            File, short_description="Gene list file to assess (see Documentation)", human_name="Gene List")})
+
+    output_specs: OutputSpecs = OutputSpecs({
         'GO_term_enrichment': OutputSpec(ResourceSet)
-    }
+    })
     config_specs: ConfigSpecs = {
         'Gene_universe_format': StrParam(allowed_values=["gmt_format", "topgo_format"],
                                          short_description="Gene Universe File format (see Documentation above)"),
@@ -80,7 +81,7 @@ class ToGO2GoTerm(Task):
             default_value=25, min_value=1, short_description="Top X results Fisher's Text p-value based (see TOPGO documentation)")
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         gene_universe = inputs["Gene_universe"]
         gene_list = inputs["Gene_list"]
         gene_universe_format = params["Gene_universe_format"]

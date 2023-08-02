@@ -4,7 +4,9 @@
 
 import os
 
-from gws_core import (IntParam, TaskInputs, TaskOutputs, task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (ConfigParams, ConfigSpecs, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, TaskInputs,
+                      TaskOutputs, task_decorator)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
@@ -23,13 +25,13 @@ class STARIndex(BaseOmixEnvTask):
         * `read_size'`: Reads size minus 1 in bp (ex. 150 bp --> 150 - 1 = 149)". [MANDATORY]
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'genome_file': InputSpec(FastaFile, short_description="Fasta file", human_name="Fasta file"),
         'annotation_file': InputSpec(GTFFile, short_description="GTF file", human_name="GTF annotation file")
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'star_index': OutputSpec(StarIndexFolder,)
-    }
+    })
     config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads [Default =  2] "),
         "memory": IntParam(default_value=2000000000, min_value=2000000000, short_description="Memory (RAM in Bytes) usage"),

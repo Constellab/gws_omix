@@ -29,12 +29,12 @@ class BlastECListExtractor(BaseOmixEnvTask):
     sp|A3LZ57|SEC16_PICST	sp|A3LZ57|SEC16_PICST	100.000	100	100	2212	0	0	1	2212	2212	1	2212	2212	0.0	4490	BEST_HIT	NA
 
     """
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'blastec_file': InputSpec(BlastECFile, human_name="", short_description="")
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'ec_list_file': OutputSpec(ECListFile, human_name="", short_description="")
-    }
+    })
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         ec_fi = inputs["blastec_file"]

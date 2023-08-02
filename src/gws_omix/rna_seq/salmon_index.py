@@ -5,8 +5,9 @@
 
 import os
 
-from gws_core import (InputSpec, IntParam, OutputSpec, TaskInputs, TaskOutputs,
-                      task_decorator, ConfigParams, ConfigSpecs, InputSpec, OutputSpec, InputSpecs, OutputSpecs)
+from gws_core import (ConfigParams, ConfigSpecs, InputSpec, InputSpecs,
+                      IntParam, OutputSpec, OutputSpecs, TaskInputs,
+                      TaskOutputs, task_decorator)
 
 from ..base_env.omix_env_task import BaseOmixEnvTask
 from ..file.fasta_file import FastaFile
@@ -23,13 +24,16 @@ class SalmonIndex(BaseOmixEnvTask):
         * `threads`: Multi threading options: number of threads to use. [Default =  2]
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'cdna_file': InputSpec(FastaFile, human_name="FastaFile", short_description="cDNA fasta file (compressed in gz)")
         # 'genome_file': InputSpec(FastaFile, human_name="FastaFile", short_description="Genome fasta file (compressed in gz)"),
         # 'gtf_annotation': InputSpec(GTFFile, human_name="GTFfile", short_description="Genome annotation file (compressed in gz)"),
-    }
-    output_specs: OutputSpecs = {'salmon_index_folder': OutputSpec(
-        SalmonIndexResultFolder, human_name="SalmonIndexFolder", short_description="Salmon index folder"), }
+    })
+    output_specs: OutputSpecs = OutputSpecs({
+        'salmon_index_folder': OutputSpec(
+            SalmonIndexResultFolder, human_name="SalmonIndexFolder", short_description="Salmon index folder")
+    })
+
     config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
     }
@@ -51,7 +55,7 @@ class SalmonIndex(BaseOmixEnvTask):
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         thread = params["threads"]
-        #annotation = inputs["gtf_annotation"]
+        # annotation = inputs["gtf_annotation"]
         genome_fasta = inputs["protein_file"]
         fasta_name = os.path.basename(genome_fasta.path)
         script_file_dir = os.path.dirname(os.path.realpath(__file__))

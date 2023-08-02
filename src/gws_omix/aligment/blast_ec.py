@@ -51,12 +51,12 @@ class BlastEC(Task):
 
     OUT_FMT = '7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore'
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'fasta_file': InputSpec(FastaFile, human_name="Fasta File", short_description="Fasta Input File")
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'filtered_blast_ec_file': OutputSpec(BlastECFile, human_name="Blast results", short_description="Blast results")
-    }
+    })
     config_specs: ConfigSpecs = {
         "taxonomy": StrParam(allowed_values=["fungi"],  short_description="Specify the tax group to select the dedicated database"),
         # "all", "prokaryota", "eukaryota", "animals", "fungi", "plant"

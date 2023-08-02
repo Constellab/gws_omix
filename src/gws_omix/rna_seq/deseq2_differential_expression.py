@@ -23,7 +23,7 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
     """
     DESeq2DifferentialAnalysis class.
     """
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'salmon_reads_quantmerge_file':
         InputSpec(
             SalmonReadsQuantmergeOutputFile, human_name="Salmon_merged_counts",
@@ -31,14 +31,14 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
         'metadata_file':
         InputSpec(
             File, human_name="Metadata_file",
-            short_description="Metadata file describing samples (see https://hub.gencovery.com/bricks/gws_omix/latest/doc/use-cases/undefined )")}
-    output_specs: OutputSpecs = {'DESeq2_tables': OutputSpec(
+            short_description="Metadata file describing samples (see https://hub.gencovery.com/bricks/gws_omix/latest/doc/use-cases/undefined )")})
+    output_specs: OutputSpecs = OutputSpecs({'DESeq2_tables': OutputSpec(
         ResourceSet, human_name="Deseq2 output files", short_description="DEseq2 output tables containing fold-change and statistics"),
         'Output_folder': OutputSpec(
         Folder, human_name="Deseq2 output folder", short_description="DEseq2 output folder containing all output files"),
         'Summary_table': OutputSpec(
         Table, human_name="Deseq2 summary file", short_description="DEseq2 output file which summarise under the threshold genes differentially expressed")
-    }
+    })
     config_specs: ConfigSpecs = {
         "metadata_column": StrParam(
             human_name="Metadata column",
