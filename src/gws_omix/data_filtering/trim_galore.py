@@ -2,23 +2,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-# import csv
-# import json
 import os
 
 from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
                       IntParam, OutputSpec, OutputSpecs, ResourceSet, StrParam,
-                      TaskInputs, TaskOutputs, task_decorator)
+                      Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_omix.base_env.trimfq_env_task import TrimFqEnvHelper
 
-from ..base_env.trimfq_env_task import TrimFqEnvTask
 from ..file.fastq_folder import FastqFolder
-
-# import re
 
 
 @task_decorator("TrimGalore", human_name="TrimGalore cleaning",
                 short_description="This task uses Trim_galore to clip and trimmed your sequencing datasets")
-class TrimGalore(TrimFqEnvTask):
+class TrimGalore(Task):
     """
     TrimeGalore class.
 
@@ -65,37 +61,8 @@ class TrimGalore(TrimFqEnvTask):
             default_value=100,
             short_description="The total number of Ns (as integer) a read may contain before it will be removed altogether. In a paired-end setting, either read exceeding this limit will result in the entire pair being removed from the trimmed output files.")}
 
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        seq_type = params["sequencing_type"]
-        filtered_folder = FastqFolder()
-        stats_file = File()
-        resource_set: ResourceSet = ResourceSet()
-        resource_set.name = "Set of Fastq Folder(s)"
-
-        if seq_type == "paired-end":
-            singelton_folder = FastqFolder()
-            filtered_folder.path = os.path.join(self.working_dir, "filtered_fastq_folder")
-            filtered_folder.name = "Filtered fastq folder"
-            singelton_folder.path = os.path.join(self.working_dir, "singleton_fastq_folder")
-            singelton_folder.name = "Singelton fastq folder"
-            stats_file.path = os.path.join(self.working_dir, "trimming_report.txt")
-
-            resource_set.add_resource(filtered_folder)
-            resource_set.add_resource(singelton_folder)
-        else:
-            filtered_folder.path = os.path.join(self.working_dir, "filtered_fastq_folder")
-            filtered_folder.name = "Filtered fastq folder"
-            stats_file.path = os.path.join(self.working_dir, "trimming_report.txt")
-
-            resource_set.add_resource(filtered_folder)
-
-        return {
-            "cleaned_fastq": resource_set,
-            "cleaning_stats": stats_file
-        }
-
-    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        fq_folder = inputs["fastq_folder"]
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        fq_folder: FastqFolder = inputs["fastq_folder"]
         thread = params["threads"]
         qual = params["quality"]
         seq_type = params["sequencing_type"]
@@ -139,4 +106,34 @@ class TrimGalore(TrimFqEnvTask):
                 max_unsequenced_nucleotides,
                 min_sz
             ]
-        return cmd
+
+        shell_proxy = TrimFqEnvHelper.create_proxy(self.message_dispatcher)
+        shell_proxy.run(cmd)
+
+        seq_type = params["sequencing_type"]
+        filtered_folder = FastqFolder()
+        stats_file = File()
+        resource_set: ResourceSet = ResourceSet()
+        resource_set.name = "Set of Fastq Folder(s)"
+
+        if seq_type == "paired-end":
+            singelton_folder = FastqFolder()
+            filtered_folder.path = os.path.join(shell_proxy.working_dir, "filtered_fastq_folder")
+            filtered_folder.name = "Filtered fastq folder"
+            singelton_folder.path = os.path.join(shell_proxy.working_dir, "singleton_fastq_folder")
+            singelton_folder.name = "Singelton fastq folder"
+            stats_file.path = os.path.join(shell_proxy.working_dir, "trimming_report.txt")
+
+            resource_set.add_resource(filtered_folder)
+            resource_set.add_resource(singelton_folder)
+        else:
+            filtered_folder.path = os.path.join(shell_proxy.working_dir, "filtered_fastq_folder")
+            filtered_folder.name = "Filtered fastq folder"
+            stats_file.path = os.path.join(shell_proxy.working_dir, "trimming_report.txt")
+
+            resource_set.add_resource(filtered_folder)
+
+        return {
+            "cleaned_fastq": resource_set,
+            "cleaning_stats": stats_file
+        }

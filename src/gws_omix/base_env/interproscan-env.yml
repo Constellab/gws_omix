@@ -1,5 +1,0 @@
-name: interproS
-channels:
-  - bioconda
-dependencies:
-  - interproscan=5.55_88.0

@@ -7,7 +7,7 @@ import os
 
 from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
                       IntParam, OutputSpec, OutputSpecs, ResourceSet,
-                      TableImporter, Task, TaskInputs, TaskOutputs,
+                      ShellProxy, TableImporter, Task, TaskInputs, TaskOutputs,
                       task_decorator)
 
 from ..base_env.pygsea_pip_env import PygseaPipShellProxyHelper
@@ -69,8 +69,8 @@ class GseaGoTerm(Task):
         "Threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        gene_universe = inputs["Gene_universe"]
-        gene_list = inputs["Gene_list"]
+        gene_universe: File = inputs["Gene_universe"]
+        gene_list: File = inputs["Gene_list"]
         top_threshold = params["Top_results_number"]
         threads = params["Threads"]
 
@@ -90,7 +90,7 @@ class GseaGoTerm(Task):
                                    )
         return outputs
 
-    def run_gsea_go(self, shell_proxy: PygseaPipShellProxyHelper,
+    def run_gsea_go(self, shell_proxy: ShellProxy,
                     script_file_dir: str,
                     gene_universe: str,
                     gene_list: str,

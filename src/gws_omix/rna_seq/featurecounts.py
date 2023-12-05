@@ -5,15 +5,12 @@
 
 import os
 
-from gws_core import (ConfigParams, ConfigSpecs, InputSpec, InputSpecs,
-                      IntParam, OutputSpec, OutputSpecs, ShellProxy, Task,
-                      TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (ConfigParams, ConfigSpecs, File, Folder, InputSpec,
+                      InputSpecs, IntParam, OutputSpec, OutputSpecs,
+                      ShellProxy, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 
 from ..base_env.subread_env_task import SubreadShellProxyHelper
-from ..file.bam_to_quant_folder import BAMToQuantFolder
-from ..file.gtf_file import GTFFile
-from ..file.salmon_reads_quantmerge_output_file import \
-    SalmonReadsQuantmergeOutputFile
 
 
 @task_decorator("FeatureCounts",  human_name="Feature Counts",
@@ -26,11 +23,11 @@ class FeatureCounts(Task):
 
     """
     input_specs: InputSpecs = InputSpecs({
-        'bam_folder': InputSpec(BAMToQuantFolder),
-        'gtf_file': InputSpec(GTFFile)
+        'bam_folder': InputSpec(Folder),
+        'gtf_file': InputSpec(File)
     })
     output_specs: OutputSpecs = OutputSpecs({
-        'gene_expression_file': OutputSpec(SalmonReadsQuantmergeOutputFile)  # ,
+        'gene_expression_file': OutputSpec(File)  # ,
         # 'summary_stats': OutputSpec(Table)
     })
     config_specs: ConfigSpecs = {
@@ -38,9 +35,8 @@ class FeatureCounts(Task):
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        bam_folder = inputs["bam_folder"]
-        bam_folder_path = bam_folder.path
-        annotation_file: GTFFile = inputs["gtf_file"]
+        bam_folder: Folder = inputs["bam_folder"]
+        annotation_file: File = inputs["gtf_file"]
         thrd = params["threads"]
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -48,7 +44,7 @@ class FeatureCounts(Task):
 
         outputs = self.run_cmd_lines(shell_proxy,
                                      script_file_dir,
-                                     bam_folder_path,
+                                     bam_folder.path,
                                      annotation_file.path,
                                      thrd
                                      )
@@ -63,7 +59,7 @@ class FeatureCounts(Task):
                       bam_folder_path: str,
                       annotation_file: str,
                       thrd: int
-                      ) -> None:
+                      ) -> str:
 
         cmd_1 = [
             " . ",
@@ -88,12 +84,10 @@ class FeatureCounts(Task):
             raise Exception("Second step did not finished")
         self.update_progress_value(100, "Done")
 
-        output_folder_path = shell_proxy.working_dir
+        return shell_proxy.working_dir
 
-        return output_folder_path
-
-    def outputs_annotation(self, output_folder_path: str) -> None:
-        result_file = SalmonReadsQuantmergeOutputFile()
+    def outputs_annotation(self, output_folder_path: str) -> TaskOutputs:
+        result_file = File()
         # result_file_stat = Table()
         result_file.path = os.path.join(output_folder_path, "featurecounts.gene_expression_matrix.txt")
         # result_file_stat.path = os.path.join(output_folder_path, "featurecounts.summary.txt")

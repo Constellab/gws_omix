@@ -4,17 +4,7 @@
 
 import os
 
-from gws_core import (CondaEnvShell, CondaShellProxy, MessageDispatcher,
-                      task_decorator)
-
-
-@task_decorator("TopGO2EnvTask", hide=True)
-class TopGO2EnvTask(CondaEnvShell):
-    unique_env_name = "TopGO2EnvTask"
-    env_file_path = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)),
-        "topgo2_env.yml"
-    )
+from gws_core import CondaShellProxy, MessageDispatcher
 
 
 class TopGO2ShellProxyHelper():

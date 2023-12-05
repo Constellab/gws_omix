@@ -4,7 +4,7 @@
 
 from typing import List, Union
 
-from gws_core import File, Folder, Shell, ShellProxy, resource_decorator
+from gws_core import Folder, ShellProxy, resource_decorator
 
 
 @resource_decorator("FastqFolder",

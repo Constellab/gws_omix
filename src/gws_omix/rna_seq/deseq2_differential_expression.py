@@ -9,24 +9,22 @@ import os
 from gws_core import (ConfigParams, ConfigSpecs, File, FloatParam, Folder,
                       InputSpec, InputSpecs, OutputSpec, OutputSpecs,
                       ResourceSet, StrParam, Table, TableAnnotatorHelper,
-                      TableImporter, TaskInputs, TaskOutputs, task_decorator)
+                      TableImporter, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 
-from ..base_env.r_env_task import BaseREnvTask
-# from ..file.deseq2_summary_table import Deseq2SummaryTable
-from ..file.salmon_reads_quantmerge_output_file import \
-    SalmonReadsQuantmergeOutputFile
+from ..base_env.r_env_task import BaseREnvHelper
 
 
 @task_decorator("DESeq2DifferentialAnalysis", human_name="DESeq2 pairwise differential analysis",
                 short_description="Compute differential analysis using DESeq2 R package (pairwise comparison)")
-class DESeq2DifferentialAnalysis(BaseREnvTask):
+class DESeq2DifferentialAnalysis(Task):
     """
     DESeq2DifferentialAnalysis class.
     """
     input_specs: InputSpecs = InputSpecs({
         'salmon_reads_quantmerge_file':
         InputSpec(
-            SalmonReadsQuantmergeOutputFile, human_name="Salmon_merged_counts",
+            File, human_name="Salmon_merged_counts",
             short_description="Salmon merged raw count files"),
         'metadata_file':
         InputSpec(
@@ -59,25 +57,40 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
             short_description="Choose the threshold used to filter adjusted p-value to generate summary file")
     }
 
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        salmon_merged_matrix: File = inputs["salmon_reads_quantmerge_file"]
+        metadata: File = inputs["metadata_file"]
+        metadata_col = params["metadata_column"]
+        output_file_id = params["output_file_names"]
+        threshold = params["summary_threshold"]
+        script_file_dir = os.path.dirname(os.path.realpath(__file__))
+        cmd = [
+            "bash ",
+            os.path.join(script_file_dir, "./sh/deseq2.sh"),
+            os.path.join(script_file_dir, "./R/Deseq2_script.one_parameter.R"),
+            salmon_merged_matrix.path,
+            metadata.path,
+            metadata_col,
+            output_file_id,
+            threshold
+        ]
+
+        shell_proxy = BaseREnvHelper.create_proxy(cmd)
+        shell_proxy.run(cmd)
+
         # Get output folder
         output_file_id = params["output_file_names"]
         result_folder = Folder()
-        result_folder.path = os.path.join(self.working_dir)
+        result_folder.path = os.path.join(shell_proxy.working_dir)
         result_folder.name = "Output Folder"
-        # result_file = Table()
-        for path in glob.glob(os.path.join(self.working_dir, "SummaryTable.csv")):
+        for path in glob.glob(os.path.join(shell_proxy.working_dir, "SummaryTable.csv")):
             result_file = TableImporter.call(File(path=path), {'delimiter': 'tab'})
-            # basename = os.path.basename(path)
             result_file.name = output_file_id+".summary_table.csv"
         # Create ressource set containing differnetial analysis results tables
         resource_table_set: ResourceSet = ResourceSet()
         resource_table_set.name = "Set of DESeq2 differential analysis tables"
-        # deseq2_output_files = os.path.join(self.working_dir, "*.txt")
 
-        # deseq2_output_file_path = []
-        for output_file_path in glob.glob(os.path.join(self.working_dir, "*.txt")):
-            # deseq2_output_file_path.append(output_file_path)
+        for output_file_path in glob.glob(os.path.join(shell_proxy.working_dir, "*.txt")):
 
             # for output_file_path in self.deseq2_output_file_paths.items():
             table = TableImporter.call(File(path=output_file_path), {'delimiter': 'tab', "index_column": 0})
@@ -92,51 +105,3 @@ class DESeq2DifferentialAnalysis(BaseREnvTask):
             'Output_folder': result_folder,
             'Summary_table': result_file
         }
-
-    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        salmon_merged_matrix = inputs["salmon_reads_quantmerge_file"]
-        metadata = inputs["metadata_file"]
-        metadata_col = params["metadata_column"]
-        output_file_id = params["output_file_names"]
-        threshold = params["summary_threshold"]
-        # design_formula = params["design_formula"]
-        script_file_dir = os.path.dirname(os.path.realpath(__file__))
-        cmd = [
-            "bash ",
-            os.path.join(script_file_dir, "./sh/deseq2.sh"),
-            os.path.join(script_file_dir, "./R/Deseq2_script.one_parameter.R"),
-            salmon_merged_matrix.path,
-            metadata.path,
-            metadata_col,
-            output_file_id,
-            threshold
-        ]
-
-        return cmd
-
-        # if params["design_formula"]:
-        #     if params["metadata_column"]:
-        #         raise BadRequestException("Only metadata column or design formula is required")
-        #     design_formula = params["design_formula"]
-        #     cmd = [
-        #         " Rscript --vanilla ",
-        #         os.path.join(script_file_dir, "./R/Deseq2_script.multi_parameter_interaction.R"),
-        #         salmon_merged_matrix.path,
-        #         metadata.path,
-        #         "\' " + design_formula + " \' ",
-        #         output_file_id
-        #     ]
-        # elif params["metadata_column"]:
-        #     metadata_col = params["metadata_column"]
-        #     cmd = [
-        #         " Rscript --vanilla ",
-        #         os.path.join(script_file_dir, "./R/Deseq2_script.one_parameter.R"),
-        #         salmon_merged_matrix.path,
-        #         metadata.path,
-        #         metadata_col,
-        #         output_file_id
-        #     ]
-        # else:
-        #     raise BadRequestException("Metadata column or design formula is required")
-
-        # return cmd

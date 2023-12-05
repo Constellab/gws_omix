@@ -5,18 +5,15 @@
 
 import os
 
-from gws_core import (ConfigParams, ConfigSpecs, InputSpec, InputSpecs,
-                      IntParam, OutputSpec, OutputSpecs, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (ConfigParams, ConfigSpecs, File, Folder, InputSpec,
+                      InputSpecs, IntParam, OutputSpec, OutputSpecs, Task,
+                      TaskInputs, TaskOutputs, task_decorator)
 
-from ..base_env.omix_env_task import BaseOmixEnvTask
-from ..file.fasta_file import FastaFile
-from ..file.gtf_file import GTFFile
-from ..file.salmon_index_result_folder import SalmonIndexResultFolder
+from ..base_env.omix_env_task import BaseOmixEnvHelper
 
 
 @task_decorator("SalmonIndex")
-class SalmonIndex(BaseOmixEnvTask):
+class SalmonIndex(Task):
     """
     SalmonIndex class. Represents a process that wraps Salmon index tool. Mandatory to use Salmon pseudo-aligment RNAseq mapping tool (wraps in SalmonQuantMapping class).
 
@@ -25,35 +22,20 @@ class SalmonIndex(BaseOmixEnvTask):
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'cdna_file': InputSpec(FastaFile, human_name="FastaFile", short_description="cDNA fasta file (compressed in gz)")
-        # 'genome_file': InputSpec(FastaFile, human_name="FastaFile", short_description="Genome fasta file (compressed in gz)"),
+        'cdna_file': InputSpec(File, human_name="FastaFile", short_description="cDNA fasta file (compressed in gz)")
+        # 'genome_file': InputSpec(File, human_name="FastaFile", short_description="Genome fasta file (compressed in gz)"),
         # 'gtf_annotation': InputSpec(GTFFile, human_name="GTFfile", short_description="Genome annotation file (compressed in gz)"),
     })
     output_specs: OutputSpecs = OutputSpecs({
         'salmon_index_folder': OutputSpec(
-            SalmonIndexResultFolder, human_name="SalmonIndexFolder", short_description="Salmon index folder")
+            Folder, human_name="SalmonIndexFolder", short_description="Salmon index folder")
     })
 
     config_specs: ConfigSpecs = {
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
     }
 
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        # path = self._get_output_file_path(inputs)
-
-        # print("xxxxx")
-        # print(path)
-        # print(os.listdir(os.path.join(path)))
-        # print("---")
-        # with open(os.path.join(path, "ref_indexing.log")) as fp:
-        #     print(fp.read())
-        # print("---")
-
-        result_folder = SalmonIndexResultFolder()
-        result_folder.path = os.path.join(self.working_dir, "salmon_index")
-        return {"salmon_index_folder": result_folder}
-
-    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         thread = params["threads"]
         # annotation = inputs["gtf_annotation"]
         genome_fasta = inputs["protein_file"]
@@ -68,14 +50,10 @@ class SalmonIndex(BaseOmixEnvTask):
             thread,
             fasta_name
         ]
-        return cmd
 
-    # def _get_fasta_file_name(self, inputs):
-    #     genome_fasta = inputs["protein_file"]
-    #     return os.path.basename(genome_fasta.path)
+        shell_proxy = BaseOmixEnvHelper.create_proxy(self.message_dispatcher)
 
-    # def _get_output_file_path(self, inputs):
-    #     return os.path.join(
-    #         self.working_dir,
-    #         self._get_fasta_file_name(inputs) + ".salmon_index"
-    #     )
+        shell_proxy.run(cmd)
+
+        result_folder = Folder(os.path.join(shell_proxy.working_dir, "salmon_index"))
+        return {"salmon_index_folder": result_folder}

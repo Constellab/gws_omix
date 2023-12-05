@@ -5,16 +5,11 @@
 import os
 import re
 
-from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, FloatParam,
-                      InputSpec, InputSpecs, IntParam, OutputSpec, OutputSpecs,
-                      StrParam, Task, TaskFileDownloader, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
+                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec,
+                      OutputSpecs, StrParam, Task, TaskFileDownloader,
+                      TaskInputs, TaskOutputs, task_decorator)
 from gws_omix.base_env.omix_env_task import BaseOmixEnvHelper
-
-from ..file.blast_ec_file import BlastECFile
-from ..file.fasta_file import FastaFile
-
-# from ..utils._settings import Settings
 
 
 @task_decorator("BlastEC", human_name="Blast to EC-number Annotator",
@@ -52,10 +47,10 @@ class BlastEC(Task):
     OUT_FMT = '7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore'
 
     input_specs: InputSpecs = InputSpecs({
-        'fasta_file': InputSpec(FastaFile, human_name="Fasta File", short_description="Fasta Input File")
+        'fasta_file': InputSpec(File, human_name="Fasta File", short_description="Fasta Input File")
     })
     output_specs: OutputSpecs = OutputSpecs({
-        'filtered_blast_ec_file': OutputSpec(BlastECFile, human_name="Blast results", short_description="Blast results")
+        'filtered_blast_ec_file': OutputSpec(File, human_name="Blast results", short_description="Blast results")
     })
     config_specs: ConfigSpecs = {
         "taxonomy": StrParam(allowed_values=["fungi"],  short_description="Specify the tax group to select the dedicated database"),
@@ -93,7 +88,7 @@ class BlastEC(Task):
         shell_proxy.run(["ln", "-s", fasta_file_path, './'])
         shell_proxy.run(["ln", "-s", blastdb_folder_path + '/*', './'])
 
-        fasta_file: FastaFile = inputs["fasta_file"]
+        fasta_file: File = inputs["fasta_file"]
         fasta_file_name = os.path.basename(fasta_file.path)
 
         output_file_path = os.path.join(
@@ -138,7 +133,7 @@ class BlastEC(Task):
         tab_file_path = self._download_tab(file_prefix)
         filtered_file_path = self._create_filtered_output_file(
             output_file_path, tab_file_path, idt)
-        result_file = BlastECFile(path=filtered_file_path)
+        result_file = File(path=filtered_file_path)
 
         return {"filtered_blast_ec_file": result_file}
 

@@ -3,15 +3,11 @@
 # About us: https://gencovery.com
 
 import os
-from gws_core import  MessageDispatcher, PipShellProxy
+
+from gws_core import MessageDispatcher, PipShellProxy
 
 
 class HTSeqShellProxyHelper():
-    ENV_DIR_NAME = "HTSeqShellProxy"
-    ENV_FILE_PATH = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)),
-        "htseq_env.yml"
-    )
 
     PIP_ENV_DIR_NAME = "HTSeqShellProxyPip"
     PIP_ENV_FILE_PATH = os.path.join(
