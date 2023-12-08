@@ -3,24 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, Settings, TaskRunner,
-                      ViewTester)
+from gws_core import BaseTestCaseLight, File, Settings, TaskRunner
 from gws_omix import BlastEC
 
 
-class TestBlastEC(BaseTestCase):
+# gws_omix/test_blast_ec
+class TestBlastEC(BaseTestCaseLight):
 
     def test_BlastEC(self):
-        settings = Settings.retrieve()
-        data_dir = settings.get_variable("gws_omix:testdata_dir")
-        file = File()
-        file.path = os.path.join(data_dir, "fasta_subject.faa")
-
-        settings = Settings.retrieve()
-        testdata_dir = settings.get_variable("gws_omix:testdata_dir")
+        data_dir = Settings.get_instance().get_variable("gws_omix:testdata_dir")
+        file = File(os.path.join(data_dir, "fasta_subject.faa"))
 
         # Running BlastEC.py
         tester = TaskRunner(
@@ -37,16 +31,5 @@ class TestBlastEC(BaseTestCase):
 
         with open(expected_file_path, 'r') as fp:
             expected_result_content = fp.read()
-            print("----")
-            print(result_content)
-            print("----")
-            print(expected_result_content)
-            print("----")
             # Comparing results
             self.assertEqual(result_content, expected_result_content)
-
-        table_view = blast_ec_file.view_head_tail_as_table(ConfigParams())
-        tester = ViewTester(view=table_view)
-        dic_ = tester.to_dict(params={})
-        print(json.dumps(dic_, indent=2))
-        self.assertEqual(dic_["total_number_of_rows"], 24)

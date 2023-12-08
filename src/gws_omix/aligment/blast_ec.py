@@ -44,7 +44,7 @@ class BlastEC(Task):
         "virus": "uniprot-taxonomy_v1_10239"
     }
 
-    OUT_FMT = '7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore'
+    OUT_FMT = '"7 qaccver saccver pident qcovs qcovhsp length mismatch gapopen qstart qend qlen sstart send slen evalue bitscore"'
 
     input_specs: InputSpecs = InputSpecs({
         'fasta_file': InputSpec(File, human_name="Fasta File", short_description="Fasta Input File")
@@ -69,6 +69,8 @@ class BlastEC(Task):
         shell_proxy: CondaShellProxy = BaseOmixEnvHelper.create_proxy(
             self.message_dispatcher)
 
+        self.log_info_message("Running BlastEC")
+
         taxo = params["taxonomy"]
         alignment = params["alignment_type"]
         evalue = params["e_value"]
@@ -85,7 +87,8 @@ class BlastEC(Task):
 
         # add fasta file path, and blastdb_folder_path to working dir using symlink
         # because blast command need to have the fasta file and the blastdb in the same folder
-        shell_proxy.run(["ln", "-s", fasta_file_path, './'])
+        # rename the .fasta.txt file to .fasta
+        shell_proxy.run(["ln", "-s", fasta_file_path, file_prefix + '.fasta'])
         shell_proxy.run(["ln", "-s", blastdb_folder_path + '/*', './'])
 
         fasta_file: File = inputs["fasta_file"]
@@ -98,14 +101,14 @@ class BlastEC(Task):
         if alignment == "PP":
             cmd = [
                 "blastp",
-                "-db", "uniprot*.fasta",
-                "-query", fasta_file_name,
+                "-db", "uniprot*.fasta.txt",
+                "-query", fasta_file.path,
                 "-evalue", evalue,
                 "-num_threads", thread,
                 "-qcov_hsp_perc", cov,
                 "-num_alignments", num_alignments,
                 "-outfmt", self.OUT_FMT,
-                "show_gis",
+                "-show_gis",
                 "-task", "balstp-fast",
                 "-out", output_file_path
             ]
@@ -119,13 +122,18 @@ class BlastEC(Task):
                 "-qcov_hsp_perc", cov,
                 "-num_alignments", num_alignments,
                 "-outfmt", self.OUT_FMT,
-                "show_gis",
+                "-show_gis",
                 "-task", "balstp-fast",
                 "-out", output_file_path
             ]
 
         # call the command
-        shell_proxy.run(cmd, shell_mode=True)
+        result = shell_proxy.run(cmd, shell_mode=True)
+
+        if result != 0:
+            raise Exception(f"Error while running blast, details are available in messages.")
+
+        self.log_success_message("Blast run successfully, parsing results")
 
         # execute blast parsing command and ec number retrieving
         idt = params["idt"]
@@ -143,10 +151,13 @@ class BlastEC(Task):
 
         # Gest fasta
         self.log_info_message("Downloading fasta file")
-        fasta_file_name = file_prefix + '.fasta.gz'
-        db_location = os.path.join(self.DB_LOCATION)
-        return file_downloader.download_file_if_missing(
+        db_location = self.DB_LOCATION + '/' + file_prefix + '.fasta.gz'
+        fasta_file_name = file_prefix + '_fasta'
+        unzip_folder = file_downloader.download_file_if_missing(
             db_location, fasta_file_name, decompress_file=True)
+
+        # path of the downloaded fasta file inside the folder
+        return os.path.join(unzip_folder, f"{file_prefix}.fasta.txt")
 
     def _download_tab(self, file_prefix: str) -> str:
         file_downloader = TaskFileDownloader(
@@ -154,10 +165,13 @@ class BlastEC(Task):
 
         # Get tab
         self.log_info_message("Downloading tab file")
-        tab_file_name = file_prefix + '.tab.gz'
-        db_location = os.path.join(self.DB_LOCATION, tab_file_name)
-        return file_downloader.download_file_if_missing(
+        db_location = self.DB_LOCATION + '/' + file_prefix + '.tab.gz'
+        tab_file_name = file_prefix + '_tab'
+        unzip_folder = file_downloader.download_file_if_missing(
             db_location, tab_file_name, decompress_file=True)
+
+        # path of the downloaded tab file inside the folder
+        return os.path.join(unzip_folder, f"{file_prefix}.tab.txt")
 
     def _download_blastdb(self, file_prefix: str) -> str:
         file_downloader = TaskFileDownloader(
@@ -165,14 +179,19 @@ class BlastEC(Task):
 
         # Get blastdb
         self.log_info_message("Downloading blastdb file")
-        blastdb_file_name = file_prefix + '.fasta_blast_index.tar.gz'
-        db_location = os.path.join(self.DB_LOCATION, blastdb_file_name)
-        return file_downloader.download_file_if_missing(
+        db_location = self.DB_LOCATION + '/' + file_prefix + '.fasta_blast_index.tar.gz'
+        blastdb_file_name = file_prefix + '_fasta_blast_index'
+
+        unzip_folder = file_downloader.download_file_if_missing(
             db_location, blastdb_file_name, decompress_file=True)
+
+        return os.path.join(unzip_folder, file_prefix + '.fasta_blast_index')
 
     def _create_filtered_output_file(self, blast_output_file: str, tabular_file: str, id):
         gene_ec = {}
         hit_parsed = {}
+
+        self.log_info_message("Creating corresponding EC number(s) for each gene")
 
         # Create dict. containing genes with their corresponding EC number(s)
         with open(tabular_file, 'r') as lines:
@@ -188,6 +207,8 @@ class BlastEC(Task):
                             "\n"  # ! : missing+ "\n"
 
         filtered_file_path = blast_output_file + ".filtered.csv"
+
+        self.log_info_message("Creating corresponding EC number(s) for each gene")
 
         with open(filtered_file_path, 'w+') as filtered_file_fp:
             with open(blast_output_file, 'r') as raw_fp:
