@@ -101,7 +101,7 @@ class BlastEC(Task):
         if alignment == "PP":
             cmd = [
                 "blastp",
-                "-db", "uniprot*.fasta.txt",
+                "-db", "uniprot*.fasta",
                 "-query", fasta_file.path,
                 "-evalue", evalue,
                 "-num_threads", thread,
