@@ -12,7 +12,7 @@ from gws_core import (ConfigParams, File, InputSpec, InputSpecs, OutputSpec,
 
 @task_decorator("ECListMerger",
                 human_name="ECListMerger",
-                short_description="Merges DeepECFile and BlastECFile files")
+                short_description="Merges DeepECFile and BlastECFile files", hide=True)
 class ECListMerger(Task):
     input_specs: InputSpecs = InputSpecs({
         'deepec_ec_file': InputSpec(File, human_name="", short_description=""),

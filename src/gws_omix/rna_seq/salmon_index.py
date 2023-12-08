@@ -12,7 +12,7 @@ from gws_core import (ConfigParams, ConfigSpecs, File, Folder, InputSpec,
 from ..base_env.omix_env_task import BaseOmixEnvHelper
 
 
-@task_decorator("SalmonIndex")
+@task_decorator("SalmonIndex", hide=True)
 class SalmonIndex(Task):
     """
     SalmonIndex class. Represents a process that wraps Salmon index tool. Mandatory to use Salmon pseudo-aligment RNAseq mapping tool (wraps in SalmonQuantMapping class).

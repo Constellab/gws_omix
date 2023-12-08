@@ -16,7 +16,7 @@ from ..base_env.pygsea_pip_env import PygseaPipShellProxyHelper
 
 
 @task_decorator("GseaGoTerm", human_name="GSEA_GO_enrichment",
-                short_description="Performs GO term enrichment using pyGSEA library")
+                short_description="Performs GO term enrichment using pyGSEA library", hide=True)
 class GseaGoTerm(Task):
     """
     GseaGoTerm class.

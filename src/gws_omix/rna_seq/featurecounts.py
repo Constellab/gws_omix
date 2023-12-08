@@ -14,7 +14,7 @@ from ..base_env.subread_env_task import SubreadShellProxyHelper
 
 
 @task_decorator("FeatureCounts",  human_name="Feature Counts",
-                short_description="Genes expression count based on bam files containing folder")
+                short_description="Genes expression count based on bam files containing folder", hide=True)
 class FeatureCounts(Task):
     """
     featureCounts class.

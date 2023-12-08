@@ -13,7 +13,7 @@ from gws_omix import FastqFolder
 from ..base_env.omix_env_task import BaseOmixEnvHelper
 
 
-@task_decorator("STARMappingTranscriptomeReads")
+@task_decorator("STARMappingTranscriptomeReads", hide=True)
 class STARMappingTranscriptomeReads(Task):
     """
     STARMappingTranscriptomeReads class. Represents a process that wraps STAR program.

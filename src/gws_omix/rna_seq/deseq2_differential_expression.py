@@ -16,7 +16,7 @@ from ..base_env.r_env_task import BaseREnvHelper
 
 
 @task_decorator("DESeq2DifferentialAnalysis", human_name="DESeq2 pairwise differential analysis",
-                short_description="Compute differential analysis using DESeq2 R package (pairwise comparison)")
+                short_description="Compute differential analysis using DESeq2 R package (pairwise comparison)", hide=True)
 class DESeq2DifferentialAnalysis(Task):
     """
     DESeq2DifferentialAnalysis class.

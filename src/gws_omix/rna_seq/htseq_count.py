@@ -14,7 +14,7 @@ from ..base_env.htseq_env_task import HTSeqShellProxyHelper
 
 
 @task_decorator("HTSeqCount",  human_name="HTSeqCount",
-                short_description="Genes expression count based on bam files containing folder")
+                short_description="Genes expression count based on bam files containing folder", hide=True)
 class HTSeqCount(Task):
     """
     HTSeqCount class.

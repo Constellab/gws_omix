@@ -16,7 +16,7 @@ from ..base_env.topgo2_env_task import TopGO2ShellProxyHelper
 
 
 @task_decorator("TopGO2GoTerm", human_name="TopGO2_GO_enrichment",
-                short_description="Performs GO term enrichment using TopGO2 R package")
+                short_description="Performs GO term enrichment using TopGO2 R package", hide=True)
 class ToGO2GoTerm(Task):
     """
     TopGO2-GoTerm class.

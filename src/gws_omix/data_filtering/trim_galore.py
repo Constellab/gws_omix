@@ -13,7 +13,7 @@ from ..file.fastq_folder import FastqFolder
 
 
 @task_decorator("TrimGalore", human_name="TrimGalore cleaning",
-                short_description="This task uses Trim_galore to clip and trimmed your sequencing datasets")
+                short_description="This task uses Trim_galore to clip and trimmed your sequencing datasets", hide=True)
 class TrimGalore(Task):
     """
     TrimeGalore class.

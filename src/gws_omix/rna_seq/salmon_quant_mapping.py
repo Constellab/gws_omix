@@ -12,7 +12,7 @@ from ..base_env.omix_env_task import BaseOmixEnvHelper
 from ..file.fastq_folder import FastqFolder
 
 
-@task_decorator("SalmonQuantMapping")
+@task_decorator("SalmonQuantMapping", hide=True)
 class SalmonQuantMapping(Task):
     """
     SalmonQuantMapping class. Represents a process that wraps Salmon pseudo-aligment RNAseq mapping program (salmon quant).
