@@ -1,0 +1,7 @@
+name: .venv
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - biopython =1.82
+  - r-bioseq =0.1.4

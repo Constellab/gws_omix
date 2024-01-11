@@ -1,5 +1,4 @@
 # Blast_EC
-from .aligment.blast_ec import BlastEC
 # Merge EC List
 from .aligment.ec_list_merger import ECListMerger
 # data filtering
