@@ -13,22 +13,18 @@ from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File, ShellPro
 from gws_omix.base_env.diamond_env_task import DiamondShellProxyHelper
 
 
-@task_decorator("Diamond", human_name="diamond",
-                short_description="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.")
+@task_decorator("Diamond", human_name="Diamond",
+                short_description="Accelerated BLAST compatible local sequence aligner.")
 class Diamond(Task):
     """
-    BlastEC class.
-
-    Represents a process that wraps NCBI blast program. This version !!! ALLOWED !!! to get EC numbers for digital twins reconstruction.
+    DIAMOND, an evolutionary leap in bioinformatics, presenting an enhanced version that transcends the boundaries of its predecessors while matching the sensitivity of the gold standard BLASTP.
+    It uses UniProtKB/Swiss-Prot database.
 
     Configuration options
-        * `taxonomy`: Specify the tax group to select the dedicated database.
-        * `alignement_type`: Alignement type. Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). Respectivly, options = PP, TNP. [Default: PP] ".
-        * `num_alignments: Number of database sequences to show alignments for [Default: 10],
-        * `evalue`: E-value to exclude results. Default = 0.00001 (i.e 1e-5).
-        * `threads`: Multi threading options: number of threads to use (min=1, max=7). [Default =  1].
-        * `idt`: Similarity/identity minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
-        * `cov`: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70].
+        * `input_type_value`: Alignement type. Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). Respectivly, options = prot, nuc. [Default: nuc] ".
+        * `evalue_value`: E-value to exclude results. Default = 0.00001 (i.e 1e-5).
+        * `num_threads`: Multi threading options: number of threads to use (min=1, max=7). [Default =  1].
+        * `query_cover_value: Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results (min= 1, max= 100). [Default = 70]
 
     """
 
@@ -40,15 +36,13 @@ class Diamond(Task):
     })
 
     output_specs: OutputSpecs = OutputSpecs({'output_path': OutputSpec(
-        Table, human_name="xxxxxxxxxxxxx", short_description="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"), })
+        Table, human_name="Blast results", short_description="This table resumes Diamond results"), })
 
     config_specs: ConfigSpecs = {
-        "input_type_value": StrParam(default_value="nuc", allowed_values=["nuc", "prot"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
+        "input_type_value": StrParam(default_value="nuc", allowed_values=["nuc", "prot"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : prot, nuc ]. Default = nuc"),
         "evalue_value": FloatParam(default_value=0.00001, min_value=0.0, short_description="E-value : Default = 0.00001 (i.e 1e-5)"),
         "num_threads": IntParam(default_value=1, min_value=1, short_description="Number of threads"),
-        "query_cover_value": IntParam(default_value=90, min_value=1, max_value=100, short_description="query_cover_value"),
-        "approx_id_value": IntParam(default_value=70, min_value=1, max_value=100, short_description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]"),
-        "min_score_value": IntParam(default_value=500, min_value=1, max_value=1000, short_description=""),
+        "query_cover_value": IntParam(default_value=70, min_value=1, max_value=100, short_description="Report only alignments above the given percentage of query cover (min= 1, max= 100). [Default = 70]")
 
 
     }
@@ -64,8 +58,6 @@ class Diamond(Task):
         evalue_value = params["evalue_value"]
         num_threads = params["num_threads"]
         query_cover_value = params["query_cover_value"]
-        approx_id_value = params["approx_id_value"]
-        min_score_value = params["min_score_value"]
 
         diamond_input_path: str = None
         if input_type_value == "nuc":
@@ -73,8 +65,7 @@ class Diamond(Task):
         else:
             diamond_input_path = input_path.path
 
-        diamond_result_path = self.call_diamond(diamond_input_path, evalue_value, num_threads, query_cover_value,
-                                                approx_id_value, min_score_value)
+        diamond_result_path = self.call_diamond(diamond_input_path, evalue_value, num_threads, query_cover_value)
 
 
         # Use TableImporter to read the raw table
@@ -108,7 +99,7 @@ class Diamond(Task):
 
 
     def call_diamond(self, diamond_input_path: str, evalue_value: float, num_threads: int,
-                     query_cover_value: int, approx_id_value: int, min_score_value: int) -> str:
+                     query_cover_value: int) -> str:
 
         file_downloader = TaskFileDownloader(brick_name=Diamond.get_brick_name(),
                                              message_dispatcher=self.message_dispatcher)
@@ -129,10 +120,8 @@ class Diamond(Task):
         command = [
             diamond_exe_path,
             'blastp',
-            '--min-score', str(min_score_value),
             '--evalue', str(evalue_value),
             '--query-cover', str(query_cover_value),
-            '--approx-id', str(approx_id_value),
             '-q', diamond_input_path,
             '-o', output_file,
             '--threads', str(num_threads),
