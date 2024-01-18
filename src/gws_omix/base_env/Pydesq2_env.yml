@@ -1,0 +1,10 @@
+name: .venv
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - pydeseq2 =0.4.4
+  - scanpy =1.9.6
+  - plotly =5.18.0
+  - nbformat =5.9.2
+  - decoupler =1.5.0
