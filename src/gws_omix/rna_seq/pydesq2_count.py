@@ -4,7 +4,6 @@ from gws_core import (ConfigParams, ConfigSpecs, File, ShellProxy,
                       OutputSpecs, StrParam, Task, TaskFileDownloader, Table,
                       TaskInputs, TaskOutputs, task_decorator , PlotlyResource , CondaShellProxy)
 
-import scanpy as sc
 import plotly.express as px
 import pandas as pd
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
