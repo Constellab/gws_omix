@@ -10,14 +10,15 @@ import pandas as pd
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 
 
-@task_decorator("Pydesq2", human_name="Differential analysis",
-                short_description="Differential analysis using pydesq2")
+@task_decorator("pyDESeq2DifferentialAnalysis", human_name="pyDESeq2 pairwise differential analysis",
+                short_description="Compute differential analysis using pyDESeq2 python package (pairwise comparison)" , hide=True)
 
 class Pydesq2(Task):
     """
-    xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    PyDESeq2, a Python implementation of the DESeq2 method originally developed in R (click here) , is a versatile tool for conducting differential expression analysis (DEA) with bulk RNA-seq data.
+    This re-implementation yields similar, but not identical, results: it achieves higher model likelihood, allows speed improvements on large datasets.
+    By implementing Wald tests, PyDESeq2 enables users to statistically evaluate the significance of these expression differences, providing a robust framework for unraveling the nuanced relationships between genes  in RNA-seq studies.
+
     """
 
     input_specs: InputSpecs = InputSpecs({
