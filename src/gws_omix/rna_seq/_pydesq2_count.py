@@ -48,6 +48,7 @@ class DeseqAnalyzer:
         stat_res = DeseqStats(self.dds, contrast=('Condition', self.unnormal_condition, self.control_condition))
         stat_res.summary()
         res = stat_res.results_df
+        res = res[res.baseMean >= 10]   
 
         # Filter significant genes
         self.sigs = res[(res.padj < self.padj_value) & (abs(res.log2FoldChange) > self.log2FoldChange_value)]
@@ -86,6 +87,7 @@ class DeseqAnalyzer:
         # Select significant genes for heatmap
         dds_sigs = self.dds[:, self.sigs.index]
         grapher = pd.DataFrame(dds_sigs.layers['log1p'].T, index=dds_sigs.var_names, columns=dds_sigs.obs_names)
+        grapher.to_csv('grapher.csv', index=True)
 
         # Create a seaborn clustermap
         clustermap = sns.clustermap(grapher, z_score=0, cmap='RdYlBu_r')
