@@ -1,3 +1,0 @@
-Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	transcript	337	2799	.	+	.	transcript_id "AAC73113.mrna1"; gene_id "AAC73113.path1"
-Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	exon	337	2799	100	+	.	transcript_id "AAC73113.mrna1"; gene_id "AAC73113.path1";
-Chromosome	e_coli_K12.genome.fna.fasta.gmap_index	CDS	337	2799	.	+	0	transcript_id "AAC73113.mrna1"; gene_id "AAC73113.path1";
