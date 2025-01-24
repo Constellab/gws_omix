@@ -4,10 +4,12 @@
 # About us: https://gencovery.com
 
 import os
+
 from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
-                      InputSpec, InputSpecs, IntParam, OutputSpec, TableImporter,
-                      OutputSpecs, Task, TaskFileDownloader, Table,
-                      TaskInputs, TaskOutputs, task_decorator, Settings, FileHelper)
+                      FileHelper, InputSpec, InputSpecs, IntParam, OutputSpec,
+                      OutputSpecs, Settings, Table, TableImporter, Task,
+                      TaskFileDownloader, TaskInputs, TaskOutputs,
+                      task_decorator)
 
 
 @task_decorator("DeepECtransformer", human_name="DeepECtransformer",
@@ -69,7 +71,7 @@ class DeepECtransformer(Task):
         yml_env_file = os.path.join(deepec_folder, self.DEEP_EC_FOLDER_NAME, "environment.yml")
 
         # we set the working to the repository, because to work the command needs to be run inside the repository
-        shell_proxy = CondaShellProxy(env_name="DeepProZyme", env_file_path=yml_env_file,
+        shell_proxy = CondaShellProxy(env_file_path=yml_env_file, env_name="DeepProZyme",
                                       message_dispatcher=self.message_dispatcher, working_dir=repo_path)
 
         # create a temp dir to store output in this

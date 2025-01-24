@@ -16,4 +16,6 @@ class DiamondShellProxyHelper():
 
     @classmethod
     def create_proxy(cls, message_dispatcher: MessageDispatcher = None) -> CondaShellProxy:
-        return CondaShellProxy(cls.unique_env_name, cls.env_file_path, message_dispatcher=message_dispatcher)
+        return CondaShellProxy(
+            env_file_path=cls.env_file_path, env_name=cls.unique_env_name,
+            message_dispatcher=message_dispatcher)

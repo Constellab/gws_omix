@@ -9,13 +9,13 @@ from gws_core import MessageDispatcher, PipShellProxy
 
 class HTSeqShellProxyHelper():
 
-    PIP_ENV_DIR_NAME = "HTSeqShellProxyPip"
-    PIP_ENV_FILE_PATH = os.path.join(
+    ENV_DIR_NAME = "HTSeqShellProxyPip"
+    ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
         "htseq_env_2.txt"
     )
 
     @classmethod
     def create_proxy(cls, message_dispatcher: MessageDispatcher = None):
-        return PipShellProxy(cls.ENV_DIR_NAME, cls.ENV_FILE_PATH,
+        return PipShellProxy(env_file_path=cls.ENV_FILE_PATH, env_name=cls.ENV_DIR_NAME,
                              message_dispatcher=message_dispatcher)

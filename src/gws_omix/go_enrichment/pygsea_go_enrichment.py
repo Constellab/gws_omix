@@ -102,7 +102,7 @@ class GseaGoTerm(Task):
             thrds
         ]
 
-        shell_proxy.run(cmd, shell_mode=True)
+        shell_proxy.run(cmd, shell_mode=False)
         # shell_proxy.run_with_proxy(cmd, params=ConfigParams, inputs=TaskInputs, shell_proxy=PygseaPipShellProxyHelper)
         # Resource set
         resource_table: ResourceSet = ResourceSet()

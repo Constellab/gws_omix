@@ -113,7 +113,7 @@ class ToGO2GoTerm(Task):
                 os.path.join(script_file_dir, "./sh/gmt_to_topGO_importer.sh"),
                 gene_universe
             ]
-            shell_proxy.run(cmd, shell_mode=True)
+            shell_proxy.run(cmd, shell_mode=False)
             topgo_gene_universe = os.path.join(
                 shell_proxy.working_dir, "TopGO2_gene_universe.csv")
             cmd_2 = [
@@ -124,7 +124,7 @@ class ToGO2GoTerm(Task):
                 "TopGO2.GO_enrichment_results.tsv",
                 top_results
             ]
-            shell_proxy.run(cmd_2, shell_mode=True)
+            shell_proxy.run(cmd_2, shell_mode=False)
         else:
             cmd_2 = [
                 "Rscript --vanilla ",
@@ -134,7 +134,7 @@ class ToGO2GoTerm(Task):
                 "TopGO2.GO_enrichment_results.tsv",
                 top_results
             ]
-            shell_proxy.run(cmd_2, shell_mode=True)
+            shell_proxy.run(cmd_2, shell_mode=False)
 
         # Resource set
         resource_table: ResourceSet = ResourceSet()
