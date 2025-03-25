@@ -1,0 +1,10 @@
+name: RNA_seq_env
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+dependencies:
+  - pyyaml
+  - fastqc
+  - trimmomatic
+  - star

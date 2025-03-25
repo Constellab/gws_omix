@@ -1,0 +1,7 @@
+name: scRNA_seq_env
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+dependencies:
+  - star
