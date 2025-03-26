@@ -23,9 +23,9 @@ class DeepECtransformer(Task):
     output_specs: OutputSpecs = OutputSpecs({'output_table': OutputSpec(
         Table, human_name="DeepEC results", short_description="This table resumes DeepEC results"), })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "num_threads": IntParam(default_value=4, min_value=1, short_description="Number of threads"),
-    }
+    })
 
     SOURCE_CODE = "https://github.com/kaistsystemsbiology/DeepProZyme/archive/refs/tags/v_1_0.zip"
     DEEP_EC_FOLDER_NAME = 'DeepProZyme-v_1_0'
@@ -42,12 +42,14 @@ class DeepECtransformer(Task):
         input_file: File = inputs['input_path']
         num_threads = params["num_threads"]
 
-        ec_result_path = self.call_deep_transformer(input_file.path, num_threads, deepec_folder)
+        ec_result_path = self.call_deep_transformer(
+            input_file.path, num_threads, deepec_folder)
 
         # Use TableImporter to read the raw table
         ec_table: Table = TableImporter.call(
             File(ec_result_path),
-            {'delimiter': 'tab', 'header': 0, 'file_format': 'txt', 'index_column': -1}
+            {'delimiter': 'tab', 'header': 0,
+                'file_format': 'txt', 'index_column': -1}
         )
 
         # rename columns
@@ -67,8 +69,10 @@ class DeepECtransformer(Task):
     def call_deep_transformer(self, input_path: str, num_threads: int, deepec_folder: str) -> str:
 
         repo_path = os.path.join(deepec_folder, self.DEEP_EC_FOLDER_NAME)
-        python_file = os.path.join(deepec_folder, self.DEEP_EC_FOLDER_NAME, "run_deepectransformer.py")
-        yml_env_file = os.path.join(deepec_folder, self.DEEP_EC_FOLDER_NAME, "environment.yml")
+        python_file = os.path.join(
+            deepec_folder, self.DEEP_EC_FOLDER_NAME, "run_deepectransformer.py")
+        yml_env_file = os.path.join(
+            deepec_folder, self.DEEP_EC_FOLDER_NAME, "environment.yml")
 
         # we set the working to the repository, because to work the command needs to be run inside the repository
         shell_proxy = CondaShellProxy(env_file_path=yml_env_file, env_name="DeepProZyme",

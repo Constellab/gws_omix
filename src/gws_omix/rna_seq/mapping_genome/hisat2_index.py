@@ -29,9 +29,9 @@ class Hisat2Index(Task):
                              short_description="Generated HISAT2 index")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=1, short_description="Number of threads")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run HISAT2-build to create genome index """
@@ -41,7 +41,8 @@ class Hisat2Index(Task):
         threads = params["threads"]
 
         # Create working directory
-        shell_proxy = Hisat2ShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = Hisat2ShellProxyHelper.create_proxy(
+            self.message_dispatcher)
         result_path = os.path.join(shell_proxy.working_dir, 'hisat2_index')
         os.makedirs(result_path, exist_ok=True)
 
@@ -53,7 +54,8 @@ class Hisat2Index(Task):
         res = shell_proxy.run(hisat2_build_cmd, shell_mode=True)
 
         # Check if index files were created
-        index_files = [f for f in os.listdir(result_path) if f.startswith("genome_index")]
+        index_files = [f for f in os.listdir(
+            result_path) if f.startswith("genome_index")]
         if res != 0 or not index_files:
             raise Exception("Error occurred while building HISAT2 index.")
 

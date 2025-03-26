@@ -4,12 +4,13 @@
 
 import os
 import re
-import pandas as pd
-from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File, ShellProxy,
-                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec, TableImporter,
-                      OutputSpecs, StrParam, Task, TaskFileDownloader, Table,
-                      TaskInputs, TaskOutputs, task_decorator, StrParam, TaskFileDownloader)
 
+import pandas as pd
+from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
+                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec,
+                      OutputSpecs, ShellProxy, StrParam, Table, TableImporter,
+                      Task, TaskFileDownloader, TaskInputs, TaskOutputs,
+                      task_decorator)
 from gws_omix.base_env.diamond_env_task import DiamondShellProxyHelper
 
 
@@ -38,14 +39,21 @@ class Diamond(Task):
     output_specs: OutputSpecs = OutputSpecs({'output_path': OutputSpec(
         Table, human_name="Blast results", short_description="This table resumes Diamond results"), })
 
-    config_specs: ConfigSpecs = {
-        "input_type_value": StrParam(default_value="nuc", allowed_values=["nuc", "prot"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : prot, nuc ]. Default = nuc"),
-        "evalue_value": FloatParam(default_value=0.00001, min_value=0.0, short_description="E-value : Default = 0.00001 (i.e 1e-5)"),
-        "num_threads": IntParam(default_value=1, min_value=1, short_description="Number of threads"),
-        "query_cover_value": IntParam(default_value=70, min_value=1, max_value=100, short_description="Report only alignments above the given percentage of query cover (min= 1, max= 100). [Default = 70]")
+    config_specs: ConfigSpecs = ConfigSpecs(
+        {
+            "input_type_value":
+            StrParam(
+                default_value="nuc", allowed_values=["nuc", "prot"],
+                short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : prot, nuc ]. Default = nuc"),
+            "evalue_value":
+            FloatParam(
+                default_value=0.00001, min_value=0.0, short_description="E-value : Default = 0.00001 (i.e 1e-5)"),
+            "num_threads": IntParam(default_value=1, min_value=1, short_description="Number of threads"),
+            "query_cover_value":
+            IntParam(
+                default_value=70, min_value=1, max_value=100,
+                short_description="Report only alignments above the given percentage of query cover (min= 1, max= 100). [Default = 70]")})
 
-
-    }
     python_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
         "_blast_diamond.py"
@@ -65,18 +73,19 @@ class Diamond(Task):
         else:
             diamond_input_path = input_path.path
 
-        diamond_result_path = self.call_diamond(diamond_input_path, evalue_value, num_threads, query_cover_value)
-
+        diamond_result_path = self.call_diamond(
+            diamond_input_path, evalue_value, num_threads, query_cover_value)
 
         # Use TableImporter to read the raw table
-        diamond_blast_table : Table = TableImporter.call(
+        diamond_blast_table: Table = TableImporter.call(
             File(diamond_result_path),
-            {'delimiter': 'tab', 'header': -1, 'file_format': 'tsv', 'index_column': 0, 'comment': '#'}
+            {'delimiter': 'tab', 'header': -1, 'file_format': 'tsv',
+                'index_column': 0, 'comment': '#'}
         )
         raw_table_columns = ['Subject ID', 'Percentage of identical matches', 'Alignment length',
-                            'Number of mismatches', 'Number of gap openings', 'Start of alignment in query',
-                            'End of alignment in query', 'Start of alignment in subject', 'End of alignment in subject',
-                            'Expected value', 'Bit score']
+                             'Number of mismatches', 'Number of gap openings', 'Start of alignment in query',
+                             'End of alignment in query', 'Start of alignment in subject',
+                             'End of alignment in subject', 'Expected value', 'Bit score']
 
         diamond_blast_table.set_all_column_names(raw_table_columns)
 
@@ -87,7 +96,8 @@ class Diamond(Task):
 
     def translate(self, input_file_path: str) -> str:
         # Execute the command
-        shell_proxy: ShellProxy = DiamondShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy: ShellProxy = DiamondShellProxyHelper.create_proxy(
+            self.message_dispatcher)
 
         fasta_output_path = os.path.join(shell_proxy.working_dir, 'output.fasta')
 
@@ -96,7 +106,6 @@ class Diamond(Task):
         shell_proxy.run(cmd, shell_mode=True)
 
         return fasta_output_path
-
 
     def call_diamond(self, diamond_input_path: str, evalue_value: float, num_threads: int,
                      query_cover_value: int) -> str:

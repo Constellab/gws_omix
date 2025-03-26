@@ -34,7 +34,7 @@ class DESeq2DifferentialAnalysis(Task):
         'Summary_table': OutputSpec(
         Table, human_name="Deseq2 summary file", short_description="DEseq2 output file which summarise under the threshold genes differentially expressed")
     })
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "metadata_column": StrParam(
             human_name="Metadata column",
             optional=True,
@@ -52,7 +52,7 @@ class DESeq2DifferentialAnalysis(Task):
             max_value=1,
             human_name="Summary file threshold",
             short_description="Choose the threshold used to filter adjusted p-value to generate summary file")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         salmon_merged_matrix: File = inputs["salmon_reads_quantmerge_file"]
@@ -81,7 +81,8 @@ class DESeq2DifferentialAnalysis(Task):
         result_folder.path = os.path.join(shell_proxy.working_dir)
         result_folder.name = "Output Folder"
         for path in glob.glob(os.path.join(shell_proxy.working_dir, "SummaryTable.csv")):
-            result_file = TableImporter.call(File(path=path), {'delimiter': 'tab'})
+            result_file = TableImporter.call(
+                File(path=path), {'delimiter': 'tab'})
             result_file.name = output_file_id+".summary_table.csv"
         # Create ressource set containing differnetial analysis results tables
         resource_table_set: ResourceSet = ResourceSet()
@@ -90,9 +91,12 @@ class DESeq2DifferentialAnalysis(Task):
         for output_file_path in glob.glob(os.path.join(shell_proxy.working_dir, "*.txt")):
 
             # for output_file_path in self.deseq2_output_file_paths.items():
-            table = TableImporter.call(File(path=output_file_path), {'delimiter': 'tab', "index_column": 0})
-            metadata_table = TableImporter.call(File(path=path), {'delimiter': 'tab'})
-            table_annotated = TableAnnotatorHelper.annotate_rows(table, metadata_table, use_table_row_names_as_ref=True)
+            table = TableImporter.call(File(path=output_file_path), {
+                'delimiter': 'tab', "index_column": 0})
+            metadata_table = TableImporter.call(
+                File(path=path), {'delimiter': 'tab'})
+            table_annotated = TableAnnotatorHelper.annotate_rows(
+                table, metadata_table, use_table_row_names_as_ref=True)
             basename = os.path.basename(output_file_path)
             table_annotated.name = basename
             resource_table_set.add_resource(table_annotated)

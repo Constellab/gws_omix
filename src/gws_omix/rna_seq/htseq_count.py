@@ -27,9 +27,9 @@ class HTSeqCount(Task):
         'gene_expression_file': OutputSpec(File),
         'unmapped_stats': OutputSpec(Table)
     })
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         bam_folder: Folder = inputs["bam_folder"]
@@ -37,7 +37,8 @@ class HTSeqCount(Task):
         thrd = params["threads"]
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
 
-        shell_proxy = HTSeqShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = HTSeqShellProxyHelper.create_proxy(
+            self.message_dispatcher)
 
         outputs = self.run_cmd_lines(shell_proxy,
                                      script_file_dir,
@@ -74,7 +75,8 @@ class HTSeqCount(Task):
         # This script perform Qiime2 demux , quality assessment
         cmd_2 = [
             ".",
-            os.path.join(script_file_dir, "./sh/2_htseq_count_output_formating.sh")
+            os.path.join(script_file_dir,
+                         "./sh/2_htseq_count_output_formating.sh")
         ]
         self.log_info_message("Formating output files")
         res = shell_proxy.run(cmd_2)
@@ -85,7 +87,8 @@ class HTSeqCount(Task):
         return shell_proxy.working_dir
 
     def outputs_annotation(self, output_folder_path: str) -> TaskOutputs:
-        result_file = File(os.path.join(output_folder_path, "merged.htseq-count.txt"))
+        result_file = File(os.path.join(
+            output_folder_path, "merged.htseq-count.txt"))
 
         # result_file_stat = Table()
         # result_file_stat.path = os.path.join(output_folder_path, "unmapped_stats.txt")

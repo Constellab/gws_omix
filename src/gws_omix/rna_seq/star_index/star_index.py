@@ -5,8 +5,8 @@
 
 import os
 
-from gws_core import (ConfigParams, Folder, IntParam, Task,InputSpecs,OutputSpecs,
-                      TaskInputs, TaskOutputs, task_decorator,InputSpec, OutputSpec, ConfigSpecs,File)
+from gws_core import (ConfigParams, Folder, IntParam, Task, InputSpecs, OutputSpecs,
+                      TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs, File)
 
 
 from .star_index_env import StarIndexShellProxyHelper
@@ -29,9 +29,9 @@ class StarIndex(Task):
         'output': OutputSpec(Folder, human_name="indexed genome", short_description="indexed genome")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads ")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """
@@ -42,7 +42,8 @@ class StarIndex(Task):
         thrd = params["threads"]
 
         # retrieve the factor param value
-        shell_proxy = StarIndexShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = StarIndexShellProxyHelper.create_proxy(
+            self.message_dispatcher)
         result_path = os.path.join(shell_proxy.working_dir, 'result')
         os.makedirs(result_path)
 

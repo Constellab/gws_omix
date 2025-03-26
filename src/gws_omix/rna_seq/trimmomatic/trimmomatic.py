@@ -12,6 +12,7 @@ from gws_core import (
 from gws_omix import FastqFolder
 from .trimmomatic_env import TrimommaticShellProxyHelper
 
+
 @task_decorator("Trimmomatic", human_name="Trimmomatic",
                 short_description="Eliminate adapters and low-quality reads")
 class Trimmomatic(Task):
@@ -40,7 +41,7 @@ class Trimmomatic(Task):
         )
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads"),
         "min_len": IntParam(default_value=35, min_value=30, short_description="Minimum length of reads to keep"),
         "sequencing_type": StrParam(allowed_values=["Paired-end", "Single-end"],
@@ -51,7 +52,7 @@ class Trimmomatic(Task):
                                       short_description="Reverse read identifier (for Paired-end)"),
         "5_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0,
                                                     short_description="Bases to remove from 5' end")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """Main entry point: run the Trimmomatic process."""
@@ -66,7 +67,8 @@ class Trimmomatic(Task):
         headcrop = params["5_prime_hard_trimming_read_size"]
 
         # === 2) Create working directory
-        shell_proxy = TrimommaticShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = TrimommaticShellProxyHelper.create_proxy(
+            self.message_dispatcher)
         result_path = os.path.join(shell_proxy.working_dir, "result")
         os.makedirs(result_path, exist_ok=True)
 
@@ -74,8 +76,10 @@ class Trimmomatic(Task):
         # Example:
         #   if fwd_sep="r1", forward_pattern="^(.*?)[-_.](?:r1)\w*.fastq.gz$"
         #   group(1) = sample name
-        forward_pattern = re.compile(rf"^(.*?)[-_.](?:{re.escape(fwd_sep)})\w*\.fastq\.gz$")
-        reverse_pattern = re.compile(rf"^(.*?)[-_.](?:{re.escape(rev_sep)})\w*\.fastq\.gz$")
+        forward_pattern = re.compile(
+            rf"^(.*?)[-_.](?:{re.escape(fwd_sep)})\w*\.fastq\.gz$")
+        reverse_pattern = re.compile(
+            rf"^(.*?)[-_.](?:{re.escape(rev_sep)})\w*\.fastq\.gz$")
 
         # === 4) Single-end logic: trim any file that ends with .fastq.gz
         if seq_type == "Single-end":
@@ -84,9 +88,11 @@ class Trimmomatic(Task):
                 if fname.endswith(".fastq.gz"):
                     sample_name = fname.replace(".fastq.gz", "")
                     in_file = os.path.join(fastq_folder.path, fname)
-                    out_file = os.path.join(result_path, f"{sample_name}_trimmed.fastq.gz")
+                    out_file = os.path.join(
+                        result_path, f"{sample_name}_trimmed.fastq.gz")
 
-                    print(f"[INFO] Trimming single-end: {fname} -> {os.path.basename(out_file)}")
+                    print(
+                        f"[INFO] Trimming single-end: {fname} -> {os.path.basename(out_file)}")
 
                     trim_cmd = (
                         f"trimmomatic SE -threads {threads} -phred33 {in_file} {out_file} "
@@ -97,7 +103,8 @@ class Trimmomatic(Task):
 
                     rc = shell_proxy.run(trim_cmd, shell_mode=True)
                     if rc != 0:
-                        raise Exception(f"Trimmomatic failed on single-end file {fname}")
+                        raise Exception(
+                            f"Trimmomatic failed on single-end file {fname}")
 
         # === 5) Paired-end logic
         else:
@@ -129,11 +136,15 @@ class Trimmomatic(Task):
 
                     # Output filenames:
                     # e.g. sample_name_trimmed_R1.fastq.gz or _r1, etc.
-                    R1_out = os.path.join(result_path, f"{sample_name}_trimmed_{fwd_sep}.fastq.gz")
-                    R2_out = os.path.join(result_path, f"{sample_name}_trimmed_{rev_sep}.fastq.gz")
+                    R1_out = os.path.join(
+                        result_path, f"{sample_name}_trimmed_{fwd_sep}.fastq.gz")
+                    R2_out = os.path.join(
+                        result_path, f"{sample_name}_trimmed_{rev_sep}.fastq.gz")
 
-                    print(f"[INFO] Trimming paired reads: {files['FWD']} & {files['REV']}")
-                    print(f"[DEBUG] Outputs -> {os.path.basename(R1_out)}, {os.path.basename(R2_out)}")
+                    print(
+                        f"[INFO] Trimming paired reads: {files['FWD']} & {files['REV']}")
+                    print(
+                        f"[DEBUG] Outputs -> {os.path.basename(R1_out)}, {os.path.basename(R2_out)}")
 
                     trim_cmd = (
                         f"trimmomatic PE -threads {threads} -phred33 {R1_in} {R2_in} "
@@ -145,7 +156,8 @@ class Trimmomatic(Task):
 
                     rc = shell_proxy.run(trim_cmd, shell_mode=True)
                     if rc != 0:
-                        raise Exception(f"Trimmomatic failed on paired-end sample {sample_name}")
+                        raise Exception(
+                            f"Trimmomatic failed on paired-end sample {sample_name}")
 
         # === 6) Return the result folder
         return {'output': FastqFolder(result_path)}
