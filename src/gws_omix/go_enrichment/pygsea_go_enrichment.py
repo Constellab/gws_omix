@@ -61,9 +61,9 @@ class GseaGoTerm(Task):
     output_specs: OutputSpecs = OutputSpecs({
         'GO_term_enrichment': OutputSpec(ResourceSet)
     })
-    config_specs: ConfigSpecs = {"Top_results_number": IntParam(
+    config_specs: ConfigSpecs = ConfigSpecs({"Top_results_number": IntParam(
         default_value=10, min_value=1, short_description="Number of the best enriched GO term to include in the top list"),
-        "Threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")}
+        "Threads": IntParam(default_value=2, min_value=2, short_description="Number of threads")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         gene_universe: File = inputs["Gene_universe"]

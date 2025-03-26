@@ -52,7 +52,7 @@ class BlastEC(Task):
     output_specs: OutputSpecs = OutputSpecs({
         'filtered_blast_ec_file': OutputSpec(File, human_name="Blast results", short_description="Blast results")
     })
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "taxonomy": StrParam(allowed_values=["fungi"],  short_description="Specify the tax group to select the dedicated database"),
         # "all", "prokaryota", "eukaryota", "animals", "fungi", "plant"
         "alignment_type": StrParam(default_value="PP", allowed_values=["PP", "TNP"], short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : PP, TNP ]. Default = PP"),
@@ -63,7 +63,7 @@ class BlastEC(Task):
         "cov": IntParam(default_value=70, min_value=1, max_value=100, short_description="Coverage (see blast option -qcov_hsp_perc) minimum percentage threshold to exclude results [Default = 70]"),
         # TODO: set protected
         # "uniprot_db_dir": StrParam(default_value="", short_description="Location of the UniProtKB database")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         shell_proxy: CondaShellProxy = BaseOmixEnvHelper.create_proxy(
@@ -131,7 +131,8 @@ class BlastEC(Task):
         result = shell_proxy.run(cmd, shell_mode=True)
 
         if result != 0:
-            raise Exception(f"Error while running blast, details are available in messages.")
+            raise Exception(
+                f"Error while running blast, details are available in messages.")
 
         self.log_success_message("Blast run successfully, parsing results")
 
@@ -191,7 +192,8 @@ class BlastEC(Task):
         gene_ec = {}
         hit_parsed = {}
 
-        self.log_info_message("Creating corresponding EC number(s) for each gene")
+        self.log_info_message(
+            "Creating corresponding EC number(s) for each gene")
 
         # Create dict. containing genes with their corresponding EC number(s)
         with open(tabular_file, 'r') as lines:
@@ -203,12 +205,12 @@ class BlastEC(Task):
                     if re.match("^$", str(li_split[7])):
                         gene_ec[li_split[0]] = "NA\n"
                     else:
-                        gene_ec[li_split[0]] = li_split[7] + \
-                            "\n"  # ! : missing+ "\n"
+                        gene_ec[li_split[0]] = li_split[7] + "\n"  # ! : missing+ "\n"
 
         filtered_file_path = blast_output_file + ".filtered.csv"
 
-        self.log_info_message("Creating corresponding EC number(s) for each gene")
+        self.log_info_message(
+            "Creating corresponding EC number(s) for each gene")
 
         with open(filtered_file_path, 'w+') as filtered_file_fp:
             with open(blast_output_file, 'r') as raw_fp:

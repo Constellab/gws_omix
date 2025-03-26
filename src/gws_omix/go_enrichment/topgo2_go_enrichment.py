@@ -70,13 +70,13 @@ class ToGO2GoTerm(Task):
     output_specs: OutputSpecs = OutputSpecs({
         'GO_term_enrichment': OutputSpec(ResourceSet)
     })
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         'Gene_universe_format': StrParam(allowed_values=["gmt_format", "topgo_format"],
                                          short_description="Gene Universe File format (see Documentation above)"),
         'Top_results':
         IntParam(
             default_value=25, min_value=1, short_description="Top X results Fisher's Text p-value based (see TOPGO documentation)")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         gene_universe = inputs["Gene_universe"]

@@ -34,7 +34,7 @@ class Hisat2Align(Task):
                              short_description="Folder containing sorted BAM files")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=2, short_description="Number of threads"),
         "sequencing_type": StrParam(allowed_values=["Paired-end", "Single-end"],
                                     short_description="Sequencing type"),
@@ -42,7 +42,7 @@ class Hisat2Align(Task):
                                       short_description="Forward read identifier for Paired-end"),
         "Reverse_separator": StrParam(allowed_values=["R2", "2", "r2", " "],
                                       short_description="Reverse read identifier for Paired-end")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """Main entry point: run the HISAT2 alignment."""
@@ -59,13 +59,16 @@ class Hisat2Align(Task):
         hisat2_index_path = os.path.join(hisat2_index.path, "genome_index")
 
         # Create output directory
-        shell_proxy = Hisat2ShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = Hisat2ShellProxyHelper.create_proxy(
+            self.message_dispatcher)
         result_path = os.path.join(shell_proxy.working_dir, 'result')
         os.makedirs(result_path, exist_ok=True)
 
         # Regex to detect forward & reverse files, e.g. ".*?[-_.](?:R1|1|r1)\w*\.fastq.gz$"
-        forward_pattern = re.compile(rf"^(.*?)[-_.](?:{re.escape(fwd_sep)})\w*\.fastq\.gz$")
-        reverse_pattern = re.compile(rf"^(.*?)[-_.](?:{re.escape(rev_sep)})\w*\.fastq\.gz$")
+        forward_pattern = re.compile(
+            rf"^(.*?)[-_.](?:{re.escape(fwd_sep)})\w*\.fastq\.gz$")
+        reverse_pattern = re.compile(
+            rf"^(.*?)[-_.](?:{re.escape(rev_sep)})\w*\.fastq\.gz$")
 
         # == Single-end logic ==
         if seq_type == "Single-end":
@@ -76,7 +79,8 @@ class Hisat2Align(Task):
                     fastq_path = os.path.join(fastq_folder.path, fname)
 
                     # Output sorted BAM
-                    bam_output = os.path.join(result_path, f"{sample_name}.bam")
+                    bam_output = os.path.join(
+                        result_path, f"{sample_name}.bam")
 
                     hisat2_cmd = (
                         f"hisat2 -q --rna-strandness F -p {threads} "
@@ -87,7 +91,8 @@ class Hisat2Align(Task):
 
                     rc = shell_proxy.run(hisat2_cmd, shell_mode=True)
                     if rc != 0:
-                        raise Exception(f"Error during HISAT2 alignment (single-end) for {sample_name}")
+                        raise Exception(
+                            f"Error during HISAT2 alignment (single-end) for {sample_name}")
 
         # == Paired-end logic ==
         else:
@@ -118,7 +123,8 @@ class Hisat2Align(Task):
                     R1_in = os.path.join(fastq_folder.path, files['FWD'])
                     R2_in = os.path.join(fastq_folder.path, files['REV'])
 
-                    bam_output = os.path.join(result_path, f"{sample_name}.bam")
+                    bam_output = os.path.join(
+                        result_path, f"{sample_name}.bam")
 
                     hisat2_cmd = (
                         f"hisat2 -q --rna-strandness FR -p {threads} "
@@ -129,6 +135,7 @@ class Hisat2Align(Task):
 
                     rc = shell_proxy.run(hisat2_cmd, shell_mode=True)
                     if rc != 0:
-                        raise Exception(f"Error during HISAT2 alignment (paired-end) for {sample_name}")
+                        raise Exception(
+                            f"Error during HISAT2 alignment (paired-end) for {sample_name}")
 
         return {'output': Folder(result_path)}

@@ -41,10 +41,11 @@ class STARMappingTranscriptomeReads(Task):
             short_description="Mapping output file(s) (BAM format) contained in a Folder")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads [Default =  2] "),
-        "memory": IntParam(default_value=6000000000, min_value=2000000000, short_description="Memory (RAM in Bytes) usage")  # ,
-    }
+        # ,
+        "memory": IntParam(default_value=6000000000, min_value=2000000000, short_description="Memory (RAM in Bytes) usage")
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fq_folder: FastqFolder = inputs["fastq_folder"]
@@ -59,7 +60,8 @@ class STARMappingTranscriptomeReads(Task):
         script_file_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
             " bash ",
-            os.path.join(script_file_dir, "./sh/star_transcriptome_mapping.sh"),
+            os.path.join(script_file_dir,
+                         "./sh/star_transcriptome_mapping.sh"),
             fq_folder.path,
             thread,
             ram,
@@ -71,7 +73,8 @@ class STARMappingTranscriptomeReads(Task):
         shell_proxy = BaseOmixEnvHelper.create_proxy(self.message_dispatcher)
         shell_proxy.run(cmd)
 
-        result_folder = Folder(os.path.join(shell_proxy.working_dir, "star_transciptome_mapping"))
+        result_folder = Folder(os.path.join(
+            shell_proxy.working_dir, "star_transciptome_mapping"))
         result_folder.name = "STAR BAM Folder"
         return {
             'star_bam_folder': result_folder

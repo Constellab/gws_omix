@@ -14,6 +14,7 @@ from gws_core import (
 
 from .featurecounts_env import FeatureCountsShellProxyHelper
 
+
 @task_decorator("FeatureCounts", human_name="FeatureCounts",
                 short_description="Quantify read counts using featureCounts")
 class FeatureCounts(Task):
@@ -40,7 +41,7 @@ class FeatureCounts(Task):
                              short_description="Cleaned CSV matrix of raw counts")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         # For multi-threading
         "threads": IntParam(default_value=4, min_value=1, short_description="Number of threads"),
         # Single-end or Paired-end?
@@ -48,7 +49,7 @@ class FeatureCounts(Task):
             allowed_values=["Paired-end", "Single-end"],
             short_description="Library type for featureCounts"
         )
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """Run featureCounts, then parse and convert the output into a clean CSV count matrix."""
@@ -59,8 +60,10 @@ class FeatureCounts(Task):
         seq_type = params["sequencing_type"]
 
         # Create working directory
-        shell_proxy = FeatureCountsShellProxyHelper.create_proxy(self.message_dispatcher)
-        result_path = os.path.join(shell_proxy.working_dir, 'featurecounts_result')
+        shell_proxy = FeatureCountsShellProxyHelper.create_proxy(
+            self.message_dispatcher)
+        result_path = os.path.join(
+            shell_proxy.working_dir, 'featurecounts_result')
         os.makedirs(result_path, exist_ok=True)
 
         # Collect all .bam files from the folder
@@ -135,4 +138,5 @@ class FeatureCounts(Task):
         # 6) Write out to CSV
         #    If you want a TSV, use sep='\t'.
         count_df.to_csv(output_file, sep=',')
-        print(f"[INFO] Wrote cleaned count matrix to {output_file}. Columns: {new_cols}")
+        print(
+            f"[INFO] Wrote cleaned count matrix to {output_file}. Columns: {new_cols}")

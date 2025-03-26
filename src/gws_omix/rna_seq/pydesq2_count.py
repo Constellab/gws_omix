@@ -1,21 +1,20 @@
 import os
-from gws_core import (ConfigParams, ConfigSpecs, File, ShellProxy,
-                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec, TableImporter,
-                      OutputSpecs, StrParam, Task, TaskFileDownloader, Table,
-                      TaskInputs, TaskOutputs, task_decorator , PlotlyResource , CondaShellProxy)
-
-import scipy.cluster.hierarchy as sch
-import plotly.graph_objects as go
-import plotly.express as px
 from typing import Tuple
-import pandas as pd
 
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import scipy.cluster.hierarchy as sch
+from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
+                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec,
+                      OutputSpecs, PlotlyResource, ShellProxy, StrParam, Table,
+                      TableImporter, Task, TaskFileDownloader, TaskInputs,
+                      TaskOutputs, task_decorator)
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 
 
 @task_decorator("pyDESeq2DifferentialAnalysis", human_name="pyDESeq2 pairwise differential analysis",
                 short_description="Compute differential analysis using pyDESeq2 python package (pairwise comparison)")
-
 class Pydesq2(Task):
     """
     PyDESeq2, a Python implementation of the DESeq2 method originally developed in R (click here) , is a versatile tool for conducting differential expression analysis (DEA) with bulk RNA-seq data.
@@ -51,13 +50,13 @@ class Pydesq2(Task):
         'file_2': OutputSpec(File, human_name="volcano plot", short_description="Top 30 statistical significance ( represented as p-values) on the y-axis against fold change values on the x-axis for each feature (genes) in a dataset")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "genes_colname": StrParam(short_description="Column name containing gene ids in expression matrix "),
         "control_condition": StrParam(short_description="normal_condition"),
         "unnormal_condition": StrParam(short_description="unnormal_condition"),
         "pvalue_value": FloatParam(default_value=0.05, min_value=0.05, short_description="pvalue_value"),
         "log2FoldChange_value": FloatParam(default_value=0.5, min_value=0.5, short_description="log2FoldChange value"),
-    }
+    })
 
     python_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
@@ -76,38 +75,42 @@ class Pydesq2(Task):
         log2FoldChange_value = params["log2FoldChange_value"]
 
         # retrieve the factor param value
-        shell_proxy: ShellProxy = Pydesq2ShellProxyHelper.create_proxy(self.message_dispatcher)
-
+        shell_proxy: ShellProxy = Pydesq2ShellProxyHelper.create_proxy(
+            self.message_dispatcher)
 
         # call python file
         cmd = f"python3 {self.python_file_path} {count_table_file.path} {metadata_file.path} {genes_colname} {control_condition} {unnormal_condition} {pvalue_value} {log2FoldChange_value}"
         result = shell_proxy.run(cmd, shell_mode=True)
 
         if result != 0:
-            raise Exception("An error occured during the execution of the script.")
+            raise Exception(
+                "An error occured during the execution of the script.")
 
         heatmap_file_name = os.path.join(shell_proxy.working_dir, "Heatmap.png")
-        volcanoplot_file_name = os.path.join(shell_proxy.working_dir, "volcano_plot.png")
+        volcanoplot_file_name = os.path.join(
+            shell_proxy.working_dir, "volcano_plot.png")
 
-        pydesq2_results_file_name = os.path.join(shell_proxy.working_dir, "pydesq2_results_table.csv")
+        pydesq2_results_file_name = os.path.join(
+            shell_proxy.working_dir, "pydesq2_results_table.csv")
 
         pydesq2_results_table = TableImporter.call(
             File(pydesq2_results_file_name),
             {'delimiter': ',', 'header': 0, 'file_format': 'csv', 'index_column': 0})
 
-
         # PCA
-        pca_proportion_file_path = os.path.join(shell_proxy.working_dir, "pca_proportions.csv")
+        pca_proportion_file_path = os.path.join(
+            shell_proxy.working_dir, "pca_proportions.csv")
         pca_file_path = os.path.join(shell_proxy.working_dir, "pca_metadata.csv")
-        plolty_resource = self.build_plotly(pca_file_path, pca_proportion_file_path)
+        plolty_resource = self.build_plotly(
+            pca_file_path, pca_proportion_file_path)
 
-        #heatmap
+        # heatmap
         grapher_file_path = os.path.join(shell_proxy.working_dir, "grapher.csv")
         plolty_resource_heatmap = self.build_plotly_heatmap(grapher_file_path)
 
         # Volcanoplot
-        plolty_resource_volcanoplot = self.build_plotly_volcanoplot(pydesq2_results_file_name)
-
+        plolty_resource_volcanoplot = self.build_plotly_volcanoplot(
+            pydesq2_results_file_name)
 
         # return the output table
         return {
@@ -115,8 +118,8 @@ class Pydesq2(Task):
             'file_2': File(volcanoplot_file_name),
             'plotly_result': plolty_resource,
             'table_1': pydesq2_results_table,
-            'plotly_result_heatmap' : plolty_resource_heatmap,
-            'plotly_result_volcanoplot' : plolty_resource_volcanoplot
+            'plotly_result_heatmap': plolty_resource_heatmap,
+            'plotly_result_volcanoplot': plolty_resource_volcanoplot
 
 
         }
@@ -137,7 +140,8 @@ class Pydesq2(Task):
             size_max=10,
             opacity=0.7,
             title='PCA Plot',
-            labels={'PC1': f'PC1 ({proportion_data["PC1 Proportion"].iloc[0] * 100:.2f}%)', 'PC2': f'PC2 ({proportion_data["PC2 Proportion"].iloc[0] * 100:.2f}%)'},
+            labels={'PC1': f'PC1 ({proportion_data["PC1 Proportion"].iloc[0] * 100:.2f}%)',
+                    'PC2': f'PC2 ({proportion_data["PC2 Proportion"].iloc[0] * 100:.2f}%)'},
         )
 
         # Show the plot
@@ -147,16 +151,21 @@ class Pydesq2(Task):
 
 
 # heatmap function
+
     def build_plotly_heatmap(self, grapher_file_path) -> PlotlyResource:
         # Read saved files
-        data = pd.read_csv(grapher_file_path, index_col=0)  # Specify the first column as the index
+        # Specify the first column as the index
+        data = pd.read_csv(grapher_file_path, index_col=0)
 
         # Extract numeric data for clustering
-        numeric_data = data.drop(data.columns[0], axis=1)  # Assuming the first column is non-numeric (e.g., gene IDs)
+        # Assuming the first column is non-numeric (e.g., gene IDs)
+        numeric_data = data.drop(data.columns[0], axis=1)
 
         # Perform hierarchical clustering
-        row_linkage = sch.linkage(numeric_data.values, method='average', metric='euclidean')
-        col_linkage = sch.linkage(numeric_data.values.T, method='average', metric='euclidean')
+        row_linkage = sch.linkage(numeric_data.values,
+                                  method='average', metric='euclidean')
+        col_linkage = sch.linkage(numeric_data.values.T,
+                                  method='average', metric='euclidean')
 
         row_order = sch.dendrogram(row_linkage, no_plot=True)['leaves']
         col_order = sch.dendrogram(col_linkage, no_plot=True)['leaves']
@@ -182,7 +191,8 @@ class Pydesq2(Task):
 # Volcano plot function
     def build_plotly_volcanoplot(self, pydesq2_results_file_name) -> PlotlyResource:
         # Read saved files
-        sigs = pd.read_csv(pydesq2_results_file_name)  # Specify the first column as the index
+        # Specify the first column as the index
+        sigs = pd.read_csv(pydesq2_results_file_name)
         # Create a volcano plot using Plotly Express
         fig = px.scatter(
             sigs,

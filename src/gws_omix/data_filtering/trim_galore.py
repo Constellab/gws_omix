@@ -33,7 +33,7 @@ class TrimGalore(Task):
         "cleaned_fastq": OutputSpec(ResourceSet, human_name="", short_description=""),
         "cleaning_stats": OutputSpec(File, human_name="", short_description="")
     })
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=2, min_value=1, short_description="Number of threads"),
         "quality":
         IntParam(
@@ -59,7 +59,7 @@ class TrimGalore(Task):
         "filter_reads_with_unsequenced_nucl":
         IntParam(
             default_value=100,
-            short_description="The total number of Ns (as integer) a read may contain before it will be removed altogether. In a paired-end setting, either read exceeding this limit will result in the entire pair being removed from the trimmed output files.")}
+            short_description="The total number of Ns (as integer) a read may contain before it will be removed altogether. In a paired-end setting, either read exceeding this limit will result in the entire pair being removed from the trimmed output files.")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fq_folder: FastqFolder = inputs["fastq_folder"]
@@ -97,7 +97,8 @@ class TrimGalore(Task):
         else:
             cmd = [
                 "bash",
-                os.path.join(script_file_dir, "./sh/trim_galore_cmd_single.sh"),
+                os.path.join(script_file_dir,
+                             "./sh/trim_galore_cmd_single.sh"),
                 fq_folder.path,
                 thread,
                 qual,
@@ -118,18 +119,23 @@ class TrimGalore(Task):
 
         if seq_type == "paired-end":
             singelton_folder = FastqFolder()
-            filtered_folder.path = os.path.join(shell_proxy.working_dir, "filtered_fastq_folder")
+            filtered_folder.path = os.path.join(
+                shell_proxy.working_dir, "filtered_fastq_folder")
             filtered_folder.name = "Filtered fastq folder"
-            singelton_folder.path = os.path.join(shell_proxy.working_dir, "singleton_fastq_folder")
+            singelton_folder.path = os.path.join(
+                shell_proxy.working_dir, "singleton_fastq_folder")
             singelton_folder.name = "Singelton fastq folder"
-            stats_file.path = os.path.join(shell_proxy.working_dir, "trimming_report.txt")
+            stats_file.path = os.path.join(
+                shell_proxy.working_dir, "trimming_report.txt")
 
             resource_set.add_resource(filtered_folder)
             resource_set.add_resource(singelton_folder)
         else:
-            filtered_folder.path = os.path.join(shell_proxy.working_dir, "filtered_fastq_folder")
+            filtered_folder.path = os.path.join(
+                shell_proxy.working_dir, "filtered_fastq_folder")
             filtered_folder.name = "Filtered fastq folder"
-            stats_file.path = os.path.join(shell_proxy.working_dir, "trimming_report.txt")
+            stats_file.path = os.path.join(
+                shell_proxy.working_dir, "trimming_report.txt")
 
             resource_set.add_resource(filtered_folder)
 

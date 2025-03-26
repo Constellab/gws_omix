@@ -12,6 +12,7 @@ from gws_omix import FastqFolder
 
 from .fastq_init_env import FastqInitShellProxyHelper
 
+
 @task_decorator("FastQC", human_name="FastQC",
                 short_description="Check the quality of reads using fastqc")
 class FastqcInit(Task):
@@ -27,11 +28,11 @@ class FastqcInit(Task):
         'output': OutputSpec(Folder, human_name="Quality result",
                              short_description="reads quality report")})
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=8, min_value=2, short_description="Number of threads"),
         "sequencing_mode": StrParam(default_value="paired", allowed_values=["paired", "single"],
-                                        short_description="Sequencing mode: paired-end or single-end")
-    }
+                                    short_description="Sequencing mode: paired-end or single-end")
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """
@@ -42,7 +43,8 @@ class FastqcInit(Task):
         sequencing_mode = params["sequencing_mode"]
 
         # Create working directory
-        shell_proxy = FastqInitShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell_proxy = FastqInitShellProxyHelper.create_proxy(
+            self.message_dispatcher)
         result_path = os.path.join(shell_proxy.working_dir, 'result')
         os.makedirs(result_path)
 
@@ -50,12 +52,15 @@ class FastqcInit(Task):
         r1_file_pattern = re.compile(r'.*?[-_.][R1|1|r1]\w*\.fastq\.gz')
         r2_file_pattern = re.compile(r'.*?[-_.][R2|2|r2]\w*\.fastq\.gz')
 
-        r1_files = [f for f in os.listdir(input_folder.path) if r1_file_pattern.match(f)]
-        r2_files = [f for f in os.listdir(input_folder.path) if r2_file_pattern.match(f)]
+        r1_files = [f for f in os.listdir(
+            input_folder.path) if r1_file_pattern.match(f)]
+        r2_files = [f for f in os.listdir(
+            input_folder.path) if r2_file_pattern.match(f)]
 
         if sequencing_mode == "single":
             # In single-end mode, include all fastq.gz files (even those without R1 or 1)
-            all_fastq_files = [f for f in os.listdir(input_folder.path) if f.endswith(".fastq.gz")]
+            all_fastq_files = [f for f in os.listdir(
+                input_folder.path) if f.endswith(".fastq.gz")]
             fastqc_cmd = f'fastqc {" ".join([os.path.join(input_folder.path, f) for f in all_fastq_files])} -o {result_path} -t {thrd}'
         else:
             # In paired-end mode, both R1 and R2 files are considered

@@ -1,14 +1,14 @@
 import os
-from gws_core import (ConfigParams, ConfigSpecs, File, ShellProxy,
-                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec, TableImporter,
-                      OutputSpecs, StrParam, Task, TaskFileDownloader, Table,
-                      TaskInputs, TaskOutputs, task_decorator, StrParam)
+from gws_core import (ConfigParams, ConfigSpecs, ConfigSpecs,
+                      InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, Task, TaskFileDownloader, Table,
+                      TaskInputs, TaskOutputs, task_decorator)
 
 from typing import Dict, List
 
+
 @task_decorator("Ec_number", human_name="Ec number",
                 short_description="Mapping blast result to EC number database.")
-
 class ECnumber(Task):
     """
     EC number determination.
@@ -27,7 +27,7 @@ class ECnumber(Task):
         'output_table': OutputSpec(Table, human_name="xxxxxxxxxxxxx", short_description="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     })
 
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -56,7 +56,7 @@ class ECnumber(Task):
             processed_data.append(data)
 
         # read the databse file
-        mapping_dict : Dict[str, List[str]] = {}
+        mapping_dict: Dict[str, List[str]] = {}
         with open(ec_database_file, 'r') as mapping_file:
             header = mapping_file.readline().strip().split('\t')
             entry_index = header.index('Entry')
@@ -67,7 +67,6 @@ class ECnumber(Task):
                 entry = columns[entry_index]
                 ec_numbers = columns[ec_number_index].split(';')
                 mapping_dict[entry] = ec_numbers
-
 
         # compare database file to diamond table
         processed_ec_numbers = set()
@@ -81,5 +80,5 @@ class ECnumber(Task):
                         processed_ec_numbers.add(ec_number_stripped)
 
         # Create a Table with the processed EC numbers
-        result = Table(list(processed_ec_numbers),column_names= ["EC number"])
+        result = Table(list(processed_ec_numbers), column_names=["EC number"])
         return result

@@ -38,9 +38,9 @@ class SalmonQuantMapping(Task):
             File, human_name="RawCountFile",
             short_description="Raw count genes expression counting files merged in one (see salmon quantmerge documentation)")
     })
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         'threads': IntParam(default_value=2, min_value=1, short_description="Number of threads [Default =  2] ")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         shell_proxy = BaseOmixEnvHelper.create_proxy(self.message_dispatcher)
@@ -65,7 +65,8 @@ class SalmonQuantMapping(Task):
         shell_proxy.run(cmd)
 
         # path = self._get_output_file_path(inputs)
-        result_file_tpm = File(os.path.join(shell_proxy.working_dir, "salmon_quantmerge.tpm_count.txt"))
+        result_file_tpm = File(os.path.join(
+            shell_proxy.working_dir, "salmon_quantmerge.tpm_count.txt"))
         result_file_raw = File(os.path.join(
             shell_proxy.working_dir, "salmon_quantmerge.raw_count.txt"))
         return {
