@@ -21,7 +21,10 @@ class Pydesq2(Task):
     PyDESeq2, a Python implementation of the DESeq2 method originally developed in R (click here) , is a versatile tool for conducting differential expression analysis (DEA) with bulk RNA-seq data.
     This re-implementation yields similar, but not identical, results: it achieves higher model likelihood, allows speed improvements on large datasets.
     By implementing Wald tests, PyDESeq2 enables users to statistically evaluate the significance of these expression differences, providing a robust framework for unraveling the nuanced relationships between genes  in RNA-seq studies.
-
+    the p-value in DESeq2 is calculated using the wald test. The null hypothesis of the wald test is that: for each gene, there is no differential expression across two sample groups (e.g., treated vs control).
+    If the p-value is small (e.g., p<0.05), the null hypothesis is rejected, as there is only 5% of chance that the null hypothesis is true.
+    However, when you have many genes being tested, by chance (5%), there is a number of genes that are not significantly expressed, but obtained significant p-values.
+    Therefore, we need to correct this problem caused by multiple testing. DESeq2 adjust the p value from wald test using Benjamini and Hochberg method (BH-adjusted p values), which is presented in the column of padj in the results object.
     """
 
     input_specs: InputSpecs = InputSpecs({
@@ -52,7 +55,7 @@ class Pydesq2(Task):
         "genes_colname": StrParam(short_description="Column name containing gene ids in expression matrix "),
         "control_condition": StrParam(short_description="normal_condition"),
         "unnormal_condition": StrParam(short_description="unnormal_condition"),
-        "padj_value": FloatParam(default_value=0.05, min_value=0.05, short_description="padj_value"),
+        "pvalue_value": FloatParam(default_value=0.05, min_value=0.05, short_description="pvalue_value"),
         "log2FoldChange_value": FloatParam(default_value=0.5, min_value=0.5, short_description="log2FoldChange value"),
     }
 
@@ -69,7 +72,7 @@ class Pydesq2(Task):
         genes_colname = params["genes_colname"]
         control_condition = params["control_condition"]
         unnormal_condition = params["unnormal_condition"]
-        padj_value = params["padj_value"]
+        pvalue_value = params["pvalue_value"]
         log2FoldChange_value = params["log2FoldChange_value"]
 
         # retrieve the factor param value
@@ -77,7 +80,7 @@ class Pydesq2(Task):
 
 
         # call python file
-        cmd = f"python3 {self.python_file_path} {count_table_file.path} {metadata_file.path} {genes_colname} {control_condition} {unnormal_condition} {padj_value} {log2FoldChange_value}"
+        cmd = f"python3 {self.python_file_path} {count_table_file.path} {metadata_file.path} {genes_colname} {control_condition} {unnormal_condition} {pvalue_value} {log2FoldChange_value}"
         result = shell_proxy.run(cmd, shell_mode=True)
 
         if result != 0:
@@ -184,14 +187,14 @@ class Pydesq2(Task):
         fig = px.scatter(
             sigs,
             x='log2FoldChange',
-            y='padj',
+            y='pvalue',
             color='log2FoldChange',  # Use 'log2FoldChange' for color scale
             hover_data=['Geneid'],  # Assuming you have a 'Geneid' column
             size_max=10,
             opacity=0.7,
             color_continuous_scale='RdBu',  # Use 'RdBu' color scale
             title='Volcano Plot',
-            labels={'log2FoldChange': 'Log2 Fold Change', 'padj': 'Adjusted p-value'}
+            labels={'log2FoldChange': 'Log2 Fold Change', 'pvalue': 'p-value'}
         )
         # Show the plot
         c = PlotlyResource(fig)

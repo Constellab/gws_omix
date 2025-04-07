@@ -18,12 +18,8 @@ from .hisat2_env import Hisat2ShellProxyHelper
                 short_description="Align RNA-seq reads to a reference genome using HISAT2")
 class Hisat2Align(Task):
     """
-    This task performs RNA-seq read alignment using HISAT2.
+    This task performs RNA-seq read alignment using HISAT2 (a splice-aware aligner).
     It supports both single-end and paired-end reads, and outputs sorted BAM files.
-
-    Logic:
-      - Single-end: any file ending with .fastq.gz
-      - Paired-end: uses regex to detect forward/reverse by user separators
     """
 
     input_specs: InputSpecs = InputSpecs({

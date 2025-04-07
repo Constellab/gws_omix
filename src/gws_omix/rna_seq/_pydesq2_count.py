@@ -16,7 +16,7 @@ class DeseqAnalyzer:
         genes_colname,
         control_condition=None,
         unnormal_condition=None,
-        padj_value=None,
+        pvalue_value=None,
         log2FoldChange_value=None
     ):
         self.count_table_path = count_table_path
@@ -24,7 +24,7 @@ class DeseqAnalyzer:
         self.genes_colname = genes_colname
         self.control_condition = control_condition
         self.unnormal_condition = unnormal_condition
-        self.padj_value = padj_value
+        self.pvalue_value = pvalue_value
         self.log2FoldChange_value = log2FoldChange_value
         self.sigs = None
         self.dds = None
@@ -61,17 +61,20 @@ class DeseqAnalyzer:
         stat_res.summary()
         res = stat_res.results_df
 
-        # Filter based on user-supplied padj and log2FoldChange thresholds
-        if self.padj_value is not None and self.log2FoldChange_value is not None:
+        # Filter based on user-supplied pvalue and log2FoldChange thresholds
+        if self.pvalue_value is not None and self.log2FoldChange_value is not None:
             self.sigs = res[
-                (res.padj < self.padj_value)
+                (res.pvalue < self.pvalue_value)
                 & (abs(res.log2FoldChange) > self.log2FoldChange_value)
             ]
         else:
             self.sigs = res
 
+        # Sort by log2FoldChange in descending order (from positive to negative)
+        self.sigs = self.sigs.sort_values(by='log2FoldChange', ascending=False)
+
     def save_desq2_results_table(self):
-        # Save significant genes to CSV
+        # Save filtered genes to CSV
         self.sigs.to_csv('pydesq2_results_table.csv', index=True)
 
     def perform_pca(self):
@@ -117,7 +120,7 @@ class DeseqAnalyzer:
 
     def generate_volcano_plot(self):
         # Using decoupler's plot_volcano_df on self.sigs
-        dc.plot_volcano_df(self.sigs, x='log2FoldChange', y='padj', top=30)
+        dc.plot_volcano_df(self.sigs, x='log2FoldChange', y='pvalue', top=30)
         plt.savefig('volcano_plot.png')
 
     def run_analysis(self):
@@ -131,14 +134,14 @@ class DeseqAnalyzer:
         self.generate_volcano_plot()
 
 # Example usage:
-# python your_script.py <count_table_file> <metadata_file> <gene_colname> <control_cond> <treat_cond> <padj> <log2fc>
+# python your_script.py <count_table_file> <metadata_file> <gene_colname> <control_cond> <treat_cond> <pvalue> <log2fc>
 if __name__ == "__main__":
     count_table_file = sys.argv[1]
     metadata_file = sys.argv[2]
     genes_colname = str(sys.argv[3])
     control_condition = str(sys.argv[4])
     unnormal_condition = str(sys.argv[5])
-    padj_value = float(sys.argv[6])
+    pvalue_value = float(sys.argv[6])
     log2FoldChange_value = float(sys.argv[7])
 
     deseq_analyzer = DeseqAnalyzer(
@@ -147,7 +150,7 @@ if __name__ == "__main__":
         genes_colname=genes_colname,
         control_condition=control_condition,
         unnormal_condition=unnormal_condition,
-        padj_value=padj_value,
+        pvalue_value=pvalue_value,
         log2FoldChange_value=log2FoldChange_value
     )
 

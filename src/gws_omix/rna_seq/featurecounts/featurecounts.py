@@ -21,6 +21,11 @@ class FeatureCounts(Task):
     This task runs featureCounts to count the number of reads (raw counts).
     These counts are generated from one or more BAM files mapping to genomic features (defined in a GTF file).
     They are then converted into a clean CSV count matrix for differential analysis.
+
+    In this version, we specifically:
+      - use '-F GTF' to tell featureCounts it's reading GTF
+      - use '-t CDS' so it only counts lines with 'CDS' in the 3rd column
+      - use '-g gene_id' to group counts by gene_id (can replace with 'transcript_id' if needed).
     """
 
     input_specs: InputSpecs = InputSpecs({
@@ -74,6 +79,7 @@ class FeatureCounts(Task):
         bam_files_str = " ".join(bam_list)
         featurecounts_cmd = (
             f"featureCounts {paired_option} "
+            f"-t CDS "           # <-- count lines where column 3 == CDS
             f"-T {threads} "
             f"-a {annotation_file.path} "
             f"-o {raw_counts_txt} "
