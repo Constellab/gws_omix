@@ -29,9 +29,9 @@ class SalmonIndex(Task):
                              short_description="Folder containing Salmon index files")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         'threads': IntParam(default_value=2, min_value=1, short_description="Number of threads")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """

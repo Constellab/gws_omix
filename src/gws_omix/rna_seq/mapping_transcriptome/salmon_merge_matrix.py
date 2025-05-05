@@ -49,7 +49,7 @@ class SalmonMergeMatrix(Task):
             short_description="CSV matrix (gene_id vs. raw integer counts per sample)"
         )
     })
-    config_specs: ConfigSpecs = {}
+    config_specs: ConfigSpecs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         salmon_folder: Folder = inputs['salmon_quant_folder']

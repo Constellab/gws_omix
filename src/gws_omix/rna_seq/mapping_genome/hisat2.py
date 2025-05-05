@@ -53,9 +53,9 @@ class Hisat2Align(Task):
     output_specs: OutputSpecs = OutputSpecs(
         {"output": OutputSpec(Folder, human_name="BAM folder")}
     )
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=2),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

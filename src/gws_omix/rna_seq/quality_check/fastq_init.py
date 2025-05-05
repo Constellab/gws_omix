@@ -96,13 +96,13 @@ class FastqcInit(Task):
         }
     )
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(
             default_value=8,
             min_value=2,
             short_description="Number of CPU threads for FastQC",
         ),
-    }
+    })
 
     # -------------------------------  RUN  -------------------------------
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

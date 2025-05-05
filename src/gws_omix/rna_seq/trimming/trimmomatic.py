@@ -66,7 +66,7 @@ class Trimmomatic(Task):
             default_value=0, min_value=0,
             short_description="Bases to remove from 5' end"
         )
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """Trimmomatic logic, naming final outputs consistently for single/paired reads."""

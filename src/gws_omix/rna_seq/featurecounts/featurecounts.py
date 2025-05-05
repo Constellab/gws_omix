@@ -41,13 +41,13 @@ class FeatureCounts(Task):
         )
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=1, short_description="Number of threads"),
         "sequencing_type": StrParam(
             allowed_values=["Paired-end", "Single-end"],
             short_description="Library type for featureCounts"
         ),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # 1) Retrieve inputs

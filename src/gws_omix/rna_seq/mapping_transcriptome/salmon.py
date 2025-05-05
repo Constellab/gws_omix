@@ -90,9 +90,9 @@ class SalmonQuant(Task):
         }
     )
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=2, short_description="CPU threads"),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

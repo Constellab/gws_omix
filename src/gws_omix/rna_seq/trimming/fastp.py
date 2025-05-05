@@ -75,12 +75,12 @@ class Fastp(Task):
         }
     )
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=2),
         "Forward_separator": StrParam(default_value="1"),
         "Reverse_separator": StrParam(default_value="2"),
         "5_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
