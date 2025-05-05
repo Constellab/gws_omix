@@ -5,28 +5,25 @@
 
 import os
 import re
-import pandas as pd  # <-- We use pandas to parse and transform the featureCounts output
+import pandas as pd
 
 from gws_core import (
     ConfigParams, Folder, IntParam, StrParam, Task, InputSpecs, OutputSpecs,
     TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs, File
 )
-
 from .featurecounts_env import FeatureCountsShellProxyHelper
 
 
+
 @task_decorator("FeatureCounts", human_name="FeatureCounts",
-                short_description="Quantify read counts using featureCounts")
+                short_description="Quantify read counts using featureCounts, then produce a final CSV with gene_id and gene_name.")
 class FeatureCounts(Task):
     """
     This task runs featureCounts to count the number of reads (raw counts).
-    These counts are generated from one or more BAM files mapping to genomic features (defined in a GTF file).
-    They are then converted into a clean CSV count matrix for differential analysis.
-
-    In this version, we specifically:
-      - use '-F GTF' to tell featureCounts it's reading GTF
-      - use '-t CDS' so it only counts lines with 'CDS' in the 3rd column
-      - use '-g gene_id' to group counts by gene_id (can replace with 'transcript_id' if needed).
+    Then it parses the raw output to create a final CSV containing:
+      - A first column 'gene_id' (replacing the default 'Geneid'),
+      - A second column 'gene_name' (from the GTF),
+      - And columns for each sample's read counts
     """
 
     input_specs: InputSpecs = InputSpecs({
@@ -37,106 +34,119 @@ class FeatureCounts(Task):
     })
 
     output_specs: OutputSpecs = OutputSpecs({
-        'output': OutputSpec(File, human_name="Counts Matrix",
-                             short_description="Cleaned CSV matrix of raw counts")
-    })
-
-    config_specs: ConfigSpecs = ConfigSpecs({
-        # For multi-threading
-        "threads": IntParam(default_value=4, min_value=1, short_description="Number of threads"),
-        # Single-end or Paired-end?
-        "sequencing_type": StrParam(
-            allowed_values=["Paired-end", "Single-end"],
-            short_description="Library type for featureCounts"
+        'output': OutputSpec(
+            File,
+            human_name="Counts Matrix",
+            short_description="CSV matrix of raw counts, including gene_id and gene_name"
         )
     })
 
+    config_specs: ConfigSpecs = {
+        "threads": IntParam(default_value=4, min_value=1, short_description="Number of threads"),
+        "sequencing_type": StrParam(
+            allowed_values=["Paired-end", "Single-end"],
+            short_description="Library type for featureCounts"
+        ),
+    }
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        """Run featureCounts, then parse and convert the output into a clean CSV count matrix."""
+        # 1) Retrieve inputs
         annotation_file: File = inputs['annotation_file']
         bam_folder: Folder = inputs['bam_files']
 
+        # 2) Retrieve config
         threads = params["threads"]
         seq_type = params["sequencing_type"]
 
-        # Create working directory
-        shell_proxy = FeatureCountsShellProxyHelper.create_proxy(
-            self.message_dispatcher)
-        result_path = os.path.join(
-            shell_proxy.working_dir, 'featurecounts_result')
+        # 3) Create working directory
+        shell_proxy = FeatureCountsShellProxyHelper.create_proxy(self.message_dispatcher)
+        result_path = os.path.join(shell_proxy.working_dir, 'featurecounts_result')
         os.makedirs(result_path, exist_ok=True)
 
-        # Collect all .bam files from the folder
-        bam_list = []
-        for fname in os.listdir(bam_folder.path):
-            if fname.endswith(".bam"):
-                bam_list.append(os.path.join(bam_folder.path, fname))
+        # 4) Collect .bam files
+        bam_list = [os.path.join(bam_folder.path, f)
+                    for f in os.listdir(bam_folder.path) if f.endswith('.bam')]
         if not bam_list:
             raise Exception("No BAM files found in the provided folder.")
 
-        # The raw featureCounts output file (tab-delimited)
         raw_counts_txt = os.path.join(result_path, "featurecounts_raw.txt")
 
-        # Build featureCounts command
+        # 5) Build featureCounts command
         paired_option = "-p" if seq_type == "Paired-end" else ""
         bam_files_str = " ".join(bam_list)
         featurecounts_cmd = (
             f"featureCounts {paired_option} "
-            f"-t CDS "           # <-- count lines where column 3 == CDS
+            f"-F GTF "                              # treat file as GTF
+            f"-O -M --fraction -s 0 "    # set strandedness dynamically
+            f"-t exon "                             # feature type to count
+            f"-g gene_id "                          # group by gene_id
             f"-T {threads} "
             f"-a {annotation_file.path} "
             f"-o {raw_counts_txt} "
             f"{bam_files_str}"
         )
-
         print("[DEBUG] Running command:", featurecounts_cmd)
+
+        # 6) Run featureCounts
         res = shell_proxy.run(featurecounts_cmd, shell_mode=True)
         if res != 0:
             raise Exception("featureCounts failed")
 
-        # Now we parse featurecounts_raw.txt and produce "counts_matrix.csv"
-        counts_matrix_csv = os.path.join(result_path, "counts_matrix.csv")
-        self._generate_clean_matrix(raw_counts_txt, counts_matrix_csv)
+        # 7) Build the final CSV (with gene_id, gene_name, and sample columns)
+        final_csv = os.path.join(result_path, "counts_matrix_with_name.csv")
+        geneid_to_name = self._parse_gtf_for_gene_names(annotation_file.path)
+        self._generate_clean_matrix(raw_counts_txt, final_csv, geneid_to_name)
 
-        # Return the cleaned CSV as final output
-        return {'output': File(counts_matrix_csv)}
+        return {'output': File(final_csv)}
 
-    def _generate_clean_matrix(self, featurecounts_file: str, output_file: str):
-        """
-        Read the multi-sample featureCounts output file (featurecounts_file),
-        rename columns by removing path and "_trimmed.bam",
-        then write a final CSV count matrix to output_file.
-        """
-
-        # 1) Read the featureCounts table, skipping lines starting with '#'
+    def _generate_clean_matrix(self, featurecounts_file: str, output_file: str,
+                               geneid_to_name: dict):
+        # 1) read featureCounts raw output
         df = pd.read_csv(featurecounts_file, sep='\t', comment='#')
-
-        # 2) Use 'Geneid' as row index
+        # 2) set 'Geneid' as index
         df.set_index('Geneid', inplace=True)
 
-        # 3) The first 5 columns after 'Geneid' are (Chr, Start, End, Strand, Length).
-        #    The actual raw counts start at column index 5.
-        #    We'll keep only these read count columns.
-        count_df = df.iloc[:, 5:]  # columns from 6th onward
+        # 3) select only sample count columns (skip meta-columns)
+        count_df = df.iloc[:, 5:]
 
-        # 4) Function to transform
-        #    /path/to/SRR13978641_trimmed.bam => SRR13978641
-        def clean_col_name(full_bam_path: str) -> str:
-            # Extract filename => SRR13978641_trimmed.bam
-            basename = os.path.basename(full_bam_path)
-            # Remove "_trimmed.bam" => SRR13978641
-            no_trimmed = re.sub(r'_trimmed\.bam$', '', basename)
-            return no_trimmed
+        # 4) rename columns => remove .bam and _trimmed suffix
+        def clean_col(path: str) -> str:
+            basename = os.path.basename(path)
+            name = re.sub(r'_trimmed\.bam$', '', basename)
+            return re.sub(r'\.bam$', '', name)
 
-        # 5) Clean each column header
-        new_cols = []
-        for col in count_df.columns:
-            new_cols.append(clean_col_name(col))
-
+        new_cols = [clean_col(c) for c in count_df.columns]
         count_df.columns = new_cols
 
-        # 6) Write out to CSV
-        #    If you want a TSV, use sep='\t'.
-        count_df.to_csv(output_file, sep=',')
-        print(
-            f"[INFO] Wrote cleaned count matrix to {output_file}. Columns: {new_cols}")
+        # 5) insert 'gene_name' column
+        count_df.insert(0, 'gene_name',
+                        count_df.index.map(lambda gid: geneid_to_name.get(gid, gid)))
+
+        # 6) reset index and rename
+        count_df.reset_index(inplace=True)
+        count_df.rename(columns={'Geneid': 'gene_id'}, inplace=True)
+
+        # 7) reorder and write
+        cols_order = ['gene_id', 'gene_name'] + new_cols
+        count_df[cols_order].to_csv(output_file, index=False)
+        print(f"[INFO] Created final CSV => {output_file}")
+
+    def _parse_gtf_for_gene_names(self, gtf_path: str) -> dict:
+        geneid2name = {}
+        with open(gtf_path, 'r') as f:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                fields = line.strip().split('\t')
+                if len(fields) < 9:
+                    continue
+                attrs = fields[8]
+                gid = self._extract_gtf_attribute(attrs, 'gene_id')
+                gname = self._extract_gtf_attribute(attrs, 'gene_name')
+                if gid:
+                    geneid2name[gid] = gname or gid
+        return geneid2name
+
+    def _extract_gtf_attribute(self, attr_str: str, key: str) -> str:
+        match = re.search(rf'{key}\s+"([^"]+)"', attr_str)
+        return match.group(1) if match else None

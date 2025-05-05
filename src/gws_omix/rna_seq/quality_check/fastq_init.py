@@ -1,77 +1,151 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+fastqc_task.py  –  GWS task “FastQC”
 
-import os
-import re
-from gws_core import (ConfigParams, Folder, InputSpec, IntParam, OutputSpec, InputSpecs, OutputSpecs,
-                      Task, TaskInputs, TaskOutputs, task_decorator, ConfigSpecs, StrParam)
+• lit un tableau metadata (TSV) listant les FASTQ(.gz)
+• saute TOUTES les lignes commençant par « # »
+• exécute FastQC (multi-thread) sur tous les fichiers
+• dépose les rapports HTML/ZIP dans   <working_dir>/fastqc_result
+"""
 
-from gws_omix import FastqFolder
+import csv
+from pathlib import Path
+from typing import List
+
+import pandas as pd
+
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    Folder,          # classe générique de dossier
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+    File,            # classe générique de fichier
+)
 
 from .fastq_init_env import FastqInitShellProxyHelper
+from gws_omix import FastqFolder
 
 
+# ───────────────────────────────  HELPERS  ────────────────────────────────
+def _read_metadata(path: Path) -> pd.DataFrame:
+    """
+    Charger un TSV de métadonnées en ignorant toutes les lignes
+    commençant par « # ». La première ligne non commentée devient l’en-tête.
+    """
+    return pd.read_csv(
+        path,
+        sep="\t",
+        comment="#",          # ← saute entièrement les lignes #
+        header=0,             # la 1ʳᵉ ligne restante = en-tête
+        quoting=csv.QUOTE_NONE,
+        dtype=str,
+    )
+
+
+def _normalise_paths(files: List[str], root: Path) -> List[str]:
+    """Rendre tous les chemins absolus et vérifier qu’ils existent."""
+    resolved: List[str] = []
+    for p in files:
+        path = Path(p)
+        if not path.is_absolute():
+            path = root / path
+        if not path.exists():
+            raise FileNotFoundError(f"Input file not found: {path}")
+        resolved.append(str(path))
+    return resolved
+
+
+# ───────────────────────────────  TASK  ────────────────────────────────
 @task_decorator("FastQC", human_name="FastQC",
-                short_description="Check the quality of reads using fastqc")
+                short_description="Check read quality with FastQC")
 class FastqcInit(Task):
-    """
-    FastQC aims to provide a simple way to do some quality control checks on raw sequence data coming from high throughput sequencing pipelines.
-    It provides a modular set of analyses which you can use to give a quick impression of whether your data has any problems of which you should be aware before doing any further analysis.
-    """
 
-    input_specs: InputSpecs = InputSpecs({
-        'fastq_folder': InputSpec(FastqFolder, human_name="Fastq folder",
-                                  short_description="folder containing reads")})
-    output_specs: OutputSpecs = OutputSpecs({
-        'output': OutputSpec(Folder, human_name="Quality result",
-                             short_description="reads quality report")})
+    # -------------  Spécifications des entrées / sorties  -------------
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "fastq_folder": InputSpec(
+                FastqFolder,
+                human_name="FASTQ folder",
+                short_description="Folder containing *.fastq(.gz) files ; "
+                                 "relative paths in metadata are resolved from here",
+            ),
+            "metadata": InputSpec(
+                File,
+                human_name="Metadata (TSV)",
+                short_description="TSV listing sample-ids and file path(s)",
+            ),
+        }
+    )
 
-    config_specs: ConfigSpecs = ConfigSpecs({
-        "threads": IntParam(default_value=8, min_value=2, short_description="Number of threads"),
-        "sequencing_mode": StrParam(default_value="paired", allowed_values=["paired", "single"],
-                                    short_description="Sequencing mode: paired-end or single-end")
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "output": OutputSpec(
+                Folder,
+                human_name="Quality reports",
+                short_description="Folder with FastQC HTML & ZIP files",
+            )
+        }
+    )
 
+    config_specs: ConfigSpecs = {
+        "threads": IntParam(
+            default_value=8,
+            min_value=2,
+            short_description="Number of CPU threads for FastQC",
+        ),
+    }
+
+    # -------------------------------  RUN  -------------------------------
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        """ Run the task """
+        """Execute FastQC on all FASTQ files declared in *metadata*."""
 
-        # Retrieve input parameters
-        input_folder: FastqFolder = inputs['fastq_folder']
-        thrd = params["threads"]
-        sequencing_mode = params["sequencing_mode"]
+        # -------- inputs & parameters
+        fastq_root: FastqFolder = inputs["fastq_folder"]
+        metadata_file: File = inputs["metadata"]
+        threads: int = params["threads"]
 
-        # Create working directory
-        shell_proxy = FastqInitShellProxyHelper.create_proxy(
-            self.message_dispatcher)
-        result_path = os.path.join(shell_proxy.working_dir, 'result')
-        os.makedirs(result_path)
+        # -------- load metadata (skip every line starting with '#')
+        df = _read_metadata(Path(metadata_file.path))
 
-        # Regular expression for detecting FASTQ files
-        r1_file_pattern = re.compile(r'.*?[-_.][R1|1|r1]\w*\.fastq\.gz')
-        r2_file_pattern = re.compile(r'.*?[-_.][R2|2|r2]\w*\.fastq\.gz')
+        paired_cols = {"forward-absolute-filepath", "reverse-absolute-filepath"}
+        single_cols = {"absolute-filepath"}
 
-        r1_files = [f for f in os.listdir(
-            input_folder.path) if r1_file_pattern.match(f)]
-        r2_files = [f for f in os.listdir(
-            input_folder.path) if r2_file_pattern.match(f)]
-
-        if sequencing_mode == "single":
-            # In single-end mode, include all fastq.gz files (even those without R1 or 1)
-            all_fastq_files = [f for f in os.listdir(
-                input_folder.path) if f.endswith(".fastq.gz")]
-            fastqc_cmd = f'fastqc {" ".join([os.path.join(input_folder.path, f) for f in all_fastq_files])} -o {result_path} -t {thrd}'
+        if paired_cols.issubset(df.columns):
+            fastq_paths = (
+                df["forward-absolute-filepath"].tolist()
+                + df["reverse-absolute-filepath"].tolist()
+            )
+        elif single_cols.issubset(df.columns):
+            fastq_paths = df["absolute-filepath"].tolist()
         else:
-            # In paired-end mode, both R1 and R2 files are considered
-            fastqc_cmd = f'fastqc {" ".join([os.path.join(input_folder.path, f) for f in r1_files])} {" ".join([os.path.join(input_folder.path, f) for f in r2_files])} -o {result_path} -t {thrd}'
+            raise ValueError(
+                "Metadata must contain either 'absolute-filepath' (single-end) "
+                "or 'forward-absolute-filepath' & 'reverse-absolute-filepath' (paired-end)."
+            )
 
-        res = shell_proxy.run(fastqc_cmd, shell_mode=True)
+        # -------- make paths absolute & check existence
+        fastq_paths = _normalise_paths(fastq_paths, Path(fastq_root.path))
+        if not fastq_paths:
+            raise ValueError("Metadata table contains no FASTQ paths.")
 
-        if res != 0:
-            raise Exception("An error occurred when formatting output files")
+        # -------- working directory
+        shell = FastqInitShellProxyHelper.create_proxy(self.message_dispatcher)
+        result_dir = Path(shell.working_dir) / "fastqc_result"
+        result_dir.mkdir(parents=True, exist_ok=True)
 
-        folder = Folder(result_path)
+        # -------- run FastQC
+        cmd = f"fastqc --noextract -t {threads} {' '.join(fastq_paths)} -o {result_dir}"
+        if shell.run(cmd, shell_mode=True) != 0:
+            raise RuntimeError("FastQC exited with non-zero status (see logs).")
 
-        # Return the output
-        return {'output': folder}
+        # -------- outputs
+        return {"output": Folder(str(result_dir))}

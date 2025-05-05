@@ -3,152 +3,146 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-import re
+import csv
+from pathlib import Path
+from typing import List
+
+import pandas as pd
 from gws_core import (
-    ConfigParams, Folder, IntParam, StrParam, Task, InputSpecs, OutputSpecs,
-    TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs
+    ConfigParams,
+    ConfigSpecs,
+    Folder, File,
+    InputSpec, InputSpecs,
+    OutputSpec, OutputSpecs,
+    IntParam, StrParam,
+    Task, TaskInputs, TaskOutputs,
+    task_decorator,
 )
+from .fastp_env import FastpShellProxyHelper
 from gws_omix import FastqFolder
 
-# We reuse the same ShellProxyHelper class for convenience,
-# but it can be renamed or replaced as needed for your environment.
-from .fastp_env import FastpShellProxyHelper
+def _read_metadata(path: Path) -> pd.DataFrame:
+    """Read TSV; skip comment lines (#)."""
+    return pd.read_csv(
+        path,
+        sep="\t",
+        comment="#",
+        header=0,
+        quoting=csv.QUOTE_NONE,
+        dtype=str,
+    )
 
-@task_decorator("Fastp", human_name="Fastp",
-                short_description="Eliminate adapters and low-quality reads using fastp")
+
+def _abs(p: str, root: Path) -> str:
+    """Absolute path anchored on *root*, ensure it exists."""
+    fp = Path(p) if Path(p).is_absolute() else root / p
+    if not fp.exists():
+        raise FileNotFoundError(fp)
+    return str(fp)
+
+
+@task_decorator(
+    "Fastp",
+    human_name="Fastp",
+    short_description="Adapter & quality trimming with fastp (metadata driven)",
+)
 class Fastp(Task):
-    """
-    Fastp is a tool designed to provide fast all-in-one preprocessing for FastQ files.
-    It performs adapter trimming, quality filtering, per-read quality pruning (like sliding windows),
-    and can be used for both single-end and paired-end reads.
 
-    - Single-end: trims all files ending with .fastq.gz.
-    - Paired-end: uses regex to detect forward vs. reverse read files and
-                  names outputs using user-supplied separators.
-    """
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "fastq_folder": InputSpec(
+                FastqFolder,
+                human_name="FASTQ folder",
+                short_description="Folder containing raw FASTQ(.gz); "
+                                 "relative paths in metadata start from here",
+            ),
+            "metadata": InputSpec(
+                File,
+                human_name="Metadata (TSV)",
+                short_description="Table with absolute-filepath (SE) or "
+                                 "forward- & reverse-absolute-filepath (PE)",
+            ),
+        }
+    )
 
-    input_specs: InputSpecs = InputSpecs({
-        'fastq_folder': InputSpec(
-            FastqFolder,
-            human_name="FASTQ Folder",
-            short_description="Folder containing raw FASTQ reads"
-        )
-    })
-
-    output_specs: OutputSpecs = OutputSpecs({
-        'output': OutputSpec(
-            FastqFolder,
-            human_name="Trimmed Reads",
-            short_description="Folder containing trimmed FASTQ files"
-        )
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "output": OutputSpec(
+                FastqFolder,
+                human_name="Trimmed FASTQ",
+                short_description="Folder with *_trimmed*.fastq.gz files",
+            )
+        }
+    )
 
     config_specs: ConfigSpecs = {
-        "threads": IntParam(default_value=2, min_value=2,
-                            short_description="Number of threads"),
-        "sequencing_type": StrParam(allowed_values=["Paired-end", "Single-end"],
-                                    short_description="Choose Single-end or Paired-end"),
-        "Forward_separator": StrParam(allowed_values=["R1", "1", "r1", " "],
-                                      short_description="Forward read identifier (for Paired-end)"),
-        "Reverse_separator": StrParam(allowed_values=["R2", "2", "r2", " "],
-                                      short_description="Reverse read identifier (for Paired-end)"),
-        "5_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0,
-                                                    short_description="Bases to remove from 5' end")
+        "threads": IntParam(default_value=4, min_value=2),
+        "Forward_separator": StrParam(default_value="1"),
+        "Reverse_separator": StrParam(default_value="2"),
+        "5_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0),
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        # === 1) Retrieve user parameters
-        fastq_folder: FastqFolder = inputs['fastq_folder']
-        threads = params["threads"]
-        seq_type = params["sequencing_type"]
-        fwd_sep = params["Forward_separator"]
-        rev_sep = params["Reverse_separator"]
+
+        fastq_root: FastqFolder = inputs["fastq_folder"]
+        meta_file : File   = inputs["metadata"]
+
+        root_path = Path(fastq_root.path)
+        meta      = _read_metadata(Path(meta_file.path))
+
+        threads  = params["threads"]
+        fwd_sep  = params["Forward_separator"]
+        rev_sep  = params["Reverse_separator"]
         headcrop = params["5_prime_hard_trimming_read_size"]
 
-        # === 2) Create working directory
-        shell_proxy = FastpShellProxyHelper.create_proxy(self.message_dispatcher)
-        result_path = os.path.join(shell_proxy.working_dir, "result")
-        os.makedirs(result_path, exist_ok=True)
+        is_paired = {"forward-absolute-filepath", "reverse-absolute-filepath"} <= set(meta.columns)
+        is_single = "absolute-filepath" in meta.columns
 
-        # === 3) Build dynamic regex for forward/reverse
-        # Example:
-        #   if fwd_sep="r1", forward_pattern="^(.*?)[-_.](?:r1)\w*.fastq.gz$"
-        #   group(1) = sample name
-        forward_pattern = re.compile(rf"^(.*?)[-_.](?:{re.escape(fwd_sep)})\w*\.fastq\.gz$")
-        reverse_pattern = re.compile(rf"^(.*?)[-_.](?:{re.escape(rev_sep)})\w*\.fastq\.gz$")
+        if not (is_single or is_paired):
+            raise ValueError(
+                "Metadata must contain either 'absolute-filepath' (single-end) "
+                "or 'forward-absolute-filepath' & 'reverse-absolute-filepath' (paired-end)."
+            )
 
-        # === 4) Single-end logic
-        if seq_type == "Single-end":
-            print("[INFO] Processing Single-end data with fastp...")
-            for fname in os.listdir(fastq_folder.path):
-                if fname.endswith(".fastq.gz"):
-                    sample_name = fname.replace(".fastq.gz", "")
-                    in_file = os.path.join(fastq_folder.path, fname)
-                    out_file = os.path.join(result_path, f"{sample_name}_trimmed.fastq.gz")
+        shell = FastpShellProxyHelper.create_proxy(self.message_dispatcher)
+        result_dir = Path(shell.working_dir) / "result"
+        result_dir.mkdir(parents=True, exist_ok=True)
 
-                    print(f"[INFO] Trimming single-end: {fname} -> {os.path.basename(out_file)}")
+        if is_single:
+            print("[INFO] Single-end trimming with fastp")
+            for _, row in meta.iterrows():
+                sample = row.get("Sample", row.get("sample-id", "sample")).strip()
+                in_fp  = _abs(row["absolute-filepath"], root_path)
+                out_fp = result_dir / f"{sample}.fastq.gz"
 
-                    # Construct fastp command for single-end
-                    fastp_cmd = (
-                        f"fastp "
-                        f"--in1 {in_file} "
-                        f"--out1 {out_file} "
-                        f"--trim_front1 {headcrop} "
-                        f"--thread {threads} "
-                    )
-                    print("[DEBUG] Command:", fastp_cmd)
+                cmd = (
+                    f"fastp --in1 {in_fp} --out1 {out_fp} "
+                    f"--trim_front1 {headcrop} "
+                    f"--thread {threads}"
+                )
+                print("[DEBUG]", cmd)
+                if shell.run(cmd, shell_mode=True) != 0:
+                    raise RuntimeError(f"fastp failed on sample {sample}")
 
-                    rc = shell_proxy.run(fastp_cmd, shell_mode=True)
-                    if rc != 0:
-                        raise Exception(f"fastp failed on single-end file {fname}")
-
-        # === 5) Paired-end logic
         else:
-            print("[INFO] Processing Paired-end data with fastp...")
+            print("[INFO] Paired-end trimming with fastp")
+            for _, row in meta.iterrows():
+                sample = row.get("Sample", row.get("sample-id", "sample")).strip()
+                fwd_in = _abs(row["forward-absolute-filepath"],  root_path)
+                rev_in = _abs(row["reverse-absolute-filepath"], root_path)
 
-            # Step 1: Identify forward & reverse reads
-            pairs_dict = {}
-            for fname in os.listdir(fastq_folder.path):
-                if fname.endswith(".fastq.gz"):
-                    fwd_match = forward_pattern.match(fname)
-                    if fwd_match:
-                        sample_name = fwd_match.group(1)
-                        pairs_dict.setdefault(sample_name, {})['FWD'] = fname
-                        continue
+                out1 = result_dir / f"{sample}_{fwd_sep}.fastq.gz"
+                out2 = result_dir / f"{sample}_{rev_sep}.fastq.gz"
 
-                    rev_match = reverse_pattern.match(fname)
-                    if rev_match:
-                        sample_name = rev_match.group(1)
-                        pairs_dict.setdefault(sample_name, {})['REV'] = fname
-                        continue
+                cmd = (
+                    f"fastp --in1 {fwd_in} --in2 {rev_in} "
+                    f"--out1 {out1} --out2 {out2} "
+                    f"--trim_front1 {headcrop} --trim_front2 {headcrop} "
+                    f"--detect_adapter_for_pe "
+                    f"--thread {threads}"
+                )
+                print("[DEBUG]", cmd)
+                if shell.run(cmd, shell_mode=True) != 0:
+                    raise RuntimeError(f"fastp failed on sample {sample}")
 
-            # Step 2: Run fastp on each matched pair
-            for sample_name, files in pairs_dict.items():
-                if 'FWD' in files and 'REV' in files:
-                    R1_in = os.path.join(fastq_folder.path, files['FWD'])
-                    R2_in = os.path.join(fastq_folder.path, files['REV'])
-
-                    # Output filenames
-                    R1_out = os.path.join(result_path, f"{sample_name}_trimmed_{fwd_sep}.fastq.gz")
-                    R2_out = os.path.join(result_path, f"{sample_name}_trimmed_{rev_sep}.fastq.gz")
-
-                    print(f"[INFO] Trimming paired reads: {files['FWD']} & {files['REV']}")
-                    print(f"[DEBUG] Outputs -> {os.path.basename(R1_out)}, {os.path.basename(R2_out)}")
-
-                    fastp_cmd = (
-                        f"fastp "
-                        f"--in1 {R1_in} --in2 {R2_in} "
-                        f"--out1 {R1_out} --out2 {R2_out} "
-                        f"--trim_front1 {headcrop} --trim_front2 {headcrop} "
-                        f"--thread {threads} "
-                        f"--detect_adapter_for_pe"
-                    )
-                    print("[DEBUG] Command:", fastp_cmd)
-
-                    rc = shell_proxy.run(fastp_cmd, shell_mode=True)
-                    if rc != 0:
-                        raise Exception(f"fastp failed on paired-end sample {sample_name}")
-
-        # === 6) Return the result folder
-        return {'output': FastqFolder(result_path)}
+        return {"output": FastqFolder(str(result_dir))}

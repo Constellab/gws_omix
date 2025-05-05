@@ -109,8 +109,8 @@ class Pydesq2(Task):
         plolty_resource_heatmap = self.build_plotly_heatmap(grapher_file_path)
 
         # Volcanoplot
-        plolty_resource_volcanoplot = self.build_plotly_volcanoplot(
-            pydesq2_results_file_name)
+        plolty_resource_volcanoplot = self.build_plotly_volcanoplot(pydesq2_results_file_name,genes_colname)
+
 
         # return the output table
         return {
@@ -189,24 +189,24 @@ class Pydesq2(Task):
         return b
 
 # Volcano plot function
-    def build_plotly_volcanoplot(self, pydesq2_results_file_name) -> PlotlyResource:
-        # Read saved files
-        # Specify the first column as the index
+    # Volcano plot function
+    def build_plotly_volcanoplot(self, pydesq2_results_file_name: str, genes_colname: str) -> PlotlyResource:
+        """Generate an interactive volcano plot using the user-supplied genes_colname in hover_data."""
         sigs = pd.read_csv(pydesq2_results_file_name)
-        # Create a volcano plot using Plotly Express
+
         fig = px.scatter(
             sigs,
             x='log2FoldChange',
             y='pvalue',
-            color='log2FoldChange',  # Use 'log2FoldChange' for color scale
-            hover_data=['Geneid'],  # Assuming you have a 'Geneid' column
+            color='log2FoldChange',
+            hover_data=[genes_colname],  # column from config
             size_max=10,
             opacity=0.7,
-            color_continuous_scale='RdBu',  # Use 'RdBu' color scale
+            color_continuous_scale='RdBu',
             title='Volcano Plot',
             labels={'log2FoldChange': 'Log2 Fold Change', 'pvalue': 'p-value'}
         )
-        # Show the plot
+
         c = PlotlyResource(fig)
         c.name = "Interactive Volcano Plot"
         return c
