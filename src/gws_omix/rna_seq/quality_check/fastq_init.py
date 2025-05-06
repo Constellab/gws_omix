@@ -1,13 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-fastqc_task.py  –  GWS task “FastQC”
-
-• lit un tableau metadata (TSV) listant les FASTQ(.gz)
-• saute TOUTES les lignes commençant par « # »
-• exécute FastQC (multi-thread) sur tous les fichiers
-• dépose les rapports HTML/ZIP dans   <working_dir>/fastqc_result
-"""
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import csv
 from pathlib import Path
@@ -15,37 +9,34 @@ from typing import List
 
 import pandas as pd
 
-from gws_core import (
-    ConfigParams,
-    ConfigSpecs,
-    Folder,          # classe générique de dossier
-    InputSpec,
-    InputSpecs,
-    IntParam,
-    OutputSpec,
-    OutputSpecs,
-    Task,
-    TaskInputs,
-    TaskOutputs,
-    task_decorator,
-    File,            # classe générique de fichier
-)
+from gws_core import ( ConfigParams, ConfigSpecs, Folder, InputSpec, InputSpecs,IntParam,OutputSpec,OutputSpecs,
+                         Task,TaskInputs,TaskOutputs,task_decorator,File )
 
-from .fastq_init_env import FastqInitShellProxyHelper
 from gws_omix import FastqFolder
+from .fastq_init_env import FastqInitShellProxyHelper
 
 
-# ───────────────────────────────  HELPERS  ────────────────────────────────
 def _read_metadata(path: Path) -> pd.DataFrame:
     """
-    Charger un TSV de métadonnées en ignorant toutes les lignes
-    commençant par « # ». La première ligne non commentée devient l’en-tête.
-    """
+    Charger un fichier TSV de métadonnées et un dossier type FastqFolder qui contient les échantillons fastq.gz.
+    Le fichier de métadonnées doit être au format tabulé (.tsv) et contenir
+    les colonnes suivantes :
+
+        Sample	forward-absolute-filepath	reverse-absolute-filepath	Condition
+
+    Exp:
+
+        Sample	forward-absolute-filepath	reverse-absolute-filepath	Condition
+    SRR13978645	SRR13978645_1.fastq.gz	SRR13978645_2.fastq.gz	CTRL
+    SRR13978644	SRR13978644_1.fastq.gz	SRR13978644_2.fastq.gz	CTRL
+    SRR13978643	SRR13978643_1.fastq.gz	SRR13978643_2.fastq.gz	CTRL
+
+        """
     return pd.read_csv(
         path,
         sep="\t",
-        comment="#",          # ← saute entièrement les lignes #
-        header=0,             # la 1ʳᵉ ligne restante = en-tête
+        comment="#",
+        header=0,             
         quoting=csv.QUOTE_NONE,
         dtype=str,
     )
@@ -64,12 +55,10 @@ def _normalise_paths(files: List[str], root: Path) -> List[str]:
     return resolved
 
 
-# ───────────────────────────────  TASK  ────────────────────────────────
 @task_decorator("FastQC", human_name="FastQC",
                 short_description="Check read quality with FastQC")
 class FastqcInit(Task):
 
-    # -------------  Spécifications des entrées / sorties  -------------
     input_specs: InputSpecs = InputSpecs(
         {
             "fastq_folder": InputSpec(
@@ -108,12 +97,10 @@ class FastqcInit(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """Execute FastQC on all FASTQ files declared in *metadata*."""
 
-        # -------- inputs & parameters
         fastq_root: FastqFolder = inputs["fastq_folder"]
         metadata_file: File = inputs["metadata"]
         threads: int = params["threads"]
 
-        # -------- load metadata (skip every line starting with '#')
         df = _read_metadata(Path(metadata_file.path))
 
         paired_cols = {"forward-absolute-filepath", "reverse-absolute-filepath"}
@@ -132,20 +119,18 @@ class FastqcInit(Task):
                 "or 'forward-absolute-filepath' & 'reverse-absolute-filepath' (paired-end)."
             )
 
-        # -------- make paths absolute & check existence
         fastq_paths = _normalise_paths(fastq_paths, Path(fastq_root.path))
         if not fastq_paths:
             raise ValueError("Metadata table contains no FASTQ paths.")
 
-        # -------- working directory
+        # working directory
         shell = FastqInitShellProxyHelper.create_proxy(self.message_dispatcher)
         result_dir = Path(shell.working_dir) / "fastqc_result"
         result_dir.mkdir(parents=True, exist_ok=True)
 
-        # -------- run FastQC
+        # run FastQC
         cmd = f"fastqc --noextract -t {threads} {' '.join(fastq_paths)} -o {result_dir}"
         if shell.run(cmd, shell_mode=True) != 0:
             raise RuntimeError("FastQC exited with non-zero status (see logs).")
 
-        # -------- outputs
         return {"output": Folder(str(result_dir))}

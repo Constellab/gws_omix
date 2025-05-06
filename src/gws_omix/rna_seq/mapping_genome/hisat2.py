@@ -8,15 +8,9 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
-from gws_core import (
-    ConfigParams, ConfigSpecs,
-    Folder, File,
-    InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs,
-    IntParam,
-    Task, TaskInputs, TaskOutputs,
-    task_decorator,
-)
+from gws_core import ( ConfigParams, ConfigSpecs, Folder, File, InputSpec, InputSpecs, OutputSpec, OutputSpecs,
+                        IntParam, Task, TaskInputs, TaskOutputs, task_decorator)
+                        
 from .hisat2_env import Hisat2ShellProxyHelper
 from gws_omix import FastqFolder
 

@@ -8,16 +8,9 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
-from gws_core import (
-    ConfigParams,
-    ConfigSpecs,
-    Folder, File,
-    InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs,
-    IntParam, StrParam,
-    Task, TaskInputs, TaskOutputs,
-    task_decorator,
-)
+from gws_core import (ConfigParams, ConfigSpecs, Folder, File, InputSpec, InputSpecs, OutputSpec, OutputSpecs,
+                       IntParam, StrParam, Task, TaskInputs, TaskOutputs, task_decorator)
+                       
 from .fastp_env import FastpShellProxyHelper
 from gws_omix import FastqFolder
 
