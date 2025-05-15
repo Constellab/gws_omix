@@ -1,6 +1,6 @@
 import os
 from typing import Tuple
-
+import numpy as np          # ← ajout
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -17,13 +17,21 @@ from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
                 short_description="Compute differential analysis using pyDESeq2 python package (pairwise comparison)")
 class Pydesq2(Task):
     """
-    PyDESeq2, a Python implementation of the DESeq2 method originally developed in R (click here) , is a versatile tool for conducting differential expression analysis (DEA) with bulk RNA-seq data.
-    This re-implementation yields similar, but not identical, results: it achieves higher model likelihood, allows speed improvements on large datasets.
-    By implementing Wald tests, PyDESeq2 enables users to statistically evaluate the significance of these expression differences, providing a robust framework for unraveling the nuanced relationships between genes  in RNA-seq studies.
-    the p-value in DESeq2 is calculated using the wald test. The null hypothesis of the wald test is that: for each gene, there is no differential expression across two sample groups (e.g., treated vs control).
-    If the p-value is small (e.g., p<0.05), the null hypothesis is rejected, as there is only 5% of chance that the null hypothesis is true.
-    However, when you have many genes being tested, by chance (5%), there is a number of genes that are not significantly expressed, but obtained significant p-values.
-    Therefore, we need to correct this problem caused by multiple testing. DESeq2 adjust the p value from wald test using Benjamini and Hochberg method (BH-adjusted p values), which is presented in the column of padj in the results object.
+    - PyDESeq2, a Python implementation of the DESeq2 method originally developed in R, is a versatile tool for conducting differential expression analysis (DEA) on bulk RNA-seq data.<br>
+    This reimplementation provides similar—but not identical—results: it achieves higher model likelihood and enables faster performance on large datasets.<br>
+
+    - Normalization:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <strong>Before</strong> differential expression analysis: <strong>Median-of-ratios</strong> normalization (<code>dds.deseq2()</code>) is used to correct for differences in sequencing depth across samples.<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;• <strong>After</strong> differential expression analysis: <strong>VST</strong> (Variance Stabilizing Transformation) is applied for exploratory analyses such as PCA, clustering, and heatmaps.<br>
+
+    - The Wald test is used to compare two conditions.<br>
+    The null hypothesis of the Wald test states that for each gene, there is no differential expression between two sample groups (e.g., treated vs. control).<br>
+    If the p-value is small (e.g., p < 0.05), the null hypothesis is rejected, suggesting there is only a 5% chance that the observed difference occurred by random chance.<br>
+    However, when testing many genes, a number of non-differentially expressed genes may still appear significant due to random chance (false positives).<br>
+
+    - Results are filtered by p-value and |log2FoldChange|.<br>
+
+
     """
 
     input_specs: InputSpecs = InputSpecs({
@@ -47,7 +55,6 @@ class Pydesq2(Task):
             short_description="This plot permit to visualize the relationship between the log2 fold change and adjusted p-values for each gene. The color scale represents log2 fold change values, and the size of the points is controlled for better visibility. The resulting plot, titled 'Volcano Plot,' provides insights into gene expression changes and their statistical significance."),
 
         'file_1': OutputSpec(File, human_name="heatmap", short_description="displaying average expression levels across different groups with rows representing individual genes ensembl id and columns representing samples. The hierarchical clustering dendrograms are typically displayed on the side of the heatmap, showing the relationships between samples based on their similarity in expression profiles."),
-        'file_2': OutputSpec(File, human_name="volcano plot", short_description="Top 30 statistical significance ( represented as p-values) on the y-axis against fold change values on the x-axis for each feature (genes) in a dataset")
     })
 
     config_specs: ConfigSpecs = ConfigSpecs({
@@ -65,64 +72,54 @@ class Pydesq2(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """
-        # retrive the input table
         count_table_file: File = inputs['count_table_file']
         metadata_file: File = inputs['metadata_file']
         genes_colname = params["genes_colname"]
         control_condition = params["control_condition"]
         unnormal_condition = params["unnormal_condition"]
-        pvalue_value = params["pvalue_value"]
+        pvalue_value = params["pvalue_value"]             # padj threshold
         log2FoldChange_value = params["log2FoldChange_value"]
 
-        # retrieve the factor param value
-        shell_proxy: ShellProxy = Pydesq2ShellProxyHelper.create_proxy(
-            self.message_dispatcher)
+        shell_proxy: ShellProxy = Pydesq2ShellProxyHelper.create_proxy(self.message_dispatcher)
 
-        # call python file
-        cmd = f"python3 {self.python_file_path} {count_table_file.path} {metadata_file.path} {genes_colname} {control_condition} {unnormal_condition} {pvalue_value} {log2FoldChange_value}"
+        cmd = (
+            f"python3 {self.python_file_path} {count_table_file.path} {metadata_file.path} "
+            f"{genes_colname} {control_condition} {unnormal_condition} {pvalue_value} {log2FoldChange_value}"
+        )
         result = shell_proxy.run(cmd, shell_mode=True)
 
         if result != 0:
-            raise Exception(
-                "An error occured during the execution of the script.")
+            raise Exception("An error occured during the execution of the script.")
 
-        heatmap_file_name = os.path.join(shell_proxy.working_dir, "Heatmap.png")
-        volcanoplot_file_name = os.path.join(
-            shell_proxy.working_dir, "volcano_plot.png")
-
-        pydesq2_results_file_name = os.path.join(
-            shell_proxy.working_dir, "pydesq2_results_table.csv")
+        # fichiers de sortie du script python
+        heatmap_file_name      = os.path.join(shell_proxy.working_dir, "Heatmap.png")
+        pydesq2_results_file   = os.path.join(shell_proxy.working_dir, "pydesq2_results_table.csv")
+        pca_prop_file          = os.path.join(shell_proxy.working_dir, "pca_proportions.csv")
+        pca_meta_file          = os.path.join(shell_proxy.working_dir, "pca_metadata.csv")
+        grapher_file_path      = os.path.join(shell_proxy.working_dir, "grapher.csv")
 
         pydesq2_results_table = TableImporter.call(
-            File(pydesq2_results_file_name),
-            {'delimiter': ',', 'header': 0, 'file_format': 'csv', 'index_column': 0})
+            File(pydesq2_results_file),
+            {'delimiter': ',', 'header': 0, 'file_format': 'csv', 'index_column': 0}
+        )
 
-        # PCA
-        pca_proportion_file_path = os.path.join(
-            shell_proxy.working_dir, "pca_proportions.csv")
-        pca_file_path = os.path.join(shell_proxy.working_dir, "pca_metadata.csv")
-        plolty_resource = self.build_plotly(
-            pca_file_path, pca_proportion_file_path)
-
-        # heatmap
-        grapher_file_path = os.path.join(shell_proxy.working_dir, "grapher.csv")
+        plolty_resource        = self.build_plotly(pca_meta_file, pca_prop_file)
         plolty_resource_heatmap = self.build_plotly_heatmap(grapher_file_path)
+        plolty_resource_volcanoplot = self.build_plotly_volcanoplot(
+            pydesq2_results_file,
+            genes_colname,
+            padj_thr=pvalue_value,
+            log2fc_thr=log2FoldChange_value,
+        )
 
-        # Volcanoplot
-        plolty_resource_volcanoplot = self.build_plotly_volcanoplot(pydesq2_results_file_name,genes_colname)
-
-
-        # return the output table
         return {
             'file_1': File(heatmap_file_name),
-            'file_2': File(volcanoplot_file_name),
             'plotly_result': plolty_resource,
             'table_1': pydesq2_results_table,
             'plotly_result_heatmap': plolty_resource_heatmap,
-            'plotly_result_volcanoplot': plolty_resource_volcanoplot
-
-
+            'plotly_result_volcanoplot': plolty_resource_volcanoplot,
         }
+
 
 # PCA function
     def build_plotly(self, pca_file_path, pca_proportion_file_path) -> PlotlyResource:
@@ -190,22 +187,48 @@ class Pydesq2(Task):
 
 # Volcano plot function
     # Volcano plot function
-    def build_plotly_volcanoplot(self, pydesq2_results_file_name: str, genes_colname: str) -> PlotlyResource:
-        """Generate an interactive volcano plot using the user-supplied genes_colname in hover_data."""
+    def build_plotly_volcanoplot(
+        self,
+        pydesq2_results_file_name: str,
+        genes_colname: str,
+        *,
+        padj_thr: float,
+        log2fc_thr: float,
+    ) -> PlotlyResource:
+        """Interactive volcano plot: -log10(padj) vs log2FC, seuils identiques à l’analyse."""
+
         sigs = pd.read_csv(pydesq2_results_file_name)
+
+        # -log10(padj)
+        min_nonzero = sigs.loc[sigs["padj"] > 0, "padj"].min()
+        sigs["padj_plot"] = sigs["padj"].replace(0, min_nonzero)
+        sigs["padj_plot"] = -np.log10(sigs["padj_plot"])
+
+        # colonne booléenne significativité
+        sigs["signif"] = (sigs["padj"] < padj_thr) & (sigs["log2FoldChange"].abs() > log2fc_thr)
 
         fig = px.scatter(
             sigs,
-            x='log2FoldChange',
-            y='pvalue',
-            color='log2FoldChange',
-            hover_data=[genes_colname],  # column from config
-            size_max=10,
+            x="log2FoldChange",
+            y="padj_plot",
+            color="signif",
+            hover_data=[genes_colname, "padj", "log2FoldChange"],
             opacity=0.7,
-            color_continuous_scale='RdBu',
-            title='Volcano Plot',
-            labels={'log2FoldChange': 'Log2 Fold Change', 'pvalue': 'p-value'}
+            size_max=10,
+            color_discrete_map={True: "#d62728", False: "#636efa"},
+            title="Volcano plot : -log10(padj) vs. log2FC",
+            labels={
+                "log2FoldChange": "Log₂ Fold Change",
+                "padj_plot": "-log₁₀(adjusted p-value)",
+                "signif": f"padj<{padj_thr} & |log2FC|>{log2fc_thr}",
+            },
         )
+
+        # lignes de seuil
+        fig.add_hline(y=-np.log10(padj_thr), line_dash="dot", line_color="grey",
+                      annotation_text=f"padj = {padj_thr}", annotation_position="top left")
+        fig.add_vline(x=log2fc_thr,  line_dash="dot", line_color="grey")
+        fig.add_vline(x=-log2fc_thr, line_dash="dot", line_color="grey")
 
         c = PlotlyResource(fig)
         c.name = "Interactive Volcano Plot"
