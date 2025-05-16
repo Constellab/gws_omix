@@ -147,43 +147,38 @@ class Pydesq2(Task):
         return a
 
 
-# heatmap function
 
+# Heatmap function
     def build_plotly_heatmap(self, grapher_file_path) -> PlotlyResource:
-        # Read saved files
-        # Specify the first column as the index
         data = pd.read_csv(grapher_file_path, index_col=0)
 
-        # Extract numeric data for clustering
-        # Assuming the first column is non-numeric (e.g., gene IDs)
-        numeric_data = data.drop(data.columns[0], axis=1)
+        # Ici on ne supprime plus la première colonne : elle n’existe déjà plus,
+        # puisque les IDs gènes sont dans l’index.
+        numeric_data = data                     # ← simplement ça
 
-        # Perform hierarchical clustering
+        # Clustering
         row_linkage = sch.linkage(numeric_data.values,
-                                  method='average', metric='euclidean')
+                                method='average', metric='euclidean')
         col_linkage = sch.linkage(numeric_data.values.T,
-                                  method='average', metric='euclidean')
+                                method='average', metric='euclidean')
 
         row_order = sch.dendrogram(row_linkage, no_plot=True)['leaves']
         col_order = sch.dendrogram(col_linkage, no_plot=True)['leaves']
 
-        # Reorder the DataFrame
         data_reordered = data.iloc[row_order, col_order]
 
-        # Create a heatmap
         heatmap = go.Figure(data=go.Heatmap(
             z=data_reordered.values,
             x=data_reordered.columns,
             y=data_reordered.index,
             colorscale='RdYlBu'
         ))
-
-        # Set the size of the plot
         heatmap.update_layout(width=800, height=800)
 
-        b = PlotlyResource(heatmap)
-        b.name = "Interactive Average Hierarchical Clustering Heatmap"
-        return b
+        res = PlotlyResource(heatmap)
+        res.name = "Interactive Average Hierarchical Clustering Heatmap"
+        return res
+
 
 # Volcano plot function
     # Volcano plot function
