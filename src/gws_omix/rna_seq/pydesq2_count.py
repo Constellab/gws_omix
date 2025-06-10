@@ -17,19 +17,32 @@ from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
                 short_description="Compute differential analysis using pyDESeq2 python package (pairwise comparison)")
 class Pydesq2(Task):
     """
-    - PyDESeq2, a Python implementation of the DESeq2 method originally developed in R, is a versatile tool for conducting differential expression analysis (DEA) on bulk RNA-seq data.<br>
+- PyDESeq2, a Python implementation of the DESeq2 method originally developed in R, is a versatile tool for conducting differential expression analysis (DEA) on bulk RNA-seq data.
     This reimplementation provides similar—but not identical—results: it achieves higher model likelihood and enables faster performance on large datasets.<br>
 
-    - Normalization:<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <strong>Before</strong> differential expression analysis: <strong>Median-of-ratios</strong> normalization (<code>dds.deseq2()</code>) is used to correct for differences in sequencing depth across samples.<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;• <strong>After</strong> differential expression analysis: <strong>VST</strong> (Variance Stabilizing Transformation) is applied for exploratory analyses such as PCA, clustering, and heatmaps.<br>
+- **Normalization:**<br>
+• Before differential expression analysis: Median-of-ratios normalization (dds.deseq2()) is used to correct for differences in sequencing depth across samples.
+• After differential expression analysis: VST (Variance Stabilizing Transformation) is applied for exploratory analyses such as PCA, clustering, and heatmaps.
 
-    - The Wald test is used to compare two conditions.<br>
-    The null hypothesis of the Wald test states that for each gene, there is no differential expression between two sample groups (e.g., treated vs. control).<br>
-    If the p-value is small (e.g., p < 0.05), the null hypothesis is rejected, suggesting there is only a 5% chance that the observed difference occurred by random chance.<br>
-    However, when testing many genes, a number of non-differentially expressed genes may still appear significant due to random chance (false positives).<br>
+- **The Wald test is used to compare two conditions:**<br>
+    The null hypothesis of the Wald test states that for each gene, there is no differential expression between two sample groups (e.g., treated vs. control).
+    If the p-value is small (e.g., p < 0.05), the null hypothesis is rejected, suggesting there is only a 5% chance that the observed difference occurred by random chance.
+    However, when testing many genes, a number of non-differentially expressed genes may still appear significant due to random chance (false positives).
 
-    - Results are filtered by p-value and |log2FoldChange|.<br>
+- **Visual outputs:**<br>
+    • `pydesq2_results_table.csv` — DE results sorted by `log2FoldChange` (raw Wald values).<br>
+    • **Volcano plot** `Volcano_<contrast>` (red = sig, grey = non-sig).<br>
+    • **Heat-map** `Heatmap_<contrast>` for the top-50 DE genes (VST counts).<br>
+    • **Global PCA**: `.<br>
+
+- **Example of metadata file:**<br>
+    Sample	forward-absolute-filepath	reverse-absolute-filepath	Condition	Replicate	Batch
+    SRR13978645	SRR13978645_1.fastq.gz	SRR13978645_2.fastq.gz	CTRL	R1	Batch1
+    SRR13978644	SRR13978644_1.fastq.gz	SRR13978644_2.fastq.gz	CTRL	R2	Batch1
+    SRR13978643	SRR13978643_1.fastq.gz	SRR13978643_2.fastq.gz	CTRL	R3	Batch2
+    SRR13978642	SRR13978642_1.fastq.gz	SRR13978642_2.fastq.gz	SPRC1	R1	Batch1
+    SRR13978641	SRR13978641_1.fastq.gz	SRR13978641_2.fastq.gz	SPRC2	R1	Batch1
+    SRR13978640	SRR13978640_1.fastq.gz	SRR13978640_2.fastq.gz	SPRC2	R2	Batch2
 
 
     """
@@ -180,7 +193,6 @@ class Pydesq2(Task):
         return res
 
 
-# Volcano plot function
     # Volcano plot function
     def build_plotly_volcanoplot(
         self,

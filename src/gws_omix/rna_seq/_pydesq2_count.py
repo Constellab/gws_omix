@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 from typing import Optional, Union
-
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
@@ -10,7 +9,6 @@ from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
 
 
-# ───────── helpers ─────────
 def _parse_float(x: Union[str, float, None]) -> Optional[float]:
     if x is None or (isinstance(x, str) and x.lower() == "none"):
         return None
@@ -23,10 +21,9 @@ def _check_samples(count_idx: pd.Index, meta_idx: pd.Index) -> None:
     if missing:
         raise ValueError(f"Samples missing in counts: {sorted(missing)}")
     if extra:
-        print(f"⚠️  Extra samples in counts ignored: {sorted(extra)}", file=sys.stderr)
+        print(f"Extra samples in counts ignored: {sorted(extra)}", file=sys.stderr)
 
 
-# ───────── pipeline ─────────
 class DeseqAnalyzer:
     def __init__(
         self,
@@ -75,7 +72,7 @@ class DeseqAnalyzer:
         stats = DeseqStats(self.dds,
                         contrast=("Condition", self.treat, self.ctrl))
 
-        # shrinkage dual-API
+        # shrinkage
         try:
             stats.lfc_shrink()
         except TypeError:
@@ -90,7 +87,7 @@ class DeseqAnalyzer:
         stats.summary(save=False)
         if hasattr(stats, "get_results_df"):
             res = stats.get_results_df()
-        elif hasattr(stats, "results_df"):    
+        elif hasattr(stats, "results_df"):
             attr = stats.results_df
             res  = attr() if callable(attr) else attr
         else:
@@ -112,7 +109,7 @@ class DeseqAnalyzer:
         # nouvelle API (≥ 0.5)
         if hasattr(self.dds, "vst_fit") and hasattr(self.dds, "vst_transform"):
             self.dds.vst_fit(use_design=False)
-            vst_counts = self.dds.vst_transform()            # ndarray (samples × genes)
+            vst_counts = self.dds.vst_transform()
             ad = sc.AnnData(vst_counts,
                             obs=self.dds.obs.copy(),
                             var=pd.DataFrame(index=self.dds.var_names))
@@ -125,8 +122,6 @@ class DeseqAnalyzer:
             return
 
         raise RuntimeError(
-            "VST not available in this PyDESeq2 build - "
-            "install ≥ 0.5 or 0.4 with get_vst()."
         )
 
     # 4 ─ PCA

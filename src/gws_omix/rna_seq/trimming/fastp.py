@@ -10,7 +10,7 @@ from typing import List
 import pandas as pd
 from gws_core import (ConfigParams, ConfigSpecs, Folder, File, InputSpec, InputSpecs, OutputSpec, OutputSpecs,
                        IntParam, StrParam, Task, TaskInputs, TaskOutputs, task_decorator)
-                       
+
 from .fastp_env import FastpShellProxyHelper
 from gws_omix import FastqFolder
 
@@ -37,7 +37,7 @@ def _abs(p: str, root: Path) -> str:
 @task_decorator(
     "Fastp",
     human_name="Fastp",
-    short_description="Adapter & quality trimming with fastp (metadata driven)",
+    short_description="Adapter & quality trimming with fastp",
 )
 class Fastp(Task):
 
