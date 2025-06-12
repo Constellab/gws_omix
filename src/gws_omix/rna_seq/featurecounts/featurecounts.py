@@ -47,6 +47,15 @@ class FeatureCounts(Task):
             allowed_values=["Paired-end", "Single-end"],
             short_description="Library type for featureCounts"
         ),
+        "strandedness": IntParam(
+            default_value=0,
+            min_value=0,
+            max_value=2,
+            short_description=(
+                "indicating if strand-specific read counting should be performed."
+                "It has three possible values: 0 (unstranded), 1 (stranded) and 2 (reversely stranded). 0 by default."
+            )
+        ),
     })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -57,6 +66,7 @@ class FeatureCounts(Task):
         # 2) Retrieve config
         threads = params["threads"]
         seq_type = params["sequencing_type"]
+        strandedness  = params["strandedness"]
 
         # 3) Create working directory
         shell_proxy = FeatureCountsShellProxyHelper.create_proxy(self.message_dispatcher)
@@ -77,7 +87,8 @@ class FeatureCounts(Task):
         featurecounts_cmd = (
             f"featureCounts {paired_option} "
             f"-F GTF "                              # treat file as GTF
-            f"-O -M --fraction -s 0 "    # set strandedness dynamically
+            f"-O -M --fraction "
+            f"-s {strandedness} "
             f"-t exon "                             # feature type to count
             f"-g gene_id "                          # group by gene_id
             f"-T {threads} "
