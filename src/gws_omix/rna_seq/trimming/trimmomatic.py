@@ -18,7 +18,7 @@ from .trimmomatic_env import TrimommaticShellProxyHelper
 
 
 @task_decorator("Trimmomatic", human_name="Trimmomatic",
-                short_description="Eliminate adapters and low-quality reads")
+                short_description="Eliminate adapters and low-quality reads",hide=True)
 class Trimmomatic(Task):
     """
     Trimmomatic is a software tool that trims and filters high-throughput sequencing data.

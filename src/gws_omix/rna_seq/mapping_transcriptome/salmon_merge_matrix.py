@@ -3,6 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+"""
+Combine multiple *quant.sf* files produced by Salmon into a gene‑level raw‑count
+matrix, taking care of transcript‑version suffixes (".1", ".2", …) that may be
+present in the quant.sf but absent in the GTF.
+
+* Strip the version suffix from **both** transcript_id and gene_id when parsing
+  the GTF.
+* Strip the version suffix from the *Name* column of *quant.sf* before the join.
+"""
+
 import os
 import re
 import pandas as pd
@@ -12,7 +22,8 @@ from gws_core import (
     TaskInputs, TaskOutputs, task_decorator,
     InputSpec, OutputSpec, ConfigSpecs, File
 )
-from .salmon_env import SalmonShellProxyHelper  # A shell proxy for Salmon
+from .salmon_env import SalmonShellProxyHelper
+
 
 @task_decorator(
     "Salmon_MergeMatrix",
@@ -42,6 +53,7 @@ class SalmonMergeMatrix(Task):
             short_description="GTF file used to extract transcript-to-gene mapping"
         )
     })
+
     output_specs = OutputSpecs({
         'matrix': OutputSpec(
             File,
@@ -49,72 +61,83 @@ class SalmonMergeMatrix(Task):
             short_description="CSV matrix (gene_id vs. raw integer counts per sample)"
         )
     })
+
     config_specs: ConfigSpecs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         salmon_folder: Folder = inputs['salmon_quant_folder']
         gtf_file: File = inputs['annotation_gtf']
 
-        # 1) Parse GTF to extract transcript_id → gene_id mapping
-        tx2gene = {}
-        pattern_tx = re.compile(r'transcript_id "([^"]+)"')
-        pattern_gn = re.compile(r'gene_id "([^"]+)"')
-        with open(gtf_file.path, 'r') as gf:
-            for line in gf:
+        # 1) Build transcript→gene map from GTF
+        tx2gene: dict[str, str] = {}
+        patt_tx = re.compile(r'transcript_id "([^\"]+)"')
+        patt_gn = re.compile(r'gene_id "([^\"]+)"')
+
+        with open(gtf_file.path) as fh:
+            for line in fh:
                 if line.startswith('#'):
                     continue
-                fields = line.strip().split('\t')
+                fields = line.rstrip('\n').split('\t')
                 if len(fields) < 9:
                     continue
                 attrs = fields[8]
-                m_tx = pattern_tx.search(attrs)
-                m_gn = pattern_gn.search(attrs)
+                m_tx = patt_tx.search(attrs)
+                m_gn = patt_gn.search(attrs)
                 if m_tx and m_gn:
-                    tx2gene[m_tx.group(1)] = m_gn.group(1)
-        if not tx2gene:
-            raise Exception("No transcript_id→gene_id mapping found in GTF.")
-        tx2gene_df = pd.DataFrame(
-            list(tx2gene.items()),
-            columns=['transcript_id', 'gene_id']
-        )
+                    tx_id = m_tx.group(1).split('.')[0]  # keep part before first dot
+                    gn_id = m_gn.group(1).split('.')[0]
+                    tx2gene[tx_id] = gn_id
 
-        # Prepare work directory
+        if not tx2gene:
+            raise Exception("No transcript_id→gene_id pairs found in GTF. Check annotation file.")
+
+        tx2gene_df = pd.DataFrame(tx2gene.items(), columns=['transcript_id', 'gene_id'])
+
+        # 2) Prepare working directory inside Salmon shell environment
         shell = SalmonShellProxyHelper.create_proxy(self.message_dispatcher)
         work_dir = os.path.join(shell.working_dir, 'merged')
         os.makedirs(work_dir, exist_ok=True)
 
-        # 2) Locate quant.sf in each sample subfolder
-        samples = []
-        for name in os.listdir(salmon_folder.path):
-            subdir = os.path.join(salmon_folder.path, name)
-            qsf = os.path.join(subdir, 'quant.sf')
-            if os.path.isfile(qsf):
-                samples.append((name, qsf))
-        if not samples:
-            raise Exception("No quant.sf files found in salmon_quant_folder.")
+        # 3) Locate quant.sf files (one per sample)
+        samples: list[tuple[str, str]] = []
+        for entry in os.listdir(salmon_folder.path):
+            qsf_path = os.path.join(salmon_folder.path, entry, 'quant.sf')
+            if os.path.isfile(qsf_path):
+                samples.append((entry, qsf_path))
 
-        # 3) Read and collapse each sample to gene-level
-        gene_dfs = []
+        if not samples:
+            raise Exception("No quant.sf files found in the provided folder.")
+
+        # 4) Convert each sample to gene-level counts
+        gene_tables: list[pd.DataFrame] = []
         for sample_name, qsf_path in samples:
             df = pd.read_csv(qsf_path, sep='\t', usecols=['Name', 'NumReads'], dtype={'Name': str})
-            df.rename(columns={'Name': 'transcript_id', 'NumReads': sample_name}, inplace=True)
-            # map transcripts to genes and sum
+            # Drop version suffix from transcript IDs
+                        # Strip version suffix from transcript IDs (first dot only)
+            df['transcript_id'] = df['Name'].str.split('.', n=1, expand=False).str[0]
+            df.rename(columns={'NumReads': sample_name}, inplace=True)
+            df = df[['transcript_id', sample_name]]
+
             merged = pd.merge(df, tx2gene_df, on='transcript_id', how='inner')
             gene_counts = merged.groupby('gene_id', as_index=False)[sample_name].sum()
-            gene_dfs.append(gene_counts)
+            gene_tables.append(gene_counts)
 
-        # 4) Merge gene-level counts across all samples
-        merged_counts = gene_dfs[0]
-        for gdf in gene_dfs[1:]:
-            merged_counts = pd.merge(merged_counts, gdf, on='gene_id', how='outer')
+        if not gene_tables:
+            raise Exception("Mapping transcripts to genes produced empty tables. Check GTF vs index.")
 
-        # 5) Fill missing with zeros, round, convert to int
-        for col in merged_counts.columns:
-            if col != 'gene_id':
-                merged_counts[col] = merged_counts[col].fillna(0).round().astype(int)
+        # 5) Merge across samples (outer join to keep all genes)
+        combined = gene_tables[0]
+        for tbl in gene_tables[1:]:
+            combined = pd.merge(combined, tbl, on='gene_id', how='outer')
 
-        # 6) Write final CSV
-        out_csv = os.path.join(work_dir, 'salmon_merged_matrix.csv')
-        merged_counts.to_csv(out_csv, index=False)
 
-        return {'matrix': File(out_csv)}
+        # 6) Fill missing with 0, round, cast to int
+
+        for col in combined.columns[1:]:  # skip gene_id column
+            combined[col] = combined[col].fillna(0).round().astype(int)
+
+        # 7) Save result
+        out_path = os.path.join(work_dir, 'salmon_merged_matrix.csv')
+        combined.to_csv(out_path, index=False)
+
+        return {'matrix': File(out_path)}

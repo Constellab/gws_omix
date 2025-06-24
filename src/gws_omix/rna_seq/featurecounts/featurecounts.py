@@ -86,10 +86,9 @@ class FeatureCounts(Task):
         bam_files_str = " ".join(bam_list)
         featurecounts_cmd = (
             f"featureCounts {paired_option} "
-            f"-F GTF "                              # treat file as GTF
-            f"-O -M --fraction "
+            f"-F GTF "
             f"-s {strandedness} "
-            f"-t exon "                             # feature type to count
+            f"-t exon "                             
             f"-g gene_id "                          # group by gene_id
             f"-T {threads} "
             f"-a {annotation_file.path} "
