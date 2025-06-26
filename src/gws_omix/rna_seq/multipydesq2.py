@@ -25,9 +25,44 @@ from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 @task_decorator(
     "pyDESeq2MultiContrast",
     human_name="pyDESeq2 multi-contrast",
-    short_description="DESeq2 contrasts + interactive PCA / volcano / heat-maps",
-)
+    short_description="DESeq2 contrasts + interactive PCA / volcano / heat-maps", hide=True)
 class Pydesq2Multi(Task):
+    """
+- MultiDE – automated multi-contrast bulk RNA-seq DEA
+    This Python script loops over every treatment level in the metadata file and runs **one differential-expression test per treatment vs control**, then (if ≥ 2 treatments are present) a **pooled “ALL vs CTRL”** comparison.
+    The design matrix is chosen automatically:
+    • ` ~ Batch + Timepoint + Replicate + Group + Condition` if  Batch + Timepoint + Replicate + Group columns exists, otherwise ~ Condition.<br>
+
+- **Normalisation workflow:**<br>
+    • Before differential expression analysis: Median-of-ratios normalization (dds.deseq2()) is used to correct for differences in sequencing depth across samples.
+    • After differential expression analysis: VST (Variance Stabilizing Transformation) is applied for exploratory analyses such as PCA, heatmaps.<br>
+
+- **Statistical test:**<br>
+     each contrast is analysed with the **Wald test** implemented in PyDESeq2’s `DeseqStats`.<br>
+
+- **The Wald test is used to compare two conditions.**<br>
+    The null hypothesis of the Wald test states that for each gene, there is no differential expression between two sample groups (e.g., treated vs. control).<br>
+    If the p-value is small (e.g., p < 0.05), the null hypothesis is rejected, suggesting there is only a 5% chance that the observed difference occurred by random chance.<br>
+    However, when testing many genes, a number of non-differentially expressed genes may still appear significant due to random chance (false positives).<br>
+
+- **Visual outputs:**<br>
+    • `pydesq2_results_table.csv` — DE results sorted by `log2FoldChange`.<br>
+    • **Volcano plot** `Volcano_<contrast>` .<br>
+    • **Heatmap** `Heatmap_<contrast>` for the top-50 DE genes (VST counts).<br>
+    • **Global PCA**: `.<br>
+
+- **Example of metadata file:**<br>
+
+Sample	forward-absolute-filepath	reverse-absolute-filepath	Timepoint	Condition	Group
+t1_control-1	t1_control-1_1.fastq.gz	t1_control-1_2.fastq.gz	t1	control	Female
+t1_control-2	t1_control-2_1.fastq.gz	t1_control-2_2.fastq.gz	t1	control	male
+t1_rapid-1	t1_rapid-1_1.fastq.gz	t1_rapid-1_2.fastq.gz	t1	rapid	Female
+t1_rapid-2	t1_rapid-2_1.fastq.gz	t1_rapid-2_2.fastq.gz	t1	rapid	Female
+t1_rapid-3	t1_rapid-3_1.fastq.gz	t1_rapid-3_2.fastq.gz	t1	rapid	male
+t1_slow-1	t1_slow-1_1.fastq.gz	t1_slow-1_2.fastq.gz	t1	slow	Female
+
+    """
+
     input_specs: Final[InputSpecs] = InputSpecs({
         "count_table_file": InputSpec(File, human_name="Counts CSV"),
         "metadata_file":    InputSpec(File, human_name="Metadata TSV"),
@@ -101,7 +136,7 @@ class Pydesq2Multi(Task):
 
         # dropdown menus --------------------------------------------
         grp_vals = ["all"] + list(grp_symbols.keys())
-        tp_vals  = ["all"] + list(tp_sizes.keys())
+        tp_vals = ["all"] + list(tp_sizes.keys())
 
         def _mask(sel_grp, sel_tp):
             m = [(sel_grp in ("all", g) and sel_tp in ("all", t))
@@ -134,9 +169,9 @@ class Pydesq2Multi(Task):
 
     @staticmethod
     def plot_pca(meta_csv: str, prop_csv: str) -> PlotlyResource:
-        meta  = pd.read_csv(meta_csv)
+        meta = pd.read_csv(meta_csv)
         props = pd.read_csv(prop_csv)
-        res   = PlotlyResource(Pydesq2Multi._pca_dropdown(meta, props))
+        res = PlotlyResource(Pydesq2Multi._pca_dropdown(meta, props))
         res.name = "Interactive PCA"
         return res
 
@@ -174,9 +209,9 @@ class Pydesq2Multi(Task):
     @staticmethod
     def plot_volcano(path: str, gene_col: str,
                      *, padj_thr: float, fc_thr: float) -> PlotlyResource:
-        df   = pd.read_csv(path)
+        df = pd.read_csv(path)
         pcol = "padj" if "padj" in df.columns else "pvalue"
-        eps  = df.loc[df[pcol] > 0, pcol].min() or 1e-300
+        eps = df.loc[df[pcol] > 0, pcol].min() or 1e-300
         df["p_plot"] = -np.log10(df[pcol].replace(0, eps))
         df["signif"] = (df[pcol] < padj_thr) & (df.log2FoldChange.abs() > fc_thr)
 
@@ -190,7 +225,7 @@ class Pydesq2Multi(Task):
                     "signif": f"{pcol}<{padj_thr} & |log2FC|>{fc_thr}"},
             title=Path(path).stem)
         fig.add_hline(y=-np.log10(padj_thr), line_dash="dot", line_color="grey")
-        fig.add_vline(x= fc_thr,  line_dash="dot", line_color="grey")
+        fig.add_vline(x=fc_thr,  line_dash="dot", line_color="grey")
         fig.add_vline(x=-fc_thr, line_dash="dot", line_color="grey")
 
         res = PlotlyResource(fig)
@@ -199,8 +234,8 @@ class Pydesq2Multi(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         counts = inputs["count_table_file"].path
-        meta   = inputs["metadata_file"].path
-        gtf    = inputs["gtf_file"].path
+        meta = inputs["metadata_file"].path
+        gtf = inputs["gtf_file"].path
         gcol, ctrl = params["genes_colname"], params["control_condition"]
         p_thr, fc_thr = params["pvalue_value"], params["log2FoldChange_value"]
 
