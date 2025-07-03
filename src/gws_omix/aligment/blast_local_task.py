@@ -25,7 +25,7 @@ from gws_omix.base_env.blast_web_env_task import BlastWebShellProxyHelper
 @task_decorator(
     "LocalBlast",
     human_name="Local BLAST per-sequence",
-    short_description="Run local BLAST on each sequence of a FASTA using RefSeq DB")
+    short_description="Run local BLAST on each sequence of a FASTA using RefSeq DB" , hide=True)
 
 class LocalBlast(Task):
 

@@ -22,7 +22,7 @@ from ..base_env.blast_web_env_task import BlastWebShellProxyHelper
 @task_decorator(
     "BlastWebRunner",
     human_name="NCBI_Remote_Blast",
-    short_description="Run remote BLAST per sequence using NCBI's servers")
+    short_description="Run remote BLAST per sequence using NCBI's servers" ,  hide=True)
 
 class BlastWebRunner(Task):
 
