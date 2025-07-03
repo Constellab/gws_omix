@@ -1,10 +1,23 @@
-name: .venv
+name: pydeseq2_env
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
 dependencies:
-  - pydeseq2 =0.5.1
-  - scanpy =1.11.1
-  - plotly =6.0.1
-  - nbformat =5.10.4
-  - matplotlib =3.10.3
+  # cœur DE
+  - pydeseq2           ==0.5.2
+  - scanpy             ==1.11.1         
+  - pandas             >=1.5             
+  # num / stats
+  - numpy              >=1.23
+  - scipy              >=1.11
+  - scikit-learn       >=1.1
+  # graphiques
+  - matplotlib         >=3.6.2
+  - plotly             ==6.0.1
+  - seaborn            >=0.13
+  # dépendances PyDESeq2
+  - anndata            >=0.8
+  - formulaic          >=1.0.2
+  - formulaic-contrasts >=0.2.0          
+  # autres utilitaires
+  - nbformat           >=5.10
