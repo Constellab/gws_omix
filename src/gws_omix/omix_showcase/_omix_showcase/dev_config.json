@@ -1,7 +1,18 @@
 {
     "app_dir_path": "",
-    "source_ids": ["e21a7f8b-e45d-4567-9752-466651e5f779"],
+    "source_ids": ["e21a7f8b-e45d-4567-9752-466651e5f779", "db88ac0d-3784-495b-a9cd-5f498178f22c"],
     "params": {
+        "quality_check_forward_reads": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897930",
+        "quality_check_reverse_reads": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897930",
+        "rarefaction_analysis_observed_features": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897931",
+        "rarefaction_analysis_shannon_index": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897932",
+        "taxonomy_analysis_kingdom": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897930",
+        "taxonomy_analysis_phylum": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897930",
+        "taxonomy_analysis_class": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897935",
+        "taxonomy_analysis_order": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897934",
+        "taxonomy_analysis_family": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897933",
+        "taxonomy_analysis_genus": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897930",
+        "taxonomy_analysis_species": "https://lab.f073fa6a-7f5b-40c2-a371-28865f52b557.constellab.app/open/resource/fd229c22-8c1c-4e9d-98bf-b3fa1cb13811_1751643897930"
     },
     "env_type": "NONE",
     "env_file_path": ""

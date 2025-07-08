@@ -1,10 +1,59 @@
+.sidebar-container {
+    height: 100vh !important;
+}
+
+.sidebar-icon{
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.download-href-button{
+    background-color: var(--accent-9);
+    color: var(--accent-contrast);
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+    font-weight: var(--font-weight-medium);
+    gap: var(--space-2);
+    font-size: var(--font-size-2);
+    line-height: var(--line-height-2);
+    letter-spacing: var(--letter-spacing-2);
+    border-radius: max(var(--radius-2), var(--radius-full));
+    --base-button-classic-active-padding-top: 2px;
+    --base-button-height: var(--space-6);
+    height: var(--base-button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+.download-href-button:hover {
+    background-color: var(--accent-10);
+    color: var(--accent-contrast) !important;
+    cursor: pointer;
+}
+
+.page_container{
+    min-height: 100vh !important;
+    width: auto;
+    overflow: auto;
+}
+
 .tab-content {
     height: calc(100vh - 7em);
     padding-top: 1em;
     overflow-y: auto;
+    width: calc(100vw - 18em);
 }
 
-.introduction-box{
+.tab-content .rt-Heading {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.overview-box{
     max-width: 60rem;
 }
 
@@ -16,13 +65,29 @@
 
 
 .gridjs-th, .gridjs-td {
-    padding: 3px 5px !important;
+    padding: 3px !important;
+    max-width: 500px !important;
+    min-width: 30px !important;
 }
 
-.gridjs-th{
-    min-width: 200px !important;
+.gridjs-th-content{
+    min-width: fit-content !important;
+}
+
+.gridjs-td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .clickable:hover {
     cursor: pointer;
+}
+
+
+@media (max-width: 1600px) {
+    .tab-button .rt-BaseTabListTriggerInner, .tab-button .rt-BaseTabListTriggerInnerHidden{
+        padding: 0 !important;
+        font-size: 0.85em !important;
+    }
 }

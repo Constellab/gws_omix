@@ -2,7 +2,9 @@ from gws_core import (AppConfig, AppType, ConfigParams, ConfigSpecs,
                       InputSpecs, OutputSpec, OutputSpecs, ReflexResource,
                       Task, TaskInputs, TaskOutputs, app_decorator,
                       task_decorator)
+from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.file.file import File
+from gws_core.impl.file.folder import Folder
 from gws_core.io.io_spec import InputSpec
 
 
@@ -17,21 +19,55 @@ class OmixShowcaseAppConfig(AppConfig):
 
 
 @task_decorator("GenerateOmixShowcase", human_name="Generate OmixShowcase app",
-                style=ReflexResource.copy_style(), hide=True)
+                style=ReflexResource.copy_style())
 class GenerateOmixShowcase(Task):
     """
     Task that generates the OmixShowcase app.
     """
 
     input_specs = InputSpecs({
-        'data_file': InputSpec(File, human_name="Data Excel File",
-                               short_description="Excel file used for the showcase, containing data to be displayed", is_optional=False)
+        'eggnog_data_file': InputSpec(File, human_name="Eggnog gData Excel File",
+                                      short_description="Excel file used for the eggnog showcase, containing data to be displayed", is_optional=False),
+        'sixteen_s_data_file': InputSpec(Folder, human_name="16S Data Folder",
+                                         short_description="Folder containing the 16S data files to be displayed", is_optional=False),
     })
     output_specs = OutputSpecs({
         'reflex_app': OutputSpec(ReflexResource)
     })
 
-    config_specs = ConfigSpecs({})
+    config_specs = ConfigSpecs({
+        'quality_check_forward_reads': StrParam(human_name='Quality Check Forward Reads URL',
+                               short_description='The iframe URL for the quality check forward reads'),
+        'quality_check_reverse_reads': StrParam(human_name='Quality Check Reverse Reads URL',
+                               short_description='The iframe URL for the quality check reverse reads'),
+        'rarefaction_analysis_observed_features': StrParam(
+            human_name='Rarefaction Analysis Observed Features URL',
+            short_description='The iframe URL for the rarefaction analysis observed features'),
+        'rarefaction_analysis_shannon_index': StrParam(
+            human_name='Rarefaction Analysis Shannon Index URL',
+            short_description='The iframe URL for the rarefaction analysis shannon index'),
+        'taxonomy_analysis_kingdom': StrParam(
+            human_name='Taxonomy Analysis Kingdom URL',
+            short_description='The iframe URL for the taxonomy analysis kingdom'),
+        'taxonomy_analysis_phylum': StrParam(
+            human_name='Taxonomy Analysis Phylum URL',
+            short_description='The iframe URL for the taxonomy analysis phylum'),
+        'taxonomy_analysis_class': StrParam(
+            human_name='Taxonomy Analysis Class URL',
+            short_description='The iframe URL for the taxonomy analysis class'),
+        'taxonomy_analysis_order': StrParam(
+            human_name='Taxonomy Analysis Order URL',
+            short_description='The iframe URL for the taxonomy analysis order'),
+        'taxonomy_analysis_family': StrParam(
+            human_name='Taxonomy Analysis Family URL',
+            short_description='The iframe URL for the taxonomy analysis family'),
+        'taxonomy_analysis_genus': StrParam(
+            human_name='Taxonomy Analysis Genus URL',
+            short_description='The iframe URL for the taxonomy analysis genus'),
+        'taxonomy_analysis_species': StrParam(
+            human_name='Taxonomy Analysis Species URL',
+            short_description='The iframe URL for the taxonomy analysis species'),
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """
@@ -40,6 +76,9 @@ class GenerateOmixShowcase(Task):
 
         reflex_app.set_app_config(OmixShowcaseAppConfig())
         reflex_app.name = "OmixShowcase"
-        reflex_app.add_resource(inputs['data_file'], create_new_resource=False)
+        reflex_app.add_resource(inputs['eggnog_data_file'], create_new_resource=False)
+        reflex_app.add_resource(inputs['sixteen_s_data_file'], create_new_resource=False)
+
+        reflex_app.set_params(params)
 
         return {"reflex_app": reflex_app}
