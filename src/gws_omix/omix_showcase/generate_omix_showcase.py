@@ -81,4 +81,6 @@ class GenerateOmixShowcase(Task):
 
         reflex_app.set_params(params)
 
+        reflex_app.set_requires_authentication(False)
+
         return {"reflex_app": reflex_app}
