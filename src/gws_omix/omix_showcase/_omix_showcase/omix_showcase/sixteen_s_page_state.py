@@ -12,14 +12,14 @@ from gws_reflex_main import ReflexMainState
 class SixteenSPageState(ReflexMainState):
 
     @rx.var(cache=True)
-    def quality_check_forward_reads_url(self) -> Optional[str]:
+    def quality_check_forward_reads_url(self) -> str:
         """Return the URL for the quality check forward reads."""
-        return self.get_param("quality_check_forward_reads")
+        return self.get_param("quality_check_forward_reads", "")
 
     @rx.var(cache=True)
-    def quality_check_reverse_reads_url(self) -> Optional[str]:
+    def quality_check_reverse_reads_url(self) -> str:
         """Return the URL for the quality check reverse reads."""
-        return self.get_param("quality_check_reverse_reads")
+        return self.get_param("quality_check_reverse_reads", "")
 
     @rx.var(cache=True)
     def feature_inference(self) -> pd.DataFrame:
