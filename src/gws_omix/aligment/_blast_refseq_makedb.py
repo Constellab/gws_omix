@@ -1,40 +1,49 @@
 #!/usr/bin/env python3
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
-
 import os
 import subprocess
 import sys
+from contextlib import contextmanager
 
+DBS = ["refseq_rna", "refseq_protein"]
+# Any of these indicate a present/usable DB (covers protein/nucleotide + alias files)
+DB_MARKERS = [".pal", ".nal", ".pin", ".nin", ".psq", ".nsq", ".pdb", ".ndb", ".phr", ".nhr"]
 
-def download_and_decompress(db_name: str):
-    print(f"[INFO] Downloading RefSeq database: {db_name}")
-    subprocess.run(["update_blastdb.pl", db_name, "--decompress"], check=True)
-    print(f"[INFO] {db_name} downloaded and decompressed.")
+@contextmanager
+def chdir(path):
+    prev = os.getcwd()
+    os.makedirs(path, exist_ok=True)
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev)
 
+def db_exists(db_basename: str, folder: str) -> bool:
+    for ext in DB_MARKERS:
+        if os.path.exists(os.path.join(folder, db_basename + ext)):
+            return True
+    return False
 
-def move_db_files(db_name: str, output_dir: str):
-    print(f"[INFO] Moving {db_name} files to {output_dir}")
-    files = [f for f in os.listdir(".") if f.startswith(db_name + ".")]
-    for f in files:
-        os.rename(f, os.path.join(output_dir, f))
-    print(f"[INFO] Files moved: {files}")
+def ensure_db(db_name: str, output_dir: str):
+    if db_exists(db_name, output_dir):
+        print(f"[INFO] {db_name} already present in {output_dir}. Skipping download.")
+        return
+    print(f"[INFO] Downloading {db_name} into {output_dir} ...")
+    with chdir(output_dir):
+        subprocess.run(["update_blastdb.pl", db_name, "--decompress"], check=True)
+    if not db_exists(db_name, output_dir):
+        raise RuntimeError(f"Downloaded {db_name}, but expected files not found in {output_dir}")
+    print(f"[INFO] {db_name} ready in {output_dir}")
 
-
-def build_refseq_db(output_dir: str):
-    os.makedirs(output_dir, exist_ok=True)
-    for db in ["refseq_rna", "refseq_protein"]:
-        download_and_decompress(db)
-        move_db_files(db, output_dir)
+def main():
+    output_dir = sys.argv[1]
+    for db in DBS:
+        ensure_db(db, output_dir)
     print(f"[INFO] Finished. Databases are in {output_dir}")
 
-
 if __name__ == "__main__":
-    output_dir = sys.argv[1]
     try:
-        build_refseq_db(output_dir)
+        main()
     except Exception as e:
         print(f"[ERROR] {e}")
         sys.exit(1)

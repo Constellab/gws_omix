@@ -19,9 +19,9 @@ from gws_omix.base_env.blast_web_env_task import BlastWebShellProxyHelper
 
 
 @task_decorator(
-    "RefSeqBlastDB",
+    "Build RefSeqBlastDB",
     human_name="Build RefSeqBlastDatabase",
-    short_description="Download and prepare RefSeq BLAST databases (RNA & Protein)" ,  hide=True)
+    short_description="Download and prepare RefSeq BLAST databases (RNA & Protein)")
 
 class RefSeqBlastDB(Task):
 
