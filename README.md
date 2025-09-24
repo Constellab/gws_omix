@@ -30,7 +30,7 @@ Molecular sequence analysis
 
 ## 🛠️ Installation
 
-The `gws_ubiome` brick requires the `gws_core` brick.
+The `gws_omix` brick requires the `gws_core` brick.
 
 ### 🔥 Recommended Method
 

@@ -4,11 +4,11 @@ from gws_core import File
 from gws_reflex_main import ReflexMainState
 
 
-class EggnogPageState(ReflexMainState):
+class EggnogPageState(ReflexMainState, rx.State):
 
     @rx.var(cache=True)
-    def database_data(self) -> pd.DataFrame:
-        resources = self.get_resources()
+    async def database_data(self) -> pd.DataFrame:
+        resources = await self.get_resources()
         if not resources or len(resources) != 2:
             return pd.DataFrame()
         data_file: File = resources[0]
@@ -20,8 +20,8 @@ class EggnogPageState(ReflexMainState):
         return data
 
     @rx.var(cache=True)
-    def constellab_data(self) -> pd.DataFrame:
-        resources = self.get_resources()
+    async def constellab_data(self) -> pd.DataFrame:
+        resources = await self.get_resources()
         if not resources or len(resources) != 2:
             return pd.DataFrame()
         data_file: File = resources[0]
@@ -33,9 +33,9 @@ class EggnogPageState(ReflexMainState):
         return data
 
     @rx.var(cache=True)
-    def download_database_data(self) -> str:
+    async def download_database_data(self) -> str:
         """Event handler to download the database data."""
-        resources = self.get_resources()
+        resources = await self.get_resources()
         if not resources or len(resources) != 2:
             return 'database_data.xlsx'
         data_file: File = resources[0]
@@ -51,9 +51,9 @@ class EggnogPageState(ReflexMainState):
         return 'database_data.xlsx'
 
     @rx.var(cache=True)
-    def download_constellab_data(self) -> str:
+    async def download_constellab_data(self) -> str:
         """Event handler to download the Constellab data."""
-        resources = self.get_resources()
+        resources = await self.get_resources()
         if not resources or len(resources) != 2:
             return 'constellab_data.xlsx'
         data_file: File = resources[0]

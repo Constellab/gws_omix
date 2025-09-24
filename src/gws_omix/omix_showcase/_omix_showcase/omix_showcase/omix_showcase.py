@@ -7,7 +7,6 @@ from gws_omix.omix_showcase._omix_showcase.omix_showcase.eggnog_page_state impor
 from gws_omix.omix_showcase._omix_showcase.omix_showcase.sixteen_s_page_state import \
     SixteenSPageState
 from gws_reflex_base import get_theme, render_main_container
-from gws_reflex_main import ReflexMainState
 
 
 def download_link_button(label: str, href: str) -> rx.Component:
@@ -140,7 +139,7 @@ app = rx.App(
 )
 
 
-@rx.page(title="Home", on_load=ReflexMainState.on_load)
+@rx.page(title="Home")
 def index():
     # Render the main container with the app content.
     # The content will be displayed once the state is initialized.
@@ -159,7 +158,7 @@ def index():
 
 
 @rx.page(title="Eggnog",
-         on_load=ReflexMainState.on_load, route="/eggnog")
+         route="/eggnog")
 def functional_annotation_through_orthology_assignment_page():
 
     # Render the main container with the app content.
@@ -262,7 +261,7 @@ def diversity_analysis_component(diversity_section: List) -> rx.Component:
     )
 
 
-@rx.page(title="16s RNA", on_load=ReflexMainState.on_load, route="/16s-rna")
+@rx.page(title="16s RNA", route="/16s-rna")
 def sixteen_s_page():
     # Render the main container with the app content.
     # The content will be displayed once the state is initialized.
