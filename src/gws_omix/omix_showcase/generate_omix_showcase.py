@@ -27,9 +27,9 @@ class GenerateOmixShowcase(Task):
 
     input_specs = InputSpecs({
         'eggnog_data_file': InputSpec(File, human_name="Eggnog gData Excel File",
-                                      short_description="Excel file used for the eggnog showcase, containing data to be displayed", is_optional=False),
+                                      short_description="Excel file used for the eggnog showcase, containing data to be displayed", optional=False),
         'sixteen_s_data_file': InputSpec(Folder, human_name="16S Data Folder",
-                                         short_description="Folder containing the 16S data files to be displayed", is_optional=False),
+                                         short_description="Folder containing the 16S data files to be displayed", optional=False),
     })
     output_specs = OutputSpecs({
         'reflex_app': OutputSpec(ReflexResource)
