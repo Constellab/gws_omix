@@ -8,7 +8,7 @@ from gws_core import File, Folder
 from gws_reflex_main import ReflexMainState
 
 
-class SixteenSPageState(ReflexMainState, rx.State):
+class SixteenSPageState(ReflexMainState):
 
     @rx.var(cache=True)
     async def quality_check_forward_reads_url(self) -> str:

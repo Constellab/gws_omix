@@ -4,7 +4,7 @@ from gws_core import File
 from gws_reflex_main import ReflexMainState
 
 
-class EggnogPageState(ReflexMainState, rx.State):
+class EggnogPageState(ReflexMainState):
 
     @rx.var(cache=True)
     async def database_data(self) -> pd.DataFrame:

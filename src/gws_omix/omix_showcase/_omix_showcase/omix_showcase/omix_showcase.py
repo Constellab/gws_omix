@@ -6,7 +6,7 @@ from gws_omix.omix_showcase._omix_showcase.omix_showcase.eggnog_page_state impor
     EggnogPageState
 from gws_omix.omix_showcase._omix_showcase.omix_showcase.sixteen_s_page_state import \
     SixteenSPageState
-from gws_reflex_base import get_theme
+from gws_reflex_main import get_theme
 
 
 def download_link_button(label: str, href: str) -> rx.Component:
