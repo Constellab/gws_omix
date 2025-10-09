@@ -1,0 +1,13 @@
+name: .venv
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - pymsaviz==0.5.0
+  - matplotlib==3.10.6
+  - mafft==7.525
+  - biopython==1.85
+  - cairo==1.18.4
+  - freetype==2.14.1
+  - pillow==11.3.0
+  - numpy==2.3.3
