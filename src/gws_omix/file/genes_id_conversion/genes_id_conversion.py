@@ -5,18 +5,13 @@
 
 import os
 import shlex
-from pathlib import Path
 from typing import Final
-import numpy as np
-import pandas as pd
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-import sys
 
 from gws_core import(
-    ConfigParams, ConfigSpecs, File, FloatParam, InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs, PlotlyResource, ResourceSet, ShellProxy,
-    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator,TableImporter,Table)
+    ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
+    OutputSpec, OutputSpecs, ShellProxy,
+    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator, Table, BoolParam,
+    TableColumnConcat, TaskRunner, TableColumnsDeleter)
 
 from .genes_id_conversion_env import GenesidConversionShellProxyHelper
 
@@ -100,13 +95,13 @@ NUMERIC_IDS_TREATED = [
 
 @task_decorator(
     "IDConvertWithGProfiler",
-    human_name="Gene_ID_conversion",
+    human_name="Gene ID conversion",
     short_description="Convert gene IDs to a selected target namespace using g:Profiler.",
 )
 class IDConvertTask(Task):
     """
     This task (task: OmiX – Gene ID conversion with g:Profiler) performs identifier harmonization on a user-provided list of gene IDs. It uses the g:Profiler g:Convert service to translate input identifiers (e.g., gene symbols, Ensembl IDs, Entrez IDs, UniProt accessions) into a selected target namespace.
-    See the full documentation on Cnostellab Community :https://constellab.community/bricks/gws_omix/latest/doc/use-cases/gene-id-conversion/
+    See the full documentation on Constellab Community: https://constellab.community/bricks/gws_omix/latest/doc/use-cases/gene-id-conversion/
     """
 
     input_specs: Final[InputSpecs] = InputSpecs({
@@ -123,23 +118,32 @@ class IDConvertTask(Task):
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
         "organism_name": StrParam(
+            human_name="Organism name",
             allowed_values=SCIENTIFIC_NAMES,
             short_description="Scientific name or g:Profiler code (e.g., 'Homo sapiens').",
         ),
         "id_column": StrParam(
+            human_name="ID column",
             default_value="",
             short_description="Column to convert (leave blank to use the first column).",
         ),
         "target_namespace": StrParam(
+            human_name="Target namespace",
             allowed_values=TARGET_NAMES,
             default_value="ENSG",
             short_description="g:Profiler target namespace.",
         ),
         "numeric_namespace": StrParam(
+            human_name="Numeric namespace",
             allowed_values=NUMERIC_IDS_TREATED,
             default_value="auto",
             short_description="How to treat bare numeric IDs (e.g., ENTREZGENE_ACC).It's recommended when your IDs are numbers. otherwise put auto",
         ),
+        "modify_input_file": BoolParam(
+            human_name = "Modify input file",
+            default_value=False,
+            short_description="If True, add the converted genes in the input file directly.",
+        )
     })
 
     python_file_path: Final[str] = os.path.join(
@@ -153,6 +157,7 @@ class IDConvertTask(Task):
         id_column   = (p["id_column"] or "").strip()
         target_ns   = p["target_namespace"].strip()
         numeric_ns  = (p.get("numeric_namespace", "") or "").strip()
+        modify_input_file = p.get("modify_input_file", False)
 
         shell: "ShellProxy" = GenesidConversionShellProxyHelper.create_proxy(self.message_dispatcher)
         work = shell.working_dir
@@ -182,6 +187,21 @@ class IDConvertTask(Task):
                 File(conv_fp),
                 {"delimiter": ",", "header": 0, "file_format": "csv"},
             )
+
+        if modify_input_file:
+            # If the user wants to modify the input file, we need to combine the original and converted tables
+            origin_table = TableImporter.call(ins["table_file"])
+            # Combine the original and converted tables
+            if converted_tbl is not None:
+                combined_table = TaskRunner(TableColumnConcat, inputs = {"table_1" :origin_table, "table_2": converted_tbl}).run()["table"]
+                # Remove the columns "incoming", "name", "description"
+                filters_to_remove = [
+                    {"name": "incoming", "is_regex": False},
+                    {"name": "name", "is_regex": False},
+                    {"name": "description", "is_regex": False}
+                ]
+                combined_table = TaskRunner(TableColumnsDeleter, inputs = {'source': combined_table}, params= {"filters": filters_to_remove}).run()["target"]
+                converted_tbl = combined_table
 
         # Even if the subprocess failed, return whatever artifact exists; if none, it's None (your app can show a clean error)
         return {"converted_table": converted_tbl}
