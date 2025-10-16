@@ -49,7 +49,6 @@ class MSAVis(Task):
         "mafft_outputs": OutputSpec(ResourceSet, human_name="MAFFT alignment & logs")
     })
 
-    # Removed: dpi, seq_index (now fixed inside the worker)
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
         "prefix": StrParam(default_value="", short_description="Output prefix (default: input filename stem)"),
         "max_seqs": IntParam(default_value=500, min_value=1, short_description="Max sequences to keep"),
@@ -84,7 +83,6 @@ class MSAVis(Task):
 
         rc = shell.run(cmd_str, shell_mode=True)
 
-        # Always build RS, even on error, so we keep logs
         msa_rs   = ResourceSet()
         mafft_rs = ResourceSet()
 
@@ -113,7 +111,6 @@ class MSAVis(Task):
                     pass
             raise RuntimeError(f"pyMSAviz worker failed. See log tail:\n{tail}")
 
-        # Worker said OK but no images? Bubble up context.
         if not any(out_dir.glob(f"{prefix}*.png")):
             tail = ""
             log_path = out_dir / f"{prefix}.log"

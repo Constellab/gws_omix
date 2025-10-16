@@ -11,7 +11,6 @@ from Bio.Align import MultipleSeqAlignment
 from collections import Counter
 from PIL import Image
 
-# ===================== Fixed display settings =====================
 DPI_DEFAULT       = 300   # baked-in DPI (was a parameter)
 SHOW_INDEX        = True  # always show position counters (was a parameter)
 # ===================== Layout (narrow portrait look) ===============
@@ -19,7 +18,6 @@ PAGE_COLS_DEFAULT = 900   # columns per page (smaller => more pages)
 WRAP_COLS         = 150   # columns shown per wrapped row (smaller => more lines)
 MAX_PX_WIDTH      = 1200  # PNG width cap (pixels) after saving
 LONG_THRESHOLD    = 400   # paginate if alignment length > max(LONG_THRESHOLD, PAGE_COLS_DEFAULT)
-# ==================================================================
 
 def log_init(log_path: Path):
     def _log(msg: str):
