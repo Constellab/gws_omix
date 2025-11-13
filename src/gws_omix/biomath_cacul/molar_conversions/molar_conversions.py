@@ -27,7 +27,6 @@ class MolarConversions(Task):
     - pmol of Protein
     - µg of Protein
 
-    Reference (Promega Biomath):
     - µg protein = protein size (kDa) × pmol protein × (10^9 µg / kg) × (kg / 10^12 pmol)
     - pmol protein = (µg protein / protein size (kDa)) × (10^12 pmol / mol) × (mol / 10^9 µg)
     - protein size (kDa) = (µg protein / pmol protein) × (10^12 pmol / mol) × (mol / 10^9 µg)

@@ -44,7 +44,16 @@ from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 )
 class Pydesq2Multi(Task):
 
-    # ---------- I/O -------------------------------------------------
+    """
+    This GWS task runs the core script, then collects and returns interactive results.
+    Inputs: count_table_file (CSV), metadata_file (TSV), gtf_file (GTF).
+    Key params: samples_colname, genes_colname, condition_column, control_condition, optional timepoint_column, group_column, extra_covariates, and filters pvalue_value, log2FoldChange_value.
+    The task executes the analysis, then assembles four outputs: tables (all DE and summary CSVs), pca_plots (interactive Plotly PCA with dropdowns for Group/Timepoint), heatmap_plots (interactive clustered heatmaps from VST CSVs), and volcano_plots (interactive Plotly volcanoes per contrast).
+    It builds an on-the-fly design (main effects: optional timepoint / group / extra covariates + mandatory condition),
+    normalizes and fits DESeq2, and runs Wald tests for each treatment vs control, plus a pooled ALL vs CTRL comparison when applicable.
+    Optional GTF mapping adds gene_name. For every contrast it saves a filtered DE table (DE_<contrast>.csv), a volcano PNG, and—when possible—a VST heatmap PNG of the top 50 genes; it also writes PCA coordinates, variance proportions, and produces heatmap CSVs.
+    """
+    
     input_specs: Final[InputSpecs] = InputSpecs({
         "count_table_file": InputSpec(File, human_name="Counts CSV"),
         "metadata_file":    InputSpec(File, human_name="Metadata TSV"),
@@ -57,7 +66,6 @@ class Pydesq2Multi(Task):
         "volcano_plots": OutputSpec(ResourceSet, human_name="Interactive volcano"),
     })
 
-    # ---------- user parameters ------------------------------------
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
         "samples_colname":      StrParam(short_description=
             "Name of the **metadata** column holding sample IDs "
@@ -85,7 +93,6 @@ class Pydesq2Multi(Task):
         "_pydeseq2_multicontrast.py",
     )
 
-    # ---------- helper: PCA dropdown -------------------------------
     @staticmethod
     def _pca_dropdown(
         meta: pd.DataFrame, props: pd.DataFrame,
@@ -287,7 +294,7 @@ class Pydesq2Multi(Task):
                     TableImporter.call(
                         File(fp),
                         {"delimiter": ",", "header": 0,
-                         "file_format": "csv", "index_column": 0},
+                         "file_format": "csv", "index_column": -1},
                     ), fn,
                 )
                 volc.add_resource(

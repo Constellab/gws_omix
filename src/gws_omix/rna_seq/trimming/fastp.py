@@ -37,10 +37,20 @@ def _abs(p: str, root: Path) -> str:
 @task_decorator(
     "Fastp",
     human_name="Fastp",
-    short_description="Adapter & quality trimming with fastp",
+    short_description="Adapters removal with fastp",
 )
 class Fastp(Task):
+    
+    """
+    This task trims adapters and low-quality bases using fastp for FASTQ datasets defined by a metadata TSV. Provide a fastq_folder
+    (base path for relative file references) and a metadata file that is either single-end (contains absolute-filepath)
+    or paired-end (contains both forward-absolute-filepath and reverse-absolute-filepath).
+    Key options: - threads
+                 - Forward_separator/Reverse_separator (suffixes like 1/2),
+                 - 5_prime_hard_trimming_read_size (bases trimmed from the 5′ end applied to both mates in PE).
 
+    The task auto-resolves relative paths against fastq_folder, executes fastp, and returns a FastqFolder pointing to the result directory.
+    """
     input_specs: InputSpecs = InputSpecs(
         {
             "fastq_folder": InputSpec(
@@ -70,8 +80,8 @@ class Fastp(Task):
 
     config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=2),
-        "Forward_separator": StrParam(default_value="1"),
-        "Reverse_separator": StrParam(default_value="2"),
+        "Forward_separator": StrParam(default_value=""),
+        "Reverse_separator": StrParam(default_value=""),
         "5_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0),
     })
 

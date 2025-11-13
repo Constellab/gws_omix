@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds  import DeseqStats
 
-
 # ───────────────────────── utilities ──────────────────────────────
 def _parse_float(x: str | float | None) -> Optional[float]:
     return None if x is None or str(x).lower() in {"", "none", "na"} else float(x)
@@ -39,20 +38,25 @@ def _load_gene_names(gtf: str | None) -> Dict[str, str]:
                 mapping[gid.split(".")[0]] = gname or gid
     return mapping
 
-
 # ─────────────────── volcano & heat-map functions ─────────────────
 def _volcano(d: pd.DataFrame, label: str,
              pthr: Optional[float], fcthr: Optional[float]) -> None:
-    eps = d.loc[d.pvalue > 0, "pvalue"].min() or 1e-300
-    d = d.assign(
-        neglog10p=-np.log10(d.pvalue.replace(0, eps)),
-        signif=((d.pvalue < (pthr or 1)) &
-                (d.log2FoldChange.abs() > (fcthr or 0)))
+    pcol = "padj" if "padj" in d.columns else ("pvalue" if "pvalue" in d.columns else None)
+    if pcol is None:
+        return
+    # robust epsilon even if all zeros / NaN
+    pos = d[pcol].dropna()
+    pos = pos[pos > 0]
+    eps = pos.min() if not pos.empty else 1e-300
+
+    dd = d.assign(
+        neglog10p=-np.log10(d[pcol].replace(0, eps)),
+        signif=((d[pcol] < (pthr or 1)) & (d.log2FoldChange.abs() > (fcthr or 0)))
     )
     plt.figure(figsize=(5, 4))
-    plt.scatter(d.log2FoldChange[~d.signif], d.neglog10p[~d.signif],
+    plt.scatter(dd.log2FoldChange[~dd.signif], dd.neglog10p[~dd.signif],
                 s=8, alpha=.45, color="#A6ACBC")
-    plt.scatter(d.log2FoldChange[d.signif], d.neglog10p[d.signif],
+    plt.scatter(dd.log2FoldChange[dd.signif], dd.neglog10p[dd.signif],
                 s=8, alpha=.75, color="#D62728")
     if pthr:
         plt.axhline(-np.log10(pthr), ls="--", c="grey")
@@ -75,7 +79,6 @@ def _heatmap(ad: sc.AnnData, genes: List[str], label: str) -> None:
                    cbar_kws={"label": "z-score (VST)"}) \
        .fig.savefig(f"Heatmap_{label}.png", dpi=300)
     plt.close()
-
 
 # ─────────────────────────── MultiDE class ────────────────────────
 class MultiDE:
@@ -108,7 +111,7 @@ class MultiDE:
         if self.c["Gene"] not in raw.columns:
             raise ValueError(f"Column '{self.c['Gene']}' missing in count table")
 
-        # keep numeric columns only
+        # keep numeric columns only; use gene column as row index internally (OK for DE)
         count_mtx = (
             raw.drop(columns=[c for c in raw.columns
                               if c != self.c["Gene"]
@@ -117,9 +120,11 @@ class MultiDE:
                .apply(pd.to_numeric, errors="coerce")
                .fillna(0).astype(int)
         )
-        count_mtx = count_mtx[count_mtx.sum(axis=1) > 0].T  # samples in rows
+        # drop all-zero genes
+        count_mtx = count_mtx.loc[count_mtx.sum(axis=1) > 0]
+        count_mtx = count_mtx.T  # samples in rows
 
-        meta = pd.read_csv(self.meta_fp, sep="\t").set_index(self.c["Sample"])
+        meta = pd.read_csv(self.meta_fp, sep="\t", comment="#").set_index(self.c["Sample"])
         if self.c["Cond"] not in meta.columns:
             raise ValueError(f"condition_column '{self.c['Cond']}' not in metadata")
 
@@ -127,12 +132,10 @@ class MultiDE:
         count_mtx = count_mtx.loc[meta.index]
         meta[self.c["Cond"]] = meta[self.c["Cond"]].astype("category")
 
-        # categorical columns
         for col in [self.c["Time"], self.c["Group"], *self.extras]:
             if col and col in meta.columns:
                 meta[col] = meta[col].astype("category")
 
-        # design (main effects only)
         terms = [c for c in [self.c["Time"], self.c["Group"], *self.extras]
                  if c and c in meta.columns] + [self.c["Cond"]]
         design = "~ " + " + ".join(terms)
@@ -148,14 +151,39 @@ class MultiDE:
         st = DeseqStats(ds, contrast=(self.c["Cond"], tr, ref))
         st.summary(save=False)
         df = st.get_results_df() if hasattr(st, "get_results_df") else st.results_df
+
         if self.pthr  is not None: df = df[df.pvalue < self.pthr]
         if self.fcthr is not None: df = df[df.log2FoldChange.abs() > self.fcthr]
         df = df.copy()
-        df["gene_name"] = [self.gene_names.get(i.split(".")[0], "") for i in df.index]
+
+        # keep optional gene_name (from GTF) for plotting hovers; may be empty for some IDs
+        if "gene_name" not in df.columns:
+            df["gene_name"] = [self.gene_names.get(i.split(".")[0], "") for i in df.index]
+
+        # context columns (time/group level) if requested
         if ctx:
             for k, v in ctx.items():
-                df.insert(0, k, v)
-        df.sort_values("log2FoldChange", ascending=False).to_csv(f"DE_{label}.csv")
+                if k not in df.columns:
+                    df.insert(0, k, v)
+
+        # ==== EXPORT: first real column must be the identifier column named exactly like genes_colname ====
+        out = df.copy()
+        id_col_name = self.c["Gene"]                      # e.g. "gene_id" or "gene_name"
+        id_values   = [str(i) for i in out.index]         # identifiers used in DE
+
+        if id_col_name in out.columns:
+            # Overwrite existing column (e.g. GTF-derived gene_name) with the true identifiers
+            out[id_col_name] = id_values
+            # Move it to be first
+            cols = [id_col_name] + [c for c in out.columns if c != id_col_name]
+            out = out[cols]
+        else:
+            out.insert(0, id_col_name, id_values)
+
+        # Write with NO index
+        out.sort_values("log2FoldChange", ascending=False).to_csv(f"DE_{label}.csv", index=False)
+
+        # plots use the stats-only df
         _volcano(df, label, self.pthr, self.fcthr)
         return df
 
@@ -248,21 +276,17 @@ class MultiDE:
         self.prepare()
         dfs, labels = [], []
 
-        # 7.1 each treatment vs CTRL
         for tr in self.dds.obs[self.c["Cond"]].cat.categories:
             if tr == self.ctrl:
                 continue
             dfs.append(self._contrast(tr, self.ctrl, f"{tr}_vs_{self.ctrl}"))
             labels.append(f"{tr}_vs_{self.ctrl}")
 
-        # 7.2 pooled ALL vs CTRL
         if len(self.dds.obs[self.c["Cond"]].cat.categories) > 1:
             dds_pool = self._dds_pooled(self.dds.obs[self.c["Cond"]].notna())
-            dfs.append(self._contrast("ALL", self.ctrl, f"ALL_vs_{self.ctrl}",
-                                      dds_pool))
+            dfs.append(self._contrast("ALL", self.ctrl, f"ALL_vs_{self.ctrl}", dds_pool))
             labels.append(f"ALL_vs_{self.ctrl}")
 
-        # 7.3 stratified contrasts
         self._stratified(self.c["Time"],  self.sum_time,  'T', True)
         self._stratified(self.c["Group"], self.sum_group, 'G', True)
         if self.sum_time:
@@ -270,9 +294,7 @@ class MultiDE:
         if self.sum_group:
             self._write(self.sum_group, "Summary_Group.csv",     self.c["Group"])
 
-        # 7.4 VST / PCA / heat-maps
         self._vst_pca_heat(dfs, labels)
-
 
 # ───────────────────────────── CLI ────────────────────────────────
 if __name__ == "__main__":

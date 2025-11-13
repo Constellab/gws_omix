@@ -15,7 +15,7 @@ import sys
 from gws_core import (
     ConfigParams, ConfigSpecs, File, FloatParam, InputSpec, InputSpecs,
     OutputSpec, OutputSpecs, PlotlyResource, ResourceSet, ShellProxy,
-    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator,
+    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator,TableExporter, Table
 )
 from .ora_analysis_env import OraAnalysisShellProxyHelper
 
@@ -188,16 +188,38 @@ SCIENTIFIC_NAMES = [
 "Rattus norvegicus","Romanomermis culicivorax","Caenorhabditis bovis","Sporisorium reilianum SRZ2"
 ]
 
-def _grid_from_long(long_df: pd.DataFrame, title: str, genes_per_page: int = 35) -> PlotlyResource:
+def _grid_from_long(
+    long_df: pd.DataFrame,
+    title: str,
+    genes_per_page: int = 35,
+    terms_per_page: int = 35
+) -> PlotlyResource:
+    """
+    Interactive Terms×Genes grid with:
+      - Full Y labels: "term_name | term_id | source | p-value"
+      - Vertical paging for terms (dropdown), generous line spacing
+      - Genes pagination (dropdown)
+      - Extra y-range padding to avoid clipping of bubbles
+      - Wider canvas and larger margins for breathing room
+    Always returns a valid PlotlyResource (empty figure if long_df is empty).
+    """
     if long_df is None or long_df.empty:
-        return PlotlyResource(go.Figure())
+        fig = go.Figure()
+        fig.update_layout(
+            title=title,
+            width=1600, height=480,
+            margin=dict(l=140, r=90, t=130, b=170),
+            xaxis_title="<b>Genes</b>",
+            yaxis_title="<b>Terms</b>",
+        )
+        return PlotlyResource(fig)
 
     d = long_df.copy()
-
     src_order = {"GO:CC": 0, "GO:BP": 1, "GO:MF": 2, "KEGG": 3}
     d["_src_ord"] = d["source"].map(src_order).fillna(9)
-
     d["_term_key"] = d["term_id"].astype(str) + "||" + d["source"].astype(str)
+
+    # Order terms by source then score
     best_score = d.groupby("_term_key")["score"].max()
     first_rows = d.drop_duplicates("_term_key").set_index("_term_key")
 
@@ -207,7 +229,7 @@ def _grid_from_long(long_df: pd.DataFrame, title: str, genes_per_page: int = 35)
         except Exception:
             return "NA"
 
-    y_labels = (
+    y_labels_full = (
         first_rows["term_name"].astype(str) + " | " +
         first_rows["term_id"].astype(str)   + " | " +
         first_rows["source"].astype(str)    + " | " +
@@ -219,118 +241,129 @@ def _grid_from_long(long_df: pd.DataFrame, title: str, genes_per_page: int = 35)
             "key": first_rows.index,
             "src": first_rows["_src_ord"].values,
             "score": best_score[first_rows.index].values,
-            "label": y_labels.values,
+            "label": y_labels_full.values,
         })
         .sort_values(["src", "score"], ascending=[True, False])
+        .reset_index(drop=False)
     )
-
     n_terms = len(order)
-    # Espacement (pixels/ligne) selon le nombre de termes
-    if n_terms >= 80:
-        per_row_px = 22
-    elif n_terms >= 60:
-        per_row_px = 24
-    elif n_terms >= 45:
-        per_row_px = 28
-    elif n_terms >= 30:
-        per_row_px = 32
-    else:
-        per_row_px = 38
 
-    # Position Y = 0..n_terms-1, l'espacement réel vient de la hauteur en pixels
-    y_positions = list(range(n_terms))
-    y_index_map: Dict[str, float] = {k: y_positions[i] for i, k in enumerate(order["key"])}
+    # Interline generous
+    per_row_px = int(np.interp(n_terms, [0, 30, 60, 90, 120], [56, 48, 40, 34, 30]))
+    total_height = int(220 + per_row_px * max(1, n_terms))
+    total_height = min(total_height, 8000)
 
-    # Couleur = p-value (Viridis, inversée → petit p = sombre)
+    # Y positions & label lookup
+    y_positions = np.arange(n_terms, dtype=float)
+    key_to_y: Dict[str, float] = dict(zip(order["key"], y_positions))
+    term_lookup = dict(zip(order["key"], order["label"]))
+
+    # Color by p-value (reversed Viridis)
     pvals = pd.to_numeric(d["pvalue"], errors="coerce").replace([np.inf, -np.inf], np.nan)
     max95 = np.nanpercentile(pvals, 95) if np.isfinite(pvals).any() else 1.0
-    d["_pval_color"] = np.clip(pvals, 0, max95)
+    d["_p"] = np.clip(pvals, 0, max95)
 
-    # Taille = |log2FC|, bornée à une fraction de per_row_px pour éviter le chevauchement
-    if "log2fc" in d.columns:
-        abs_lfc = pd.to_numeric(d["log2fc"], errors="coerce").abs()
-    else:
-        abs_lfc = pd.Series(0.0, index=d.index)
-    lfc95 = np.nanpercentile(abs_lfc, 95) if np.isfinite(abs_lfc).any() else 1.0
-    scale = (abs_lfc / (lfc95 if lfc95 > 0 else 1.0)).fillna(0.0)
+    # Bubble size by |log2FC|
+    abs_lfc = pd.to_numeric(d.get("log2fc", np.nan), errors="coerce").abs()
+    lfc95   = np.nanpercentile(abs_lfc, 95) if np.isfinite(abs_lfc).any() else 1.0
+    scale   = (abs_lfc / (lfc95 if lfc95 > 0 else 1.0)).fillna(0.0)
+    min_bub = max(7.0, per_row_px * 0.28)
+    max_bub = max(min_bub + 5.0, per_row_px * 0.58)
+    d["_sz"] = (min_bub + (max_bub - min_bub) * np.clip(scale, 0, 1)).astype(float)
 
-    min_bub = max(6.0, per_row_px * 0.25)
-    max_bub = max(min_bub + 4.0, per_row_px * 0.55)
-    d["_bubblesize"] = (min_bub + (max_bub - min_bub) * np.clip(scale, 0, 1)).astype(float)
+    # Term×gene presence
+    presence = d[["_term_key","gene_label","_p","_sz","log2fc"]].drop_duplicates()
+    presence["_y"] = presence["_term_key"].map(key_to_y)
 
-    # Pagination par gènes
-    genes = sorted(d["gene_label"].dropna().astype(str).unique().tolist())
-    pages: List[List[str]] = [genes[i:i+genes_per_page] for i in range(0, len(genes), genes_per_page)] or [genes]
-    presence = d[["_term_key", "gene_label", "_pval_color", "_bubblesize", "log2fc"]].drop_duplicates()
+    # Pagination (X) by genes
+    genes = sorted(presence["gene_label"].dropna().astype(str).unique().tolist())
+    pages_g: List[List[str]] = [genes[i:i+genes_per_page] for i in range(0, len(genes), genes_per_page)] or [genes]
 
+    # One trace per gene page; vertical paging via yaxis windows
     fig = go.Figure()
-    term_lookup = {kk: ll for kk, ll in zip(order["key"], order["label"])}
-
-    for k, page_genes in enumerate(pages, start=1):
+    for gi, page_genes in enumerate(pages_g, start=1):
         sub = presence[presence["gene_label"].isin(page_genes)]
         xmap = {g: i for i, g in enumerate(page_genes)}
         x = [xmap[g] for g in sub["gene_label"]]
-        y = [y_index_map[t] for t in sub["_term_key"]]
+        y = sub["_y"].astype(float).values
 
-        fig.add_trace(
-            go.Scatter(
-                x=x, y=y, mode="markers",
-                marker=dict(
-                    symbol="circle",
-                    size=sub["_bubblesize"],
-                    color=sub["_pval_color"],
-                    colorscale="Viridis",
-                    reversescale=True,
-                    colorbar=dict(title="p-value", thickness=12, len=min(0.9, 30.0/max(15, n_terms))),
-                    line=dict(width=0.3, color="#444"),
-                    opacity=0.85,
-                ),
-                visible=(k == 1),
-                hovertemplate=(
-                    "<b>%{customdata[0]}</b><br>"
-                    "Gene: %{customdata[1]}<br>"
-                    "log2FC: %{customdata[2]}<br>"
-                    "p-value: %{customdata[3]}<extra></extra>"
-                ),
-                customdata=np.stack([
-                    sub["_term_key"].map(term_lookup).values,
-                    sub["gene_label"].astype(str).values,
-                    pd.to_numeric(sub["log2fc"], errors="coerce").round(3).astype(object).values,
-                    sub["_pval_color"].astype(float).map(lambda v: f"{v:.2e}").values
-                ], axis=1),
-                name=f"Page {k}",
-            )
-        )
-
-    # Boutons pagination
-    buttons = []
-    for k in range(len(pages)):
-        vis = [False]*len(pages); vis[k] = True
-        buttons.append(dict(
-            label=f"Page {k+1}/{len(pages)}",
-            method="update",
-            args=[{"visible": vis},
-                  {"xaxis": {"tickmode": "array",
-                             "tickvals": list(range(len(pages[k]))),
-                             "ticktext": pages[k],
-                             "tickangle": 45,
-                             "tickfont": {"size": 10}}}]
+        fig.add_trace(go.Scatter(
+            x=x, y=y, mode="markers",
+            marker=dict(
+                size=sub["_sz"], color=sub["_p"],
+                colorscale="Viridis", reversescale=True,
+                colorbar=dict(title="p-value", thickness=12, len=0.85),
+                line=dict(width=0.3, color="#444"),
+                opacity=0.9,
+            ),
+            cliponaxis=False,  # avoid clipping at edges
+            visible=(gi == 1),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "Gene: %{customdata[1]}<br>"
+                "log2FC: %{customdata[2]}<br>"
+                "p-value: %{customdata[3]}<extra></extra>"
+            ),
+            customdata=np.stack([
+                sub["_term_key"].map(term_lookup).values,
+                sub["gene_label"].astype(str).values,
+                pd.to_numeric(sub["log2fc"], errors="coerce").round(3).astype(object).values,
+                sub["_p"].astype(float).map(lambda v: f"{v:.2e}").values
+            ], axis=1),
+            name=f"Genes page {gi}",
         ))
 
-    # Hauteur purement proportionnelle au nb de lignes
-    height = int(120 + per_row_px * max(1, n_terms))
-    height = min(height, 4000)  # garde une limite raisonnable
+    # Dropdown 1: genes pagination (switch trace + update x ticks)
+    buttons_genes = []
+    for gi, page_genes in enumerate(pages_g, start=1):
+        vis = [False]*len(pages_g); vis[gi-1] = True
+        buttons_genes.append(dict(
+            label=f"Genes {gi}/{len(pages_g)}",
+            method="update",
+            args=[{"visible": vis},
+                  {"xaxis": {
+                      "tickmode": "array",
+                      "tickvals": list(range(len(page_genes))),
+                      "ticktext": page_genes,
+                      "tickangle": 45,
+                      "tickfont": {"size": 10}
+                  }}]
+        ))
 
-    # Police des labels Y : plus il y a de lignes, plus on réduit
-    if n_terms > 70:
-        y_font = 9
-    elif n_terms > 50:
-        y_font = 9.5
-    elif n_terms > 35:
-        y_font = 10
-    else:
-        y_font = 11
+    # Dropdown 2: vertical paging by terms
+    tp = max(1, int(terms_per_page))
+    term_windows = [(s, min(s+tp, n_terms)) for s in range(0, n_terms, tp)]
+    ypad = 0.7  # padding in "row units" to avoid top/bottom clipping
 
+    def _y_layout_for_window(win):
+        s, e = win
+        tickvals = y_positions[s:e].tolist()
+        ticktext = order.loc[s:e-1, "label"].tolist()
+        return dict(
+            tickmode="array",
+            tickvals=tickvals,
+            ticktext=ticktext,
+            tickfont=dict(size=11 if tp <= 40 else 10),
+            autorange=False,
+            range=[(e - 0.5) + ypad, (s - 0.5) - ypad],  # reversed axis with padding
+            domain=[0.12, 0.98],  # extra space above/below plotting area
+            showline=False, zeroline=False,
+            showgrid=True, gridcolor="#f7f7f7", gridwidth=0.6,
+        )
+
+    buttons_terms = []
+    for ti, win in enumerate(term_windows, start=1):
+        buttons_terms.append(dict(
+            label=f"Terms {ti}/{len(term_windows)}",
+            method="relayout",
+            args=[{"yaxis": _y_layout_for_window(win)}]
+        ))
+
+    # Adaptive left margin to fit long labels
+    max_lab_len = int(order["label"].str.len().max())
+    left_margin = min(140 + 7 * max_lab_len, 1600)
+
+    # Initial layout
     fig.update_layout(
         title=title,
         font=dict(size=10.5),
@@ -340,41 +373,39 @@ def _grid_from_long(long_df: pd.DataFrame, title: str, genes_per_page: int = 35)
             title_standoff=16,
             title_font=dict(size=13, family="Arial"),
             tickmode="array",
-            tickvals=list(range(len(pages[0]))),
-            ticktext=pages[0],
+            tickvals=list(range(len(pages_g[0]))),
+            ticktext=pages_g[0],
             tickangle=45,
             tickfont=dict(size=10),
             showline=False, zeroline=False,
             showgrid=True, gridcolor="#f0f0f0", gridwidth=0.6,
         ),
-        yaxis=dict(
-            tickvals=y_positions,
-            ticktext=order["label"],
-            tickfont=dict(size=y_font),
-            autorange="reversed",
-            domain=[0.06, 1.0],
-            showline=False, zeroline=False,
-            showgrid=True, gridcolor="#f7f7f7", gridwidth=0.6,
-        ),
-        updatemenus=[dict(type="dropdown", x=0.83, y=1.12, showactive=True,
-                          direction="down", buttons=buttons)],
-        margin=dict(l=740, r=80, t=90, b=150),
-        width=1500,
-        height=height,
+        yaxis=_y_layout_for_window(term_windows[0]),
+        updatemenus=[
+            dict(type="dropdown", x=0.80, y=1.13, showactive=True,
+                 direction="down", buttons=buttons_terms),
+            dict(type="dropdown", x=0.90, y=1.13, showactive=True,
+                 direction="down", buttons=buttons_genes),
+        ],
+        margin=dict(l=left_margin, r=90, t=140, b=180),
+        width=1650,
+        height=min(total_height + 120, 8200),
     )
 
+    # Header above labels with extra gap to the first row
     fig.add_annotation(
         xref="paper", yref="paper",
-        x=-0.40, y=1.02,
+        x=-0.40, y=1.07,
         xanchor="left",
         text="<b>term_name | term_id | source | p-value</b>",
         showarrow=False, font=dict(size=12)
     )
 
-    pr = PlotlyResource(fig)
-    pr.name = title
-    return pr
+    # If very few genes, lightly tighten X range
+    if len(pages_g[0]) <= 5:
+        fig.update_xaxes(range=[-0.6, max(1.6, len(pages_g[0]) - 0.4)])
 
+    return PlotlyResource(fig)
 
 # ──────────────────────────── Task runner ───────────────────────────────
 @task_decorator(
@@ -384,14 +415,16 @@ def _grid_from_long(long_df: pd.DataFrame, title: str, genes_per_page: int = 35)
 )
 class ORAEnrichmentTask(Task):
     """
-    This script performs functional enrichment analysis (ORA) on a list of DEGs using g:Profiler,
-    testing for over-represented GO/KEGG terms via a hypergeometric test with g:SCS multiple-testing correction.
-    We use the auto background (genome-wide) to stay consistent with the g:Profiler web interface.
-    Results include filtered CSV tables and barplots of significant terms.
-    See the full documentation on Cnostellab Community : https://constellab.community/bricks/gws_omix/latest/doc/use-cases/functional-enrichment-analysis/
+    This task perform functional enrichment (ORA) of differentially expressed genes using g:Profiler,
+    then package the results as tables, static barplots, and an interactive Plotly “Terms × Genes” grid.
+    The analysis script reads a DE results CSV or Table, builds three gene sets (ALL, UP, DOWN) based on FDR (padj) and optional |log2FC| thresholds, runs g:Profiler for selected sources (GO BP/MF/CC, KEGG), filters by FDR, writes CSVs, and saves top-N barplots.
+    The runner script executes that analysis, imports all outputs, and builds an interactive grid where bubble color reflects
+    p-value and size reflects |log2FC|, with dropdown pagination for both genes (horizontal) and terms (vertical)
+    via configurable grid_genes_per_page and grid_terms_per_page, plus extra spacing and margins to keep labels readable.
     """
+
     input_specs: Final[InputSpecs] = InputSpecs({
-        "de_table_file": InputSpec(File, human_name="DE/Full results CSV (must contain an ID column)"),
+        "de_table_file": InputSpec((Table, File), human_name="DE/Full results (Table or CSV file)"),
     })
 
     output_specs: Final[OutputSpecs] = OutputSpecs({
@@ -413,17 +446,28 @@ class ORAEnrichmentTask(Task):
             short_description="Top-N terms for static barplots."),
         "sources_list": StrParam(default_value="GO:BP,GO:MF,GO:CC,KEGG",
             short_description="Comma-separated sources for g:Profiler."),
-        "grid_genes_per_page": FloatParam(default_value=25.0, min_value=10.0,
+        "grid_genes_per_page": FloatParam(default_value=25.0, min_value=1.0,
             short_description="Genes per page in the interactive grid."),
+        "grid_terms_per_page": FloatParam(default_value=20.0, min_value=1.0,
+            short_description="Terms per page in the interactive grid."),
     })
 
     python_file_path: Final[str] = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
-        "_ora_analysis.py",
+        "_ora_analysis.py",  # the analysis script
     )
 
     def run(self, p: ConfigParams, ins: TaskInputs) -> TaskOutputs:
-        de_csv  = ins["de_table_file"].path
+        # ── Accept Table or File for DE results; export Table -> CSV if needed ──
+        de_res = ins["de_table_file"]
+        if isinstance(de_res, Table):
+            de_file: File = TableExporter.call(de_res, {"file_format": "csv"})
+            de_csv = de_file.path
+        elif isinstance(de_res, File):
+            de_csv = de_res.path
+        else:
+            raise RuntimeError("Unsupported type for 'de_table_file' (expected Table or File).")
+
         species = p["organism_name"].strip()
         idcol   = p["genes_colname"].strip()
         padj    = float(p["padj_threshold"])
@@ -431,6 +475,7 @@ class ORAEnrichmentTask(Task):
         topn    = int(p["topn_plot"])
         sources = p["sources_list"].strip() or "GO:BP,GO:MF,GO:CC,KEGG"
         genes_per_page = int(p.get("grid_genes_per_page", 35))
+        terms_per_page = int(p.get("grid_terms_per_page", 35))
 
         shell: ShellProxy = OraAnalysisShellProxyHelper.create_proxy(self.message_dispatcher)
         work = shell.working_dir
@@ -453,13 +498,13 @@ class ORAEnrichmentTask(Task):
 
         tables, barplots, grids = ResourceSet(), ResourceSet(), ResourceSet()
 
+        # Collect tables and remember all long-matrix CSVs (even empty) for grids
         long_csvs: List[str] = []
         if os.path.isdir(csv_out):
             for fn in sorted(os.listdir(csv_out)):
                 fp = os.path.join(csv_out, fn)
                 if fn.endswith("_matrix_long.csv"):
-                    if os.path.getsize(fp) > 0:
-                        long_csvs.append(fp)
+                    long_csvs.append(fp)  # include empty; we still create a grid
                 elif fn.lower().endswith(".csv"):
                     try:
                         if os.path.getsize(fp) > 0:
@@ -473,6 +518,7 @@ class ORAEnrichmentTask(Task):
                     except Exception:
                         pass
 
+        # Collect barplots
         if os.path.isdir(fig_out):
             for fn in sorted(os.listdir(fig_out)):
                 if fn.lower().endswith(".png"):
@@ -482,13 +528,24 @@ class ORAEnrichmentTask(Task):
                     except Exception:
                         pass
 
+        # Build grids for all *_matrix_long.csv
         for fp in long_csvs:
             try:
-                d = pd.read_csv(fp)
-                title = f"Terms × Genes — {Path(fp).stem.replace('_matrix_long','')}"
-                grids.add_resource(_grid_from_long(d, title=title, genes_per_page=genes_per_page),
-                                   Path(fp).stem)
+                d = pd.read_csv(fp) if os.path.getsize(fp) > 0 else pd.DataFrame()
             except Exception:
-                pass
+                d = pd.DataFrame()
+            title = f"Terms × Genes — {Path(fp).stem.replace('_matrix_long','')}"
+            try:
+                pr = _grid_from_long(
+                    d, title=title,
+                    genes_per_page=genes_per_page,
+                    terms_per_page=terms_per_page
+                )
+                grids.add_resource(pr, Path(fp).stem)
+            except Exception:
+                # Fallback: empty figure with title
+                fig = go.Figure()
+                fig.update_layout(title=title, width=1200, height=400)
+                grids.add_resource(PlotlyResource(fig), Path(fp).stem)
 
         return {"tables": tables, "barplots": barplots, "term_gene_grid": grids}

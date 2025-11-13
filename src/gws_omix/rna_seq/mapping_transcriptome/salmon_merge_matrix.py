@@ -3,16 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-"""
-Combine multiple *quant.sf* files produced by Salmon into a gene‑level raw‑count
-matrix, taking care of transcript‑version suffixes (".1", ".2", …) that may be
-present in the quant.sf but absent in the GTF.
-
-* Strip the version suffix from **both** transcript_id and gene_id when parsing
-  the GTF.
-* Strip the version suffix from the *Name* column of *quant.sf* before the join.
-"""
-
 import os
 import re
 import pandas as pd

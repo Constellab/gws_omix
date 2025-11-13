@@ -16,9 +16,10 @@ from .salmon_env import SalmonShellProxyHelper
                 short_description="Build Salmon transcriptome index")
 class SalmonIndex(Task):
     """
-    This task builds a Salmon index from a transcript FASTA file.
+    This task builds a Salmon transcriptome index from a transcript FASTA. Provide transcript_fasta (FASTA of transcripts). Configure threads (CPU cores; default 2). The task runs:
+    salmon index -t <transcripts.fasta> -i <working_dir>/salmon_index -p <threads>
+    and returns output pointing to <working_dir>/salmon_index/. Use this index later with Salmon quantification tasks (salmon quant).
     """
-
     input_specs: InputSpecs = InputSpecs({
         'transcript_fasta': InputSpec(File, human_name="Transcript FASTA",
                                       short_description="Fasta file containing transcripts")

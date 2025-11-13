@@ -5,13 +5,18 @@
 
 import os
 import shlex
+from pathlib import Path
 from typing import Final
+import numpy as np
+import pandas as pd
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+import sys
 
 from gws_core import(
-    ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs, ShellProxy,
-    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator, Table, BoolParam,
-    TableColumnConcat, TaskRunner, TableColumnsDeleter)
+    ConfigParams, ConfigSpecs, File, FloatParam, InputSpec, InputSpecs,
+    OutputSpec, OutputSpecs, PlotlyResource, ResourceSet, ShellProxy,
+    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator,TableImporter,Table)
 
 from .genes_id_conversion_env import GenesidConversionShellProxyHelper
 
@@ -100,8 +105,10 @@ NUMERIC_IDS_TREATED = [
 )
 class IDConvertTask(Task):
     """
-    This task (task: OmiX – Gene ID conversion with g:Profiler) performs identifier harmonization on a user-provided list of gene IDs. It uses the g:Profiler g:Convert service to translate input identifiers (e.g., gene symbols, Ensembl IDs, Entrez IDs, UniProt accessions) into a selected target namespace.
-    See the full documentation on Constellab Community: https://constellab.community/bricks/gws_omix/latest/doc/use-cases/gene-id-conversion/
+    This task (task: OmiX – Gene ID conversion with g:Profiler) performs identifier harmonization on a user-provided list of gene IDs. It uses
+    the g:Profiler g:Convert service to translate input identifiers (e.g., gene symbols, Ensembl IDs, Entrez IDs, UniProt accessions) into a
+    selected target namespace.
+    See the full documentation on Cnostellab Community :https://constellab.community/bricks/gws_omix/latest/doc/use-cases/gene-id-conversion/
     """
 
     input_specs: Final[InputSpecs] = InputSpecs({
@@ -114,36 +121,28 @@ class IDConvertTask(Task):
 
     output_specs: Final[OutputSpecs] = OutputSpecs({
         "converted_table": OutputSpec(Table, human_name="Converted IDs"),
+        "annotated_file": OutputSpec(Table, human_name="Annotated input (+ g:Profiler columns)"),
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
         "organism_name": StrParam(
-            human_name="Organism name",
             allowed_values=SCIENTIFIC_NAMES,
             short_description="Scientific name or g:Profiler code (e.g., 'Homo sapiens').",
         ),
         "id_column": StrParam(
-            human_name="ID column",
             default_value="",
             short_description="Column to convert (leave blank to use the first column).",
         ),
         "target_namespace": StrParam(
-            human_name="Target namespace",
             allowed_values=TARGET_NAMES,
             default_value="ENSG",
             short_description="g:Profiler target namespace.",
         ),
         "numeric_namespace": StrParam(
-            human_name="Numeric namespace",
             allowed_values=NUMERIC_IDS_TREATED,
             default_value="auto",
-            short_description="How to treat bare numeric IDs (e.g., ENTREZGENE_ACC).It's recommended when your IDs are numbers. otherwise put auto",
+            short_description="How to treat bare numeric IDs (e.g., ENTREZGENE_ACC). Recommended when IDs are numbers; otherwise set 'auto'.",
         ),
-        "modify_input_file": BoolParam(
-            human_name = "Modify input file",
-            default_value=False,
-            short_description="If True, add the converted genes in the input file directly.",
-        )
     })
 
     python_file_path: Final[str] = os.path.join(
@@ -157,7 +156,6 @@ class IDConvertTask(Task):
         id_column   = (p["id_column"] or "").strip()
         target_ns   = p["target_namespace"].strip()
         numeric_ns  = (p.get("numeric_namespace", "") or "").strip()
-        modify_input_file = p.get("modify_input_file", False)
 
         shell: "ShellProxy" = GenesidConversionShellProxyHelper.create_proxy(self.message_dispatcher)
         work = shell.working_dir
@@ -179,8 +177,9 @@ class IDConvertTask(Task):
         cmd = " ".join(shlex.quote(x) for x in argv)
         rc = shell.run(cmd, shell_mode=True)
 
-        # Collect the produced table (import as a single Table)
+        # Collect produced artifacts
         conv_fp = os.path.join(work, f"{out_prefix}_converted.csv")
+
         converted_tbl = None
         if os.path.exists(conv_fp) and os.path.getsize(conv_fp) > 0:
             converted_tbl = TableImporter.call(
@@ -188,20 +187,22 @@ class IDConvertTask(Task):
                 {"delimiter": ",", "header": 0, "file_format": "csv"},
             )
 
-        if modify_input_file:
-            # If the user wants to modify the input file, we need to combine the original and converted tables
-            origin_table = TableImporter.call(ins["table_file"])
-            # Combine the original and converted tables
-            if converted_tbl is not None:
-                combined_table = TaskRunner(TableColumnConcat, inputs = {"table_1" :origin_table, "table_2": converted_tbl}).run()["table"]
-                # Remove the columns "incoming", "name", "description"
-                filters_to_remove = [
-                    {"name": "incoming", "is_regex": False},
-                    {"name": "name", "is_regex": False},
-                    {"name": "description", "is_regex": False}
-                ]
-                combined_table = TaskRunner(TableColumnsDeleter, inputs = {'source': combined_table}, params= {"filters": filters_to_remove}).run()["target"]
-                converted_tbl = combined_table
+        # Annotated file may be CSV or TSV depending on input delimiter
+        ann_csv = os.path.join(work, f"{out_prefix}_annotated.csv")
+        ann_tsv = os.path.join(work, f"{out_prefix}_annotated.tsv")
+        annotated_fp = ann_csv if os.path.exists(ann_csv) else (ann_tsv if os.path.exists(ann_tsv) else None)
 
-        # Even if the subprocess failed, return whatever artifact exists; if none, it's None (your app can show a clean error)
-        return {"converted_table": converted_tbl}
+        annotated_tbl = None
+        if annotated_fp and os.path.getsize(annotated_fp) > 0:
+            # pick delimiter from extension
+            if annotated_fp.lower().endswith(".tsv"):
+                importer_params = {"delimiter": "\t", "header": 0, "file_format": "tsv"}
+            else:
+                importer_params = {"delimiter": ",", "header": 0, "file_format": "csv"}
+            annotated_tbl = TableImporter.call(File(annotated_fp), importer_params)
+
+        # Return as Tables
+        return {
+            "converted_table": converted_tbl,
+            "annotated_file": annotated_tbl,
+        }

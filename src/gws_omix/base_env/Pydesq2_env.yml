@@ -19,5 +19,4 @@ dependencies:
   - anndata            >=0.8
   - formulaic          >=1.0.2
   - formulaic-contrasts >=0.2.0          
-  # autres utilitaires
   - nbformat           >=5.10

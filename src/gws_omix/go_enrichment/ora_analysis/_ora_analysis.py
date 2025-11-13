@@ -3,7 +3,7 @@
 from __future__ import annotations
 import argparse, ast, os, re
 from pathlib import Path
-from typing import Sequence, Dict, List
+from typing import Sequence, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ def series_clean_ids(s: pd.Series) -> pd.Series:
         s = pd.Series(strip_version(s), index=s.index)
     return s
 
-def _score_and_pval_cols(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+def _score_and_pval_cols(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
     """Return score (-log10 p) and p-value series from g:Profiler results."""
     if "adjusted_p_value" in df.columns:
         adjp = pd.to_numeric(df["adjusted_p_value"], errors="coerce")
@@ -62,7 +62,9 @@ def _score_and_pval_cols(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     return score, pval
 
 def _intersections_column(df: pd.DataFrame) -> str | None:
-    for c in ("intersections", "intersecting_genes", "queryGenes", "genes"):
+    # more permissive to accommodate lib / API variants
+    for c in ("intersections", "intersecting_genes", "queryGenes",
+              "genes", "overlap", "overlapping_genes"):
         if c in df.columns:
             return c
     return None
@@ -174,7 +176,7 @@ def build_gene_sets(df: pd.DataFrame, id_series: pd.Series, padj_thr: float, lfc
     else:
         mask_all = pd.Series(True, index=df.index)
 
-    result = {}
+    result: Dict[str, List[str]] = {}
     result["ALL_DE"] = uniq(ids.loc[mask_all[mask_all].index].tolist())
 
     if "log2FoldChange" in df.columns:

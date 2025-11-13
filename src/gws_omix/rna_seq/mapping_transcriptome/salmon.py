@@ -11,7 +11,7 @@ from typing import List
 import pandas as pd
 from gws_core import (ConfigParams,ConfigSpecs,Folder,File,InputSpec,InputSpecs,OutputSpec,OutputSpecs,
                        IntParam,Task,TaskInputs,TaskOutputs,task_decorator)
-                       
+
 from .salmon_env import SalmonShellProxyHelper
 from gws_omix import FastqFolder
 
@@ -45,7 +45,12 @@ def _abs_paths(files: List[str], root: Path) -> List[str]:
     short_description="Quantify RNA-seq reads with Salmon (metadata driven)",
 )
 class SalmonQuant(Task):
-
+    """
+    This task quantifies RNA-seq reads with Salmon using a metadata-driven workflow.
+    Provide a fastq_folder (base path for resolving relative file paths), a TSV metadata containing a Sample column plus either single-end (absolute-filepath) or paired-end (forward-absolute-filepath and reverse-absolute-filepath) columns, and a salmon_index built beforehand.
+    For each row, the task runs salmon quant (with --validateMappings) and writes outputs to working_dir (including quant.sf and logs).
+    Configure threads to control CPU usage.
+    """
     input_specs: InputSpecs = InputSpecs(
         {
             "fastq_folder": InputSpec(

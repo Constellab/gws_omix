@@ -1,21 +1,63 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import argparse, csv, json, re
+"""
+g:Profiler ID conversion CLI
+
+What it does
+------------
+1) Reads a CSV/TSV (auto-detects delimiter unless --sep is passed).
+2) Calls g:Profiler gconvert (POST JSON) to map identifiers.
+3) Writes:
+   - <out_prefix>_converted.csv  : the tidy conversion table returned by g:Profiler
+   - <out_prefix>_annotated.csv/tsv : your original table + new columns (converted, name, description)
+   - <out_prefix>_summary.json  : a small JSON summary printed to stdout too
+
+Notes
+-----
+- The column used for conversion is chosen with --id_column (default: first column).
+- --organism accepts either a g:Profiler code (e.g., "hsapiens") or a scientific name (e.g., "Homo sapiens").
+- --numeric_ns can be passed to treat bare numeric IDs correctly (e.g., ENTREZGENE_ACC). Omit or use empty to disable.
+"""
+
+import argparse
+import csv
+import json
+import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import requests
 
-
 API_BASE = "https://biit.cs.ut.ee/gprofiler/api/convert/convert/"  # POST JSON
 
 
-def _read_table(fp: str, sep: str | None) -> pd.DataFrame:
+def _detect_sep(fp: str, sep_arg: Optional[str]) -> str:
+    """
+    Detect the delimiter of a text table, unless the user explicitly provided --sep.
+    Returns a single-character separator. Defaults to comma.
+    """
+    if sep_arg is not None and len(sep_arg) > 0:
+        return sep_arg
+
+    with open(fp, "r", encoding="utf-8", errors="replace") as fh:
+        sample = fh.read(64_000)
+
+    candidates = [",", "\t", ";", "|"]
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters="".join(candidates))
+        return dialect.delimiter
+    except Exception:
+        header = sample.splitlines()[0] if sample else ""
+        counts = {d: header.count(d) for d in candidates}
+        return max(counts, key=counts.get) if counts else ","
+
+
+def _read_table(fp: str, sep: Optional[str]) -> pd.DataFrame:
     """
     Robust reader:
-      - If --sep provided, use it.
+      - If sep provided, use it.
       - Else sniff delimiter from a sample; fall back to best of [',','\\t',';','|'].
       - Force dtype=str (avoid numeric coercion / gene symbol mangling).
     """
@@ -60,7 +102,7 @@ def _to_org_code(s: str) -> str:
     return val.lower()
 
 
-def _gconvert_post(org_code: str, ids: List[str], target_ns: str, numeric_ns: str | None) -> List[Dict[str, Any]]:
+def _gconvert_post(org_code: str, ids: List[str], target_ns: str, numeric_ns: Optional[str]) -> List[Dict[str, Any]]:
     """
     Call g:Profiler gconvert via POST JSON.
     - Required: organism, query[], target
@@ -89,7 +131,7 @@ def _gconvert_post(org_code: str, ids: List[str], target_ns: str, numeric_ns: st
     return rows
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description="g:Profiler ID conversion")
     ap.add_argument("--infile", required=True)
     ap.add_argument("--id_column", default=None,
@@ -103,8 +145,11 @@ def main():
                     help="Optional explicit separator (e.g., ',' or '\\t').")
     args = ap.parse_args()
 
+    # Detect and remember the input separator to reuse it for the annotated file
+    input_sep = _detect_sep(args.infile, args.sep)
+
     # 1) Load input
-    df = _read_table(args.infile, args.sep)
+    df = _read_table(args.infile, input_sep)
     if df is None or df.empty:
         raise SystemExit("Input is empty.")
 
@@ -132,13 +177,13 @@ def main():
     rows = _gconvert_post(org_code, ids, args.target_ns, numeric_ns)
 
     # 5) Normalize columns to a stable set
-    # g:Profiler typically returns fields like: input / incoming, name (mapped ID), description, ...
-    # We keep your preferred tidy names: incoming, converted, name, description
+    # Keep tidy names: incoming, converted, name, description
     norm = []
     for r in rows:
         incoming = r.get("incoming", r.get("input"))
         converted = r.get("converted", r.get("name"))  # 'name' is often the mapped ID
-        name = r.get("name") if "converted" in r else r.get("converted")  # keep an extra alias if available
+        # keep an extra alias if available
+        name = r.get("name") if "converted" in r else r.get("converted")
         description = r.get("description")
         norm.append({
             "incoming": incoming,
@@ -149,12 +194,35 @@ def main():
 
     mapped = pd.DataFrame(norm, columns=["incoming", "converted", "name", "description"])
 
-    # 6) Write outputs
+    # 6) Write converted-only table (always CSV)
     out_prefix = Path(args.out_prefix)
-    mapped.to_csv(f"{out_prefix}_converted.csv", index=False)
+    converted_fp = f"{out_prefix}_converted.csv"
+    mapped.to_csv(converted_fp, index=False)
 
-    # 7) Summary JSON (useful for logs)
-    # Success count = non-empty 'converted'
+    # 7) Build annotated table = original DF + conversion columns
+    #    - deduplicate by incoming to avoid exploding merges (first match wins)
+    #    - merge on the original id column
+    if not mapped.empty:
+        dedup = (
+            mapped.drop_duplicates(subset=["incoming"], keep="first")
+                  .rename(columns={"incoming": idcol})
+        )
+        # Avoid duplicating the join key if present
+        drop_cols = [c for c in [idcol] if c in dedup.columns and c != idcol]
+        annotated = df.merge(dedup.drop(columns=drop_cols, errors="ignore"), how="left", on=idcol)
+    else:
+        # No mappings returned; just copy original and append empty columns
+        annotated = df.copy()
+        for col in ["converted", "name", "description"]:
+            if col not in annotated.columns:
+                annotated[col] = pd.NA
+
+    # 8) Save annotated file using the same delimiter as the input
+    ext = "tsv" if input_sep == "\t" else "csv"
+    annotated_fp = f"{out_prefix}_annotated.{ext}"
+    annotated.to_csv(annotated_fp, index=False, sep=input_sep)
+
+    # 9) Summary JSON (useful for logs)
     n_mapped_effective = int(mapped["converted"].notna().sum()) if not mapped.empty else 0
     summary = {
         "n_input": len(ids),
@@ -165,6 +233,8 @@ def main():
         "numeric_ns": numeric_ns or "",
         "input_file": str(args.infile),
         "id_column": idcol,
+        "converted_table": converted_fp,
+        "annotated_table": annotated_fp,
     }
     Path(f"{out_prefix}_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))

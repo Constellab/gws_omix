@@ -10,7 +10,7 @@ from typing import List
 import pandas as pd
 from gws_core import ( ConfigParams, ConfigSpecs, Folder, File, InputSpec, InputSpecs, OutputSpec, OutputSpecs,
                         IntParam, Task, TaskInputs, TaskOutputs, task_decorator)
-                        
+
 from .hisat2_env import Hisat2ShellProxyHelper
 from gws_omix import FastqFolder
 
@@ -30,7 +30,13 @@ def _abs(p: str, root: Path) -> str:
 @task_decorator("Hisat2_Align", human_name="Hisat2_Align",
                 short_description="Align RNA-seq reads with HISAT2 (keeps Sample names)")
 class Hisat2Align(Task):
-
+    """
+    This task aligns RNA-seq reads with HISAT2 using a metadata-driven workflow.
+    Provide a fastq_folder (base for resolving relative paths),
+    a TSV metadata with a Sample column plus either single-end (absolute-filepath) or paired-end (forward-absolute-filepath and reverse-absolute-filepath) columns,
+    and a hisat2_index folder containing genome_index.*.ht2 files.
+    For each row, reads are aligned (hisat2) and piped to samtools sort, producing <working_dir>/result/<Sample>.bam.
+    """
     input_specs: InputSpecs = InputSpecs(
         {
             "fastq_folder": InputSpec(

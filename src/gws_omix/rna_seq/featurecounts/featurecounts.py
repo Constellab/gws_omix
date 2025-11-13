@@ -19,11 +19,10 @@ from .featurecounts_env import FeatureCountsShellProxyHelper
                 short_description="Quantify read counts using featureCounts, then produce a final CSV with gene_id and gene_name.")
 class FeatureCounts(Task):
     """
-    This task runs featureCounts to count the number of reads (raw counts).
-    Then it parses the raw output to create a final CSV containing:
-      - A first column 'gene_id' (replacing the default 'Geneid'),
-      - A second column 'gene_name' (from the GTF),
-      - And columns for each sample's read counts
+    This task quantifies reads with featureCounts and produces a clean CSV including gene_id, gene_name, and per-sample raw counts.
+    Inputs: a bam_files folder (one or more .bam) and an annotation_file (GTF).
+    Key settings: threads (CPU cores), sequencing_type (Paired-end adds -p), and strandedness (0 unstranded, 1 stranded, 2 reverse-stranded).
+    It runs featureCounts grouping by gene_id (-t exon -g gene_id), then parses the GTF to map gene_id → gene_name, cleans column names (drops .bam and _trimmed).
     """
 
     input_specs: InputSpecs = InputSpecs({
@@ -88,7 +87,7 @@ class FeatureCounts(Task):
             f"featureCounts {paired_option} "
             f"-F GTF "
             f"-s {strandedness} "
-            f"-t exon "                             
+            f"-t exon "
             f"-g gene_id "                          # group by gene_id
             f"-T {threads} "
             f"-a {annotation_file.path} "

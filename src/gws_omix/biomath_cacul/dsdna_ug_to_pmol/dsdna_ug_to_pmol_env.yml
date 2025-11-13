@@ -2,3 +2,4 @@ channels:
   - bioconda
 dependencies:
   - biopython==1.85
+  - plotly==6.3.1

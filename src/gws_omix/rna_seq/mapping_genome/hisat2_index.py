@@ -15,8 +15,10 @@ from .hisat2_env import Hisat2ShellProxyHelper
                 short_description="Build genome index for HISAT2")
 class Hisat2Index(Task):
     """
-    Generates an index for the reference genome using HISAT2-build.
-    This index is required for alignment using HISAT2.
+    This task builds a HISAT2 genome index from a reference FASTA.
+    Provide a genome_file (FASTA). Configure threads (CPU cores, default 4).
+    The task runs hisat2-build and writes the index files to working_dir.
+    It returns an output folder pointing to that directory. Use this index later for read alignment with HISAT2.
     """
 
     input_specs: InputSpecs = InputSpecs({
