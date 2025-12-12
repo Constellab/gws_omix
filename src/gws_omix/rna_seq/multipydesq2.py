@@ -3,10 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 import os
+import shlex
 from pathlib import Path
-from typing import Final, List, Tuple
+from typing import Final, List
 
 import numpy as np
 import pandas as pd
@@ -36,7 +36,10 @@ from gws_core import (
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 
 
-# ------------------------------------------------------------------
+def _split_csv(s: str) -> List[str]:
+    return [z.strip() for z in str(s or "").split(",") if z.strip()]
+
+
 @task_decorator(
     "pyDESeq2MultiContrast",
     human_name="pyDESeq2 multi-contrast",
@@ -44,21 +47,12 @@ from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 )
 class Pydesq2Multi(Task):
 
-    """
-    This GWS task runs the core script, then collects and returns interactive results.
-    Inputs: count_table_file (CSV), metadata_file (TSV), gtf_file (GTF).
-    Key params: samples_colname, genes_colname, condition_column, control_condition, optional timepoint_column, group_column, extra_covariates, and filters pvalue_value, log2FoldChange_value.
-    The task executes the analysis, then assembles four outputs: tables (all DE and summary CSVs), pca_plots (interactive Plotly PCA with dropdowns for Group/Timepoint), heatmap_plots (interactive clustered heatmaps from VST CSVs), and volcano_plots (interactive Plotly volcanoes per contrast).
-    It builds an on-the-fly design (main effects: optional timepoint / group / extra covariates + mandatory condition),
-    normalizes and fits DESeq2, and runs Wald tests for each treatment vs control, plus a pooled ALL vs CTRL comparison when applicable.
-    Optional GTF mapping adds gene_name. For every contrast it saves a filtered DE table (DE_<contrast>.csv), a volcano PNG, and—when possible—a VST heatmap PNG of the top 50 genes; it also writes PCA coordinates, variance proportions, and produces heatmap CSVs.
-    """
-    
     input_specs: Final[InputSpecs] = InputSpecs({
         "count_table_file": InputSpec(File, human_name="Counts CSV"),
         "metadata_file":    InputSpec(File, human_name="Metadata TSV"),
         "gtf_file":         InputSpec(File, human_name="Gene annotation GTF"),
     })
+
     output_specs: Final[OutputSpecs] = OutputSpecs({
         "tables":        OutputSpec(ResourceSet, human_name="DE & summaries"),
         "pca_plots":     OutputSpec(ResourceSet, human_name="Interactive PCA"),
@@ -67,25 +61,28 @@ class Pydesq2Multi(Task):
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
-        "samples_colname":      StrParam(short_description=
-            "Name of the **metadata** column holding sample IDs "
-            "(must match count-table headers)."),
-        "genes_colname":        StrParam(short_description=
-            "Name of the **count-table** column containing gene identifiers."),
-        "condition_column":     StrParam(default_value="Condition", short_description=
+        "samples_colname": StrParam(short_description=
+            "Name of the **metadata** column holding sample IDs (must match count-table headers)."),
+        "genes_colname": StrParam(short_description=
+            "Name of the **count-table** column containing feature identifiers (must be UNIQUE)."),
+        "condition_column": StrParam(default_value="Condition", short_description=
             "Metadata column that defines treatments / experimental conditions."),
-        "control_condition":    StrParam(short_description=
+        "control_condition": StrParam(short_description=
             "Reference (control) level inside *condition_column*."),
-        "timepoint_column":     StrParam(default_value="", short_description=
+        "timepoint_column": StrParam(default_value="", short_description=
             "Optional time-point column (per-time-point contrasts if provided)."),
-        "group_column":         StrParam(default_value="", short_description=
+        "group_column": StrParam(default_value="", short_description=
             "Optional second grouping column (e.g. sex, strain)."),
-        "extra_covariates":     StrParam(default_value="", short_description=
+        "extra_covariates": StrParam(default_value="", short_description=
             "Comma-separated list of additional covariate columns (added as main effects)."),
-        "pvalue_value":         FloatParam(default_value=0.05, min_value=0.0,
+        "pvalue_value": FloatParam(default_value=0.05, min_value=0.0,
             short_description="P-value/FDR threshold for filtered outputs."),
         "log2FoldChange_value": FloatParam(default_value=0.5, short_description=
             "Absolute |log₂FC| cutoff for filtered outputs."),
+
+        "annotation_columns": StrParam(default_value="", short_description=
+            "Comma-separated extra columns for outputs/plots (e.g. gene_name,gene_biotype). "
+            "If not present in the counts table, they will be fetched from the GTF when possible."),
     })
 
     python_file_path: Final[str] = os.path.join(
@@ -94,30 +91,24 @@ class Pydesq2Multi(Task):
     )
 
     @staticmethod
-    def _pca_dropdown(
-        meta: pd.DataFrame, props: pd.DataFrame,
-        cond: str, grp: str | None, tp: str | None,
-    ) -> go.Figure:
+    def _pca_dropdown(meta: pd.DataFrame, props: pd.DataFrame,
+                      cond: str, grp: str | None, tp: str | None) -> go.Figure:
 
-        g_vals: List[str]; t_vals: List[str]
-
-        # symbols per-group
         if grp and grp in meta.columns:
             symbols = ["circle", "square", "diamond", "triangle-up", "x", "cross"]
             grp_syms = {g: symbols[i % len(symbols)]
-                        for i, g in enumerate(sorted(meta[grp].unique()))}
-            meta["_symbol"] = meta[grp].map(grp_syms)
+                        for i, g in enumerate(sorted(meta[grp].astype(str).unique()))}
+            meta["_symbol"] = meta[grp].astype(str).map(grp_syms)
             g_vals = meta[grp].astype(str).tolist()
         else:
             grp_syms = {"all": "circle"}
             meta["_symbol"] = "circle"
             g_vals = ["all"] * len(meta)
 
-        # marker sizes per-time-point
         if tp and tp in meta.columns:
             tp_sizes = {t: 8 + 4 * i
-                        for i, t in enumerate(sorted(meta[tp].unique()))}
-            meta["_size"] = meta[tp].map(tp_sizes)
+                        for i, t in enumerate(sorted(meta[tp].astype(str).unique()))}
+            meta["_size"] = meta[tp].astype(str).map(tp_sizes)
             t_vals = meta[tp].astype(str).tolist()
         else:
             tp_sizes = {"all": 12}
@@ -126,7 +117,7 @@ class Pydesq2Multi(Task):
 
         pal = px.colors.qualitative.Plotly
         cond_cols = {c: pal[i % len(pal)]
-                     for i, c in enumerate(sorted(meta[cond].unique()))}
+                     for i, c in enumerate(sorted(meta[cond].astype(str).unique()))}
 
         fig = go.Figure()
         hover_tpl = (
@@ -142,24 +133,25 @@ class Pydesq2Multi(Task):
                     x=[r["PC1"]], y=[r["PC2"]],
                     mode="markers",
                     marker=dict(
-                        color=cond_cols[r[cond]],
+                        color=cond_cols[str(r[cond])],
                         symbol=r["_symbol"],
                         size=r["_size"],
                         line=dict(width=0.5, color="#333"),
                     ),
                     customdata=[[idx, g_vals[r.name], t_vals[r.name]]],
-                    hovertemplate=hover_tpl, showlegend=False,
+                    hovertemplate=hover_tpl,
+                    showlegend=False,
                 )
             )
 
-        # legend
         for c, col in cond_cols.items():
             fig.add_trace(go.Scatter(x=[None], y=[None],
                                      mode="markers",
                                      marker=dict(color=col, size=10),
                                      name=c))
 
-        grp_vals, tp_vals = ["all"] + list(grp_syms.keys()), ["all"] + list(tp_sizes.keys())
+        grp_vals = ["all"] + list(grp_syms.keys())
+        tp_vals = ["all"] + list(tp_sizes.keys())
 
         def _mask(sel_g: str, sel_t: str) -> list[bool]:
             base = [(sel_g in ("all", g_vals[i])) and (sel_t in ("all", t_vals[i]))
@@ -177,14 +169,12 @@ class Pydesq2Multi(Task):
                               for t in tp_vals],
                      direction="down", x=1.18, y=1.15, showactive=True),
             ],
-            title=f"PCA — PC1 {props.iloc[0,0]*100:.1f}% • "
-                  f"PC2 {props.iloc[0,1]*100:.1f}%",
+            title=f"PCA — PC1 {props.iloc[0,0]*100:.1f}% • PC2 {props.iloc[0,1]*100:.1f}%",
             xaxis_title="PC1", yaxis_title="PC2",
             margin=dict(l=60, r=200, t=100, b=50),
         )
         return fig
 
-    # ---- static → Plotly converters (unchanged) -------------------
     @staticmethod
     def _heatmap(csv_path: str) -> PlotlyResource:
         df = pd.read_csv(csv_path, index_col=0)
@@ -214,15 +204,28 @@ class Pydesq2Multi(Task):
         return pr
 
     @staticmethod
-    def _volcano(path: str, gene_col: str, padj: float, fc: float) -> PlotlyResource:
+    def _volcano(path: str, id_col: str, padj: float, fc: float, extra_hover: List[str]) -> PlotlyResource:
         d = pd.read_csv(path)
-        pcol = "padj" if "padj" in d.columns else "pvalue"
-        eps = d.loc[d[pcol] > 0, pcol].min() or 1e-300
+        pcol = "padj" if "padj" in d.columns else ("pvalue" if "pvalue" in d.columns else None)
+        if pcol is None:
+            pr = PlotlyResource(go.Figure())
+            pr.name = f"Volcano {Path(path).stem}"
+            return pr
+
+        eps = d.loc[d[pcol] > 0, pcol].min()
+        eps = eps if (eps is not None and not np.isnan(eps)) else 1e-300
+
         d["p_plot"] = -np.log10(d[pcol].replace(0, eps))
         d["signif"] = (d[pcol] < padj) & (d.log2FoldChange.abs() > fc)
+
+        hover = []
+        for c in [id_col, *extra_hover, pcol, "log2FoldChange"]:
+            if c and c in d.columns and c not in hover:
+                hover.append(c)
+
         fig = px.scatter(
             d, x="log2FoldChange", y="p_plot", color="signif",
-            hover_data=[gene_col, pcol, "log2FoldChange", "gene_name"],
+            hover_data=hover,
             color_discrete_map={True: "#D62728", False: "#A6ACBC"},
             labels={
                 "log2FoldChange": "Log₂ FC",
@@ -234,39 +237,49 @@ class Pydesq2Multi(Task):
         fig.add_hline(y=-np.log10(padj), line_dash="dot", line_color="grey")
         fig.add_vline(x=fc,  line_dash="dot", line_color="grey")
         fig.add_vline(x=-fc, line_dash="dot", line_color="grey")
+
         pr = PlotlyResource(fig)
         pr.name = f"Volcano {Path(path).stem}"
         return pr
 
-    # ---------- run ------------------------------------------------
     def run(self, p: ConfigParams, ins: TaskInputs) -> TaskOutputs:
-
         counts = ins["count_table_file"].path
         meta   = ins["metadata_file"].path
         gtf    = ins["gtf_file"].path
 
         samp   = p["samples_colname"]
-        gene   = p["genes_colname"]
+        feat   = p["genes_colname"]  # user-defined column name
         cond   = p["condition_column"]
         ctrl   = p["control_condition"]
         tp     = p["timepoint_column"] or "None"
         grp    = p["group_column"]     or "None"
-        extras = p["extra_covariates"]
+        extras = p["extra_covariates"] or ""
         pthr   = p["pvalue_value"]
         fcthr  = p["log2FoldChange_value"]
 
+        annot_cols_str = p.get("annotation_columns", "") or ""
+        annot_cols = _split_csv(annot_cols_str)
+
         shell: ShellProxy = Pydesq2ShellProxyHelper.create_proxy(self.message_dispatcher)
-        cmd = (
-            "python3 {py} {cts} {meta} "
-            "{samp} {gene} {cond} {ctrl} "
-            "{tp} {grp} '{extras}' "
-            "{pthr} {fcthr} {gtf}"
-        ).format(
-            py=self.python_file_path, cts=counts, meta=meta,
-            samp=samp, gene=gene, cond=cond, ctrl=ctrl,
-            tp=tp, grp=grp, extras=extras,
-            pthr=pthr, fcthr=fcthr, gtf=gtf,
-        )
+
+        cmd = " ".join([
+            "python3",
+            shlex.quote(self.python_file_path),
+            shlex.quote(counts),
+            shlex.quote(meta),
+            shlex.quote(samp),
+            shlex.quote(feat),
+            shlex.quote(cond),
+            shlex.quote(ctrl),
+            shlex.quote(tp),
+            shlex.quote(grp),
+            shlex.quote(extras),
+            shlex.quote(str(pthr)),
+            shlex.quote(str(fcthr)),
+            shlex.quote(gtf),
+            shlex.quote(annot_cols_str),
+        ])
+
         if shell.run(cmd, shell_mode=True) != 0:
             raise RuntimeError("DESeq2 analysis failed – check logs")
 
@@ -293,21 +306,24 @@ class Pydesq2Multi(Task):
                 tables.add_resource(
                     TableImporter.call(
                         File(fp),
-                        {"delimiter": ",", "header": 0,
-                         "file_format": "csv", "index_column": -1},
-                    ), fn,
+                        {"delimiter": ",", "header": 0, "file_format": "csv", "index_column": -1},
+                    ),
+                    fn,
                 )
                 volc.add_resource(
-                    self._volcano(fp, gene, pthr, fcthr),
+                    self._volcano(fp, feat, float(pthr), float(fcthr), annot_cols),
                     f"Volcano {Path(fp).stem}",
                 )
+
             elif fn.startswith("Summary_") and fn.endswith(".csv"):
                 tables.add_resource(
                     TableImporter.call(
                         File(fp),
                         {"delimiter": ",", "header": 0, "file_format": "csv"},
-                    ), fn,
+                    ),
+                    fn,
                 )
+
             elif fn.startswith("Heatmap_") and fn.endswith(".csv"):
                 heat.add_resource(self._heatmap(fp), f"Heatmap {Path(fp).stem}")
 

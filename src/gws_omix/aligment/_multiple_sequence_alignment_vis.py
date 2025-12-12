@@ -59,9 +59,14 @@ def ensure_nonempty_fasta(fp: Path, log) -> bool:
     return False
 
 def run_mafft(in_fasta: Path, threads: int, log) -> str:
+    # Mode précision : L-INS-i
+    # mafft --localpair --maxiterate 1000 input > output
     cmd = [
-       "mafft","--auto","--adjustdirection","--maxiterate","2",
-       "--thread", str(max(1, int(threads))), str(in_fasta)
+       "mafft",
+       "--localpair",
+       "--maxiterate", "1000",
+       "--thread", str(max(1, int(threads))),
+       str(in_fasta)
     ]
     log("[CMD] " + " ".join(cmd))
     try:
@@ -122,10 +127,11 @@ def main():
         except Exception as e:
             log(f"[ERROR] MAFFT failed: {e}")
             sys.exit(2)
-        aligned_fa.write_text(aligned_text + "\n", newline="")
+        # IMPORTANT : pas de newline=""
+        aligned_fa.write_text(aligned_text + "\n")
         if not ensure_nonempty_fasta(aligned_fa, log):
             sys.exit(3)
-        log("[INFO] MAFFT alignment completed.")
+        log("[INFO] MAFFT alignment completed (L-INS-i, maxiterate=1000).")
 
     # 3) load alignment
     try:

@@ -5,7 +5,7 @@
 # About us: https://gencovery.com
 
 from pathlib import Path
-from typing import Final
+from typing import Final, List
 
 from gws_core import (
     BoolParam, ConfigParams, ConfigSpecs, File,
@@ -16,6 +16,7 @@ from gws_core import (
 
 from gws_omix.base_env.msaviz_env_task import MSAVisShellProxyHelper
 
+
 @task_decorator(
     "MSAVis",
     human_name="Multiple Sequence Alignment",
@@ -23,18 +24,14 @@ from gws_omix.base_env.msaviz_env_task import MSAVisShellProxyHelper
 )
 class MSAVis(Task):
     """
-    Performs multiple sequence alignment using MAFFT (if needed) and visualizes
-    the resulting alignment using pyMSAviz. The visualization automatically adapts
-    its layout to long alignments by splitting them into multiple pages (PNG files).
+    Performs multiple sequence alignment using MAFFT (L-INS-i, --localpair --maxiterate 1000
+    in the worker) and visualizes the resulting alignment using pyMSAviz.
 
-    Features:
-    - Automatic MAFFT alignment (if sequences not pre-aligned)
-    - Auto-detection of nucleotide vs protein color scheme
-    - Pagination for long alignments
-    Output:
-    - <prefix>.aln.fa : aligned FASTA file
-    - <prefix>.page_*.png : paginated alignment images
-     """
+    Outputs:
+    - msa_outputs   : MSA figures (PNG)
+    - aligned_fasta : File -> aligned FASTA principal (ex. human.aln_3.fa)
+    - alignment_log : File -> log principal (ex. human_3.log)
+    """
 
     input_specs: Final[InputSpecs] = InputSpecs({
         "sequences_fasta": InputSpec(
@@ -46,15 +43,45 @@ class MSAVis(Task):
 
     output_specs: Final[OutputSpecs] = OutputSpecs({
         "msa_outputs":   OutputSpec(ResourceSet, human_name="MSA figures (PNG)"),
-        "mafft_outputs": OutputSpec(ResourceSet, human_name="MAFFT alignment & logs")
+        "aligned_fasta": OutputSpec(File,        human_name="Aligned FASTA (.fa)"),
+        "alignment_log": OutputSpec(File,        human_name="Alignment log (.log)"),
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
-        "prefix": StrParam(default_value="", short_description="Output prefix (default: input filename stem)"),
-        "max_seqs": IntParam(default_value=500, min_value=1, short_description="Max sequences to keep"),
-        "align_if_needed": BoolParam(default_value=True, short_description="Run MAFFT if input not aligned"),
-        "threads": IntParam(default_value=8, min_value=1, short_description="MAFFT threads"),
+        "prefix": StrParam(
+            default_value="",
+            short_description="Output prefix (default: input filename stem)"
+        ),
+        "align_if_needed": BoolParam(
+            default_value=True,
+            short_description="Run MAFFT if input not aligned"
+        ),
+        "threads": IntParam(
+            default_value=8,
+            min_value=1,
+            short_description="MAFFT threads (L-INS-i)"
+        ),
     })
+
+    # ------------- helpers -------------
+
+    def _read_log_tail(self, log_path: Path, max_lines: int = 80) -> str:
+        if not log_path.is_file():
+            return ""
+        try:
+            return "\n".join(log_path.read_text(errors="ignore").splitlines()[-max_lines:])
+        except Exception:
+            return ""
+
+    def _list_dir_files(self, directory: Path) -> str:
+        if not directory.is_dir():
+            return "<directory does not exist>"
+        names: List[str] = sorted(p.name for p in directory.iterdir())
+        if not names:
+            return "<no files>"
+        return "\n".join(names)
+
+    # ------------- run -------------
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fasta: File = inputs["sequences_fasta"]
@@ -74,7 +101,7 @@ class MSAVis(Task):
             "--in",      f"\"{fasta.path}\"",
             "--out",     f"\"{out_dir}\"",
             "--prefix",  f"\"{prefix}\"",
-            "--max-seqs", str(params["max_seqs"]),
+            # max-seqs reste interne au worker (default=500), pas exposé
             "--threads",  str(params["threads"]),
             "--align-if-needed", "1" if params["align_if_needed"] else "0",
         ]
@@ -83,42 +110,69 @@ class MSAVis(Task):
 
         rc = shell.run(cmd_str, shell_mode=True)
 
-        msa_rs   = ResourceSet()
-        mafft_rs = ResourceSet()
+        msa_rs = ResourceSet()
 
-        # Figures (PNGs)
+        # 1) PNGs -> msa_outputs
         for p in sorted(out_dir.glob(f"{prefix}*.png")):
             if p.is_file():
                 msa_rs.add_resource(File(str(p)), p.name)
 
-        # Alignments & logs
-        for name in [f"{prefix}.aln.fa", f"{prefix}.trimmed.fa", f"{prefix}.mafft.log", f"{prefix}.log"]:
-            p = out_dir / name
-            if p.is_file():
-                mafft_rs.add_resource(File(str(p)), p.name)
+        # 2) Détection du FASTA principal et du log principal
+        aligned_fa_path = None  # type: Path | None
+        align_log_path  = None  # type: Path | None
 
-        for p in sorted(out_dir.glob(f"{prefix}.page_*.fa")):
-            if p.is_file():
-                mafft_rs.add_resource(File(str(p)), p.name)
+        # FASTA principal : prioriser <prefix>.aln*.fa (ex. human.aln_3.fa)
+        candidates_fa = sorted(out_dir.glob(f"{prefix}.aln*.fa"))
+        if not candidates_fa:
+            # fallback: n'importe quel *.fa qui commence par prefix et qui n'est pas une page
+            candidates_fa = [
+                p for p in sorted(out_dir.glob(f"{prefix}*.fa"))
+                if p.is_file() and "page_" not in p.name
+            ]
+        if candidates_fa:
+            aligned_fa_path = candidates_fa[0]
+            print(f"[INFO] Detected aligned FASTA: {aligned_fa_path}")
 
+        # LOG principal : <prefix>*.log (ex. human_3.log)
+        candidates_log = sorted(out_dir.glob(f"{prefix}*.log"))
+        if candidates_log:
+            align_log_path = candidates_log[0]
+            print(f"[INFO] Detected alignment log: {align_log_path}")
+
+        # log_path pour les messages d'erreur
+        log_path = align_log_path or (out_dir / f"{prefix}.log")
+
+        # 3) gestion erreurs worker / PNG manquants
         if rc:
-            tail = ""
-            log_path = out_dir / f"{prefix}.log"
-            if log_path.is_file():
-                try:
-                    tail = "\n".join(log_path.read_text(errors="ignore").splitlines()[-80:])
-                except Exception:
-                    pass
+            tail = self._read_log_tail(log_path)
             raise RuntimeError(f"pyMSAviz worker failed. See log tail:\n{tail}")
 
         if not any(out_dir.glob(f"{prefix}*.png")):
-            tail = ""
-            log_path = out_dir / f"{prefix}.log"
-            if log_path.is_file():
-                try:
-                    tail = "\n".join(log_path.read_text(errors="ignore").splitlines()[-80:])
-                except Exception:
-                    pass
+            tail = self._read_log_tail(log_path)
             raise RuntimeError("MSA finished but no PNGs were produced.\n" + tail)
 
-        return {"msa_outputs": msa_rs, "mafft_outputs": mafft_rs}
+        # 4) Vérif qu'on a bien un FASTA aligné
+        if aligned_fa_path is None or not aligned_fa_path.is_file():
+            files_list = self._list_dir_files(out_dir)
+            tail = self._read_log_tail(log_path)
+            raise RuntimeError(
+                "Aligned FASTA (.fa) not found.\n"
+                f"Expected something like '{prefix}.aln*.fa'.\n\n"
+                f"Files present in {out_dir}:\n{files_list}\n\n"
+                f"Log tail:\n{tail}"
+            )
+
+        aligned_fasta_file = File(str(aligned_fa_path))
+
+        # 5) Log (utile mais potentiellement absent)
+        if align_log_path is not None and align_log_path.is_file():
+            alignment_log_file = File(str(align_log_path))
+        else:
+            alignment_log_file = None
+
+        outputs: TaskOutputs = {
+            "msa_outputs": msa_rs,
+            "aligned_fasta": aligned_fasta_file,
+            "alignment_log": alignment_log_file,
+        }
+        return outputs
