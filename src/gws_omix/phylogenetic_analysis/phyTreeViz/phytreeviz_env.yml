@@ -1,0 +1,6 @@
+name: phytreeviz-env
+channels:
+  - conda-forge
+
+dependencies:
+  - phytreeviz==0.2.0
