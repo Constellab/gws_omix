@@ -1,37 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-"""
-Wrapper script around phyTreeViz CLI to generate a publication-quality
-phylogenetic tree figure from a Newick (or other supported) tree file.
-
-Intended usage (called by a Task):
-
-  --tree           <input tree file>
-  --out            <output directory>
-  --prefix         <output file prefix>
-  --fig-height     <figure height per leaf node>
-  --fig-width      <figure width>
-  --leaf-label-size <leaf label font size>
-  --ignore-branch-length  (flag)
-  --align-leaf-label      (flag)
-  --show-branch-length    (flag)
-  --show-confidence       (flag)
-  --dpi            <figure dpi>
-
-This script runs the phyTreeViz CLI roughly as:
-
-  phytreeviz -i <tree> -o <out/prefix>.tree.png \
-      --format newick \
-      --fig_height <...> --fig_width <...> --leaf_label_size <...> \
-      [--ignore_branch_length] [--align_leaf_label] \
-      [--show_branch_length] [--show_confidence] --dpi <...>
-
-and checks that the PNG was produced.
-"""
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import argparse
-import subprocess
 import sys
 import os
 from pathlib import Path
@@ -39,157 +13,80 @@ from pathlib import Path
 os.environ.setdefault("MPLBACKEND", "Agg")
 
 
-def log_init(log_path: Path):
-    """Create a logger that prints to stdout and appends to a log file."""
+def log_init():
+    """Simple logger: stdout only, no log file on disk."""
     def _log(msg: str):
         print(msg, flush=True)
-        try:
-            with log_path.open("a") as L:
-                L.write(msg + "\n")
-        except Exception:
-            # Never crash because of logging
-            pass
     return _log
-
-
-def run_phytreeviz(
-    tree_file: Path,
-    out_dir: Path,
-    prefix: str,
-    fig_height: float,
-    fig_width: float,
-    leaf_label_size: int,
-    ignore_branch_length: bool,
-    align_leaf_label: bool,
-    show_branch_length: bool,
-    show_confidence: bool,
-    dpi: int,
-    log,
-):
-    """
-    Run the phyTreeViz CLI with the provided options.
-
-    Produces:
-      <prefix>.tree.png              : tree figure
-      <prefix>.phytreeviz_wrapper.log: wrapper log (this script)
-    """
-    out_png = out_dir / f"{prefix}.tree.png"
-
-    cmd = [
-        "phytreeviz",
-        "-i", str(tree_file),
-        "-o", str(out_png),
-        "--format", "newick",  # IQ-TREE *.treefile is Newick
-        "--fig_height", str(fig_height),
-        "--fig_width", str(fig_width),
-        "--leaf_label_size", str(leaf_label_size),
-        "--dpi", str(dpi),
-    ]
-
-    if ignore_branch_length:
-        cmd.append("--ignore_branch_length")
-    if align_leaf_label:
-        cmd.append("--align_leaf_label")
-    if show_branch_length:
-        cmd.append("--show_branch_length")
-    if show_confidence:
-        cmd.append("--show_confidence")
-
-    log("[CMD] " + " ".join(cmd))
-
-    try:
-        res = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    except FileNotFoundError:
-        raise RuntimeError(
-            "phytreeviz CLI not found in PATH. Make sure the 'phytreeviz' "
-            "command is installed in this environment."
-        )
-
-    if res.returncode != 0:
-        stderr = (res.stderr or "").strip()
-        stdout = (res.stdout or "").strip()
-        if stderr:
-            log("[PHYTreeViz STDERR]\n" + stderr)
-        if stdout:
-            log("[PHYTreeViz STDOUT]\n" + stdout)
-        raise RuntimeError(
-            f"phyTreeViz CLI failed with exit code {res.returncode}. "
-            f"See messages above for details."
-        )
-
-    if not out_png.is_file():
-        # List files in out_dir for debugging
-        files = "\n".join(sorted(p.name for p in out_dir.iterdir()))
-        log(f"[ERROR] Output PNG not found: {out_png}")
-        log("[ERROR] Files in out_dir:\n" + files)
-        raise RuntimeError("phyTreeViz reported success but no figure was found.")
 
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Wrapper around phyTreeViz CLI to render a phylogenetic tree figure."
+        description=(
+            "Render a phylogenetic tree using phyTreeViz from a Newick tree file."
+        )
     )
     ap.add_argument("--tree", dest="tree_path", required=True,
-                    help="Input phylogenetic tree file (e.g. Newick from IQ-TREE).")
+                    help="Input tree file (Newick, etc.)")
     ap.add_argument("--out", dest="out_dir", required=True,
-                    help="Output directory for figure.")
+                    help="Output directory")
     ap.add_argument("--prefix", default="tree",
-                    help="Output prefix for the figure (default: 'tree').")
+                    help="Output prefix (default: 'tree')")
 
-    # Figure appearance options (advanced)
+    # Advanced figure options (passed from the Task)
     ap.add_argument(
         "--fig-height",
+        dest="fig_height",
         type=float,
         default=0.3,
-        help="Figure height per leaf node of the tree (Default: 0.3)."
+        help="Figure height per leaf node (Default: 0.3)."
     )
     ap.add_argument(
         "--fig-width",
+        dest="fig_width",
         type=float,
         default=12.0,
         help="Figure width (Default: 12.0)."
     )
     ap.add_argument(
         "--leaf-label-size",
-        type=int,
-        default=8,
+        dest="leaf_label_size",
+        type=float,
+        default=8.0,
         help="Leaf label font size (Default: 8)."
     )
     ap.add_argument(
-        "--ignore-branch-length",
-        action="store_true",
-        help="Ignore branch lengths when plotting (Default: use branch lengths)."
-    )
-    ap.add_argument(
         "--align-leaf-label",
+        dest="align_leaf_label",
         action="store_true",
-        help="Align leaf label positions vertically (Default: OFF)."
+        help="Align leaf label positions."
     )
     ap.add_argument(
         "--show-branch-length",
+        dest="show_branch_length",
         action="store_true",
-        help="Show branch length values on the tree (Default: OFF)."
+        help="Show branch length values on branches."
     )
     ap.add_argument(
         "--show-confidence",
+        dest="show_confidence",
         action="store_true",
-        help="Show confidence / bootstrap values on the tree (Default: OFF)."
+        help="Show confidence / bootstrap values on branches."
     )
     ap.add_argument(
         "--dpi",
+        dest="dpi",
         type=int,
         default=300,
         help="Figure DPI (Default: 300)."
     )
-
     args = ap.parse_args()
 
     tree_path = Path(args.tree_path)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    log_path = out_dir / f"{args.prefix}.phytreeviz_wrapper.log"
-    log = log_init(log_path)
+    log = log_init()
 
     log(f"[INFO] Input tree: {tree_path}")
     log(f"[INFO] Output dir: {out_dir}")
@@ -197,7 +94,6 @@ def main():
     log(f"[INFO] fig_height : {args.fig_height}")
     log(f"[INFO] fig_width  : {args.fig_width}")
     log(f"[INFO] leaf_label_size : {args.leaf_label_size}")
-    log(f"[INFO] ignore_branch_length: {args.ignore_branch_length}")
     log(f"[INFO] align_leaf_label    : {args.align_leaf_label}")
     log(f"[INFO] show_branch_length  : {args.show_branch_length}")
     log(f"[INFO] show_confidence     : {args.show_confidence}")
@@ -208,32 +104,46 @@ def main():
         sys.exit(1)
 
     try:
-        run_phytreeviz(
-            tree_file=tree_path,
-            out_dir=out_dir,
-            prefix=args.prefix,
-            fig_height=args.fig_height,
-            fig_width=args.fig_width,
-            leaf_label_size=args.leaf_label_size,
-            ignore_branch_length=args.ignore_branch_length,
-            align_leaf_label=args.align_leaf_label,
-            show_branch_length=args.show_branch_length,
-            show_confidence=args.show_confidence,
-            dpi=args.dpi,
-            log=log,
-        )
-    except Exception as e:
-        log(f"[ERROR] phyTreeViz wrapper failed: {e}")
+        from phytreeviz import TreeViz
+    except ImportError as e:
+        log("[ERROR] Could not import 'phytreeviz'. "
+            "Make sure the package is installed in this environment.")
+        log(f"[ERROR] ImportError: {e}")
         sys.exit(2)
 
-    fig_path = out_dir / f"{args.prefix}.tree.png"
-    if not fig_path.is_file():
-        files = "\n".join(sorted(p.name for p in out_dir.iterdir()))
-        log(f"[ERROR] Expected figure not found: {fig_path}")
-        log("[ERROR] Files in out_dir:\n" + files)
+    out_png = out_dir / f"{args.prefix}.tree.png"
+
+    try:
+        # Branch lengths are always used to set the horizontal scale.
+        tv = TreeViz(
+            tree_data=str(tree_path),
+            format="newick",
+            height=args.fig_height,
+            width=args.fig_width,
+            align_leaf_label=args.align_leaf_label,
+            leaf_label_size=args.leaf_label_size,
+        )
+
+        # Branch-length and confidence labels (text)
+        if args.show_branch_length:
+            tv.show_branch_length(size=max(6, int(args.leaf_label_size * 0.7)))
+        if args.show_confidence:
+            tv.show_confidence(size=max(6, int(args.leaf_label_size * 0.7)))
+
+        # Always draw a scale bar
+        tv.show_scale_bar()
+
+        tv.savefig(str(out_png), dpi=args.dpi)
+        log(f"[INFO] Wrote tree image: {out_png}")
+
+    except Exception as e:
+        log(f"[ERROR] phyTreeViz rendering failed: {e}")
         sys.exit(3)
 
-    log(f"[INFO] Figure written: {fig_path}")
+    if not out_png.is_file():
+        log(f"[ERROR] Output PNG not found: {out_png}")
+        sys.exit(4)
+
     log("[INFO] phyTreeViz wrapper done.")
     sys.exit(0)
 
