@@ -1,0 +1,8 @@
+name: pygenomeviz
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+dependencies:
+  - pygenomeviz==1.6.1      
