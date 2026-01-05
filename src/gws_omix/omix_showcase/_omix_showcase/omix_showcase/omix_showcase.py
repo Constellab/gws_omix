@@ -6,7 +6,7 @@ from gws_omix.omix_showcase._omix_showcase.omix_showcase.eggnog_page_state impor
     EggnogPageState
 from gws_omix.omix_showcase._omix_showcase.omix_showcase.sixteen_s_page_state import \
     SixteenSPageState
-from gws_reflex_main import get_theme
+from gws_reflex_main import register_gws_reflex_app
 
 
 def download_link_button(label: str, href: str) -> rx.Component:
@@ -129,14 +129,7 @@ def page_component(page_box_content: rx.Component) -> rx.Component:
     )
 
 
-app = rx.App(
-    theme=get_theme(),
-    stylesheets=[
-        "/style.css"
-    ]
-
-
-)
+app = register_gws_reflex_app()
 
 
 @rx.page(title="Home")
