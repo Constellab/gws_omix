@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 from __future__ import annotations
-import argparse, ast, os, re
-from pathlib import Path
-from typing import Sequence, Dict, List, Tuple
 
+import argparse
+import ast
+import re
+from collections.abc import Sequence
+from pathlib import Path
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")  # headless
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -44,7 +47,7 @@ def series_clean_ids(s: pd.Series) -> pd.Series:
         s = pd.Series(strip_version(s), index=s.index)
     return s
 
-def _score_and_pval_cols(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
+def _score_and_pval_cols(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     """Return score (-log10 p) and p-value series from g:Profiler results."""
     if "adjusted_p_value" in df.columns:
         adjp = pd.to_numeric(df["adjusted_p_value"], errors="coerce")
@@ -124,7 +127,7 @@ def filter_like_website(res: pd.DataFrame, alpha: float) -> pd.DataFrame:
     return r
 
 # ───────────────────── Long matrix (avec log2fc) ─────────────────
-def explode_long(df: pd.DataFrame, de_lfc_map: Dict[str, float]) -> pd.DataFrame:
+def explode_long(df: pd.DataFrame, de_lfc_map: dict[str, float]) -> pd.DataFrame:
     cols = ["term_name", "term_id", "source", "gene_label", "score", "pvalue", "log2fc"]
     if df is None or df.empty:
         return pd.DataFrame(columns=cols)
@@ -165,7 +168,7 @@ def explode_long(df: pd.DataFrame, de_lfc_map: Dict[str, float]) -> pd.DataFrame
     return pd.DataFrame(rows)
 
 # ─────────────── Build ALL / UP / DOWN gene sets ────────────────
-def build_gene_sets(df: pd.DataFrame, id_series: pd.Series, padj_thr: float, lfc_thr: float) -> Dict[str, List[str]]:
+def build_gene_sets(df: pd.DataFrame, id_series: pd.Series, padj_thr: float, lfc_thr: float) -> dict[str, list[str]]:
     ids = series_clean_ids(id_series)
     if "padj" in df.columns:
         padj = pd.to_numeric(df["padj"], errors="coerce")
@@ -176,7 +179,7 @@ def build_gene_sets(df: pd.DataFrame, id_series: pd.Series, padj_thr: float, lfc
     else:
         mask_all = pd.Series(True, index=df.index)
 
-    result: Dict[str, List[str]] = {}
+    result: dict[str, list[str]] = {}
     result["ALL_DE"] = uniq(ids.loc[mask_all[mask_all].index].tolist())
 
     if "log2FoldChange" in df.columns:

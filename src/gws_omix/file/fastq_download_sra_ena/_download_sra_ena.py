@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from __future__ import annotations
 
-import sys
 import shutil
 import subprocess
+import sys
 from pathlib import Path
-from typing import List, Optional
 
 # Keep ONLY these essential columns in the final TSV
 RUNINFO_HEADER = [
@@ -59,14 +57,14 @@ class FastqDownloader:
         path.write_text("\t".join(RUNINFO_HEADER) + "\n", encoding="utf-8")
 
     @staticmethod
-    def _find_any_runinfo(out_dir: Path) -> Optional[Path]:
+    def _find_any_runinfo(out_dir: Path) -> Path | None:
         """Find any '*-run-info.tsv' produced by fastq-dl in out_dir."""
         candidates = sorted(out_dir.glob("*-run-info.tsv"))
         return candidates[0] if candidates else None
 
     # ---------- core ----------
 
-    def build_cmd(self) -> List[str]:
+    def build_cmd(self) -> list[str]:
         return [
             "fastq-dl",
             "--accession", self.accession,
@@ -90,7 +88,7 @@ class FastqDownloader:
         # 2) Run fastq-dl
         cmd = self.build_cmd()
         print("[FASTQ-DL] Running:", " ".join(cmd), flush=True)
-        proc = subprocess.run(cmd, cwd=self.out_fastq_dir, capture_output=True, text=True)
+        proc = subprocess.run(cmd, check=False, cwd=self.out_fastq_dir, capture_output=True, text=True)
         if proc.stdout:
             print(proc.stdout, end="")
         if proc.stderr:
@@ -142,7 +140,7 @@ class FastqDownloader:
         src_header = [h.strip() for h in lines[0].split("\t")] if lines else []
         col_idx = {h: i for i, h in enumerate(src_header)}
         # Build new content
-        out_lines: List[str] = []
+        out_lines: list[str] = []
         out_lines.append("\t".join(RUNINFO_HEADER))
         for ln in lines[1:]:
             if not ln.strip():
@@ -150,7 +148,7 @@ class FastqDownloader:
             parts = ln.split("\t")
             row_vals = []
             for h in RUNINFO_HEADER:
-                i = col_idx.get(h, None)
+                i = col_idx.get(h)
                 row_vals.append(parts[i] if i is not None and i < len(parts) else "")
             out_lines.append("\t".join(row_vals))
 

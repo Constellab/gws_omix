@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class TopGO2ShellProxyHelper():
+class TopGO2ShellProxyHelper:
     ENV_DIR_NAME = "TopGO2ShellProxy"
     ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

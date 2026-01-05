@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class BaseREnvHelper():
+class BaseREnvHelper:
     unique_env_name = "BaseREnvTask"
     env_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

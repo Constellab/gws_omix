@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-import sys
+import shutil
 import subprocess
+import sys
+from concurrent.futures import ThreadPoolExecutor
+
 import pandas as pd
 from Bio import SeqIO
-from concurrent.futures import ThreadPoolExecutor
-import shutil
 
 # Mapping BLAST program to sequence type and default database basename
 DB_TYPE_MAP = {

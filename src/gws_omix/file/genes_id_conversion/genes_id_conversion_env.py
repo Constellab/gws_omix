@@ -3,10 +3,11 @@
 # About us: https://gencovery.com
 
 import os
+
 from gws_core import MessageDispatcher, PipShellProxy
 
 
-class GenesidConversionShellProxyHelper():
+class GenesidConversionShellProxyHelper:
     ENV_DIR_NAME = "GenesidConversionShellProxy"
     ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

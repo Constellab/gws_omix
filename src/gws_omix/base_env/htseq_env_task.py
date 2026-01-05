@@ -7,7 +7,7 @@ import os
 from gws_core import MessageDispatcher, PipShellProxy
 
 
-class HTSeqShellProxyHelper():
+class HTSeqShellProxyHelper:
 
     ENV_DIR_NAME = "HTSeqShellProxyPip"
     ENV_FILE_PATH = os.path.join(

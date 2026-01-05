@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-import sys
-import time
 import shutil
 import subprocess
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+
 import pandas as pd
 from Bio import SeqIO
-from concurrent.futures import ThreadPoolExecutor
 
 BLAST_DB = {
     "blastn": "nt",

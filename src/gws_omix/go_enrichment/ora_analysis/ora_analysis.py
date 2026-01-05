@@ -6,17 +6,32 @@
 import os
 from pathlib import Path
 from typing import Final
+
 import numpy as np
 import pandas as pd
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import sys
-
 from gws_core import (
-    ConfigParams, ConfigSpecs, File, FloatParam, InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs, PlotlyResource, ResourceSet, ShellProxy,
-    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator,TableExporter, Table
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FloatParam,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    PlotlyResource,
+    ResourceSet,
+    ShellProxy,
+    StrParam,
+    Table,
+    TableExporter,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
+
 from .ora_analysis_env import OraAnalysisShellProxyHelper
 
 SCIENTIFIC_NAMES = [

@@ -5,11 +5,26 @@
 
 import os
 
-from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
-                      FileHelper, InputSpec, InputSpecs, IntParam, OutputSpec,
-                      OutputSpecs, Settings, Table, TableImporter, Task,
-                      TaskFileDownloader, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (
+    CondaShellProxy,
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FileHelper,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Settings,
+    Table,
+    TableImporter,
+    Task,
+    TaskFileDownloader,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 
 @task_decorator("DeepECtransformer", human_name="DeepECtransformer",

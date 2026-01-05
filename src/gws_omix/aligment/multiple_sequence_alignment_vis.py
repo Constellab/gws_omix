@@ -5,13 +5,25 @@
 # About us: https://gencovery.com
 
 from pathlib import Path
-from typing import Final, List
+from typing import Final
 
 from gws_core import (
-    BoolParam, ConfigParams, ConfigSpecs, File,
-    InputSpec, InputSpecs, IntParam, OutputSpec, OutputSpecs,
-    ResourceSet, ShellProxy, StrParam, Task, TaskInputs, TaskOutputs,
-    task_decorator
+    BoolParam,
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ResourceSet,
+    ShellProxy,
+    StrParam,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
 
 from gws_omix.base_env.msaviz_env_task import MSAVisShellProxyHelper
@@ -76,7 +88,7 @@ class MSAVis(Task):
     def _list_dir_files(self, directory: Path) -> str:
         if not directory.is_dir():
             return "<directory does not exist>"
-        names: List[str] = sorted(p.name for p in directory.iterdir())
+        names: list[str] = sorted(p.name for p in directory.iterdir())
         if not names:
             return "<no files>"
         return "\n".join(names)

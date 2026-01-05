@@ -4,9 +4,19 @@
 # About us: https://gencovery.com
 
 import os
-import re
-from gws_core import (ConfigParams, Folder, InputSpec, OutputSpec, InputSpecs, OutputSpecs, ConfigSpecs,
-                      Task, TaskInputs, TaskOutputs, task_decorator, ConfigSpecs, StrParam)
+
+from gws_core import (
+    ConfigParams,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 from .multiqc_env import MultiQcShellProxyHelper
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # LICENSE
 # This software is the exclusive property of Gencovery SAS.
@@ -9,10 +8,22 @@
 import os
 
 from gws_core import (
-    ConfigParams, ConfigSpecs, Folder, File, Table,
-    InputSpecs, OutputSpec, OutputSpecs,
-    IntParam, StrParam,
-    ShellProxy, Task, TaskInputs, TaskOutputs, task_decorator, TableImporter
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ShellProxy,
+    StrParam,
+    Table,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
 
 # <<< renamed helper as requested >>>
@@ -61,8 +72,7 @@ class FastqDLRunner(Task):
             provider = "ena"
 
         cpus = int(params["cpus"] or 1)
-        if cpus < 1:
-            cpus = 1
+        cpus = max(cpus, 1)
 
         # Activate env and get a working directory
         shell_proxy = DownloadSraEnaShellProxyHelper.create_proxy(self.message_dispatcher)

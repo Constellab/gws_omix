@@ -3,16 +3,29 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import csv, os
+import csv
 from pathlib import Path
-from typing import List
 
 import pandas as pd
-from gws_core import ( ConfigParams, ConfigSpecs, Folder, File, InputSpec, InputSpecs, OutputSpec, OutputSpecs,
-                        IntParam, Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
+from gws_omix import FastqFolder
 
 from .hisat2_env import Hisat2ShellProxyHelper
-from gws_omix import FastqFolder
 
 
 def _read_meta(fp: Path) -> pd.DataFrame:

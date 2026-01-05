@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-import argparse, subprocess, sys, os
+import argparse
+import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import List
+
 os.environ.setdefault("MPLBACKEND", "Agg")
 
-from Bio import SeqIO, AlignIO
-from Bio.Align import MultipleSeqAlignment
 from collections import Counter
+
+from Bio import AlignIO, SeqIO
+from Bio.Align import MultipleSeqAlignment
 from PIL import Image
 
 DPI_DEFAULT       = 300   # baked-in DPI (was a parameter)
@@ -29,20 +32,20 @@ def log_init(log_path: Path):
             pass
     return _log
 
-def read_fasta_records(path: Path) -> List:
+def read_fasta_records(path: Path) -> list:
     try:
         return list(SeqIO.parse(str(path), "fasta"))
     except Exception:
         return []
 
-def is_aligned(records: List) -> bool:
+def is_aligned(records: list) -> bool:
     if len(records) < 2:
         return False
     lengths = {len(str(r.seq)) for r in records}
     gaps = any("-" in str(r.seq) for r in records)
     return (len(lengths) == 1) or gaps
 
-def write_fasta(records: List, out: Path):
+def write_fasta(records: list, out: Path):
     with out.open("wt", newline="") as w:
         SeqIO.write(records, w, "fasta")
 

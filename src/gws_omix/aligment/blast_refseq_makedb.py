@@ -5,14 +5,18 @@
 # About us: https://gencovery.com
 
 import os
-from pathlib import Path
 from typing import Final
 
 from gws_core import (
-    ConfigParams, ConfigSpecs,
-    OutputSpec, OutputSpecs, Folder,
-    ShellProxy, Task, TaskInputs,
-    TaskOutputs, task_decorator
+    ConfigParams,
+    Folder,
+    OutputSpec,
+    OutputSpecs,
+    ShellProxy,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
 
 from gws_omix.base_env.blast_web_env_task import BlastWebShellProxyHelper

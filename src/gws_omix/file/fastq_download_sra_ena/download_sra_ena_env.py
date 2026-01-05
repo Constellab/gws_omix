@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class DownloadSraEnaShellProxyHelper():
+class DownloadSraEnaShellProxyHelper:
     unique_env_name = "DownloadSraEnaShellProxy"
     env_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

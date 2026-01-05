@@ -1,15 +1,15 @@
 import sys
 from pathlib import Path
-from typing import Optional, Union
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-import matplotlib.pyplot as plt
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
 
 
-def _parse_float(x: Union[str, float, None]) -> Optional[float]:
+def _parse_float(x: str | float | None) -> float | None:
     if x is None or (isinstance(x, str) and x.lower() == "none"):
         return None
     return float(x)
@@ -32,8 +32,8 @@ class DeseqAnalyzer:
         gene_col:  str,
         ctrl:      str,
         treat:     str,
-        pval_thr:  Optional[float] = None,
-        fc_thr:    Optional[float] = None,
+        pval_thr:  float | None = None,
+        fc_thr:    float | None = None,
     ) -> None:
         self.counts_fp = Path(counts_fp)
         self.meta_fp   = Path(meta_fp)

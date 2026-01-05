@@ -2,10 +2,23 @@
 
 import os
 
-from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
-                      IntParam, OutputSpec, OutputSpecs, ResourceSet,
-                      ShellProxy, TableImporter, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ResourceSet,
+    ShellProxy,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 from ..base_env.pygsea_pip_env import PygseaPipShellProxyHelper
 

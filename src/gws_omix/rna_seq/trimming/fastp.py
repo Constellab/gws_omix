@@ -5,14 +5,28 @@
 
 import csv
 from pathlib import Path
-from typing import List
 
 import pandas as pd
-from gws_core import (ConfigParams, ConfigSpecs, Folder, File, InputSpec, InputSpecs, OutputSpec, OutputSpecs,
-                       IntParam, StrParam, Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    StrParam,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
+from gws_omix import FastqFolder
 
 from .fastp_env import FastpShellProxyHelper
-from gws_omix import FastqFolder
+
 
 def _read_metadata(path: Path) -> pd.DataFrame:
     """Read TSV; skip comment lines (#)."""
@@ -40,7 +54,7 @@ def _abs(p: str, root: Path) -> str:
     short_description="Adapters removal with fastp",
 )
 class Fastp(Task):
-    
+
     """
     This task trims adapters and low-quality bases using fastp for FASTQ datasets defined by a metadata TSV. Provide a fastq_folder
     (base path for relative file references) and a metadata file that is either single-end (contains absolute-filepath)

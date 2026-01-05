@@ -1,11 +1,10 @@
 
-from typing import List
 
 import reflex as rx
-from gws_omix.omix_showcase._omix_showcase.omix_showcase.eggnog_page_state import \
-    EggnogPageState
-from gws_omix.omix_showcase._omix_showcase.omix_showcase.sixteen_s_page_state import \
-    SixteenSPageState
+from gws_omix.omix_showcase._omix_showcase.omix_showcase.eggnog_page_state import EggnogPageState
+from gws_omix.omix_showcase._omix_showcase.omix_showcase.sixteen_s_page_state import (
+    SixteenSPageState,
+)
 from gws_reflex_main import register_gws_reflex_app
 
 
@@ -232,7 +231,7 @@ def functional_annotation_through_orthology_assignment_page():
             direction="column", width="100%", spacing="2", padding="1em"))
 
 
-def render_diversity_df(df: List) -> rx.Component:
+def render_diversity_df(df: list) -> rx.Component:
     return rx.vstack(
         rx.text(df[0]),
         rx.data_table(
@@ -241,7 +240,7 @@ def render_diversity_df(df: List) -> rx.Component:
             width="100%", class_name="data-table"))
 
 
-def diversity_analysis_component(diversity_section: List) -> rx.Component:
+def diversity_analysis_component(diversity_section: list) -> rx.Component:
     return rx.vstack(
         rx.heading(diversity_section[0], font_size="1.2em"),
         rx.foreach(

@@ -6,11 +6,23 @@
 import os
 
 from gws_core import (
-    ConfigParams, Folder, IntParam, StrParam, Task, InputSpecs, OutputSpecs,
-    TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs, File
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
 
 from .salmon_env import SalmonShellProxyHelper
+
 
 @task_decorator("Salmon_Index", human_name="Salmon_Index",
                 short_description="Build Salmon transcriptome index")

@@ -26,7 +26,7 @@ class TestBlastEC(BaseTestCaseLight):
         # Get the expected file output
         expected_file_path = os.path.join(data_dir, "results.test.blast.csv")
 
-        with open(expected_file_path, 'r') as fp:
+        with open(expected_file_path) as fp:
             expected_result_content = fp.read()
             # Comparing results
             self.assertEqual(result_content, expected_result_content)

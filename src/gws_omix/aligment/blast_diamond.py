@@ -3,14 +3,28 @@
 # About us: https://gencovery.com
 
 import os
-import re
 
-import pandas as pd
-from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
-                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec,
-                      OutputSpecs, ShellProxy, StrParam, Table, TableImporter,
-                      Task, TaskFileDownloader, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FloatParam,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ShellProxy,
+    StrParam,
+    Table,
+    TableImporter,
+    Task,
+    TaskFileDownloader,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
 from gws_omix.base_env.diamond_env_task import DiamondShellProxyHelper
 
 

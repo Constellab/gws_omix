@@ -6,17 +6,27 @@
 
 import os
 import shutil
-from pathlib import Path
 from typing import Final
 
 from gws_core import (
-    ConfigParams, ConfigSpecs,
-    File, Folder, InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs, ShellProxy,
-    IntParam, FloatParam, StrParam,
-    ResourceSet, TableImporter, Table,
-    Task, TaskInputs, TaskOutputs,
-    task_decorator
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FloatParam,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ResourceSet,
+    ShellProxy,
+    StrParam,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
 
 from gws_omix.base_env.blast_web_env_task import BlastWebShellProxyHelper

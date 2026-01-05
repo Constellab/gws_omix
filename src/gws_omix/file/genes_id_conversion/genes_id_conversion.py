@@ -5,18 +5,25 @@
 
 import os
 import shlex
-from pathlib import Path
 from typing import Final
-import numpy as np
-import pandas as pd
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-import sys
 
-from gws_core import(
-    ConfigParams, ConfigSpecs, File, FloatParam, InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs, PlotlyResource, ResourceSet, ShellProxy,
-    StrParam, TableImporter, Task, TaskInputs, TaskOutputs, task_decorator,TableImporter,Table)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    ShellProxy,
+    StrParam,
+    Table,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 from .genes_id_conversion_env import GenesidConversionShellProxyHelper
 
@@ -157,7 +164,7 @@ class IDConvertTask(Task):
         target_ns   = p["target_namespace"].strip()
         numeric_ns  = (p.get("numeric_namespace", "") or "").strip()
 
-        shell: "ShellProxy" = GenesidConversionShellProxyHelper.create_proxy(self.message_dispatcher)
+        shell: ShellProxy = GenesidConversionShellProxyHelper.create_proxy(self.message_dispatcher)
         work = shell.working_dir
         out_prefix = "ID_CONVERT"  # fixed prefix for outputs
 

@@ -5,8 +5,21 @@
 
 import os
 
-from gws_core import (ConfigParams, Folder, IntParam, Task, InputSpecs, OutputSpecs,
-                      TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs, File)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 from .hisat2_env import Hisat2ShellProxyHelper
 

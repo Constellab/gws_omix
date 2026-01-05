@@ -5,9 +5,18 @@
 
 import re
 
-from gws_core import (ConfigParams, File, InputSpec, InputSpecs, OutputSpec,
-                      OutputSpecs, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (
+    ConfigParams,
+    File,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 
 @task_decorator("ECListMerger",
@@ -34,7 +43,7 @@ class ECListMerger(Task):
         uniq_ec = {}
         deepec_ec = deepec_output_file
         blast_ec = blast_output_file
-        with open(deepec_ec, 'r') as lines:
+        with open(deepec_ec) as lines:
             li_deepec = lines.readlines()
             for line in li_deepec:
                 if re.match("^Query ID", line):
@@ -44,7 +53,7 @@ class ECListMerger(Task):
                     ec_split = li_split[1].split(":")
                     uniq_ec[ec_split[1]] = 1
 
-        with open(blast_ec, 'r') as lines:
+        with open(blast_ec) as lines:
             li_blast = lines.readlines()
             for line in li_blast:
                 if re.match("^#", line):

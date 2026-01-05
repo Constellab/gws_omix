@@ -1,10 +1,17 @@
-import os
-from gws_core import (ConfigParams, ConfigSpecs, ConfigSpecs,
-                      InputSpec, InputSpecs, OutputSpec,
-                      OutputSpecs, Task, TaskFileDownloader, Table,
-                      TaskInputs, TaskOutputs, task_decorator)
-
-from typing import Dict, List
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    Table,
+    Task,
+    TaskFileDownloader,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 
 @task_decorator("Ec_number", human_name="Ec number",
@@ -56,8 +63,8 @@ class ECnumber(Task):
             processed_data.append(data)
 
         # read the databse file
-        mapping_dict: Dict[str, List[str]] = {}
-        with open(ec_database_file, 'r') as mapping_file:
+        mapping_dict: dict[str, list[str]] = {}
+        with open(ec_database_file) as mapping_file:
             header = mapping_file.readline().strip().split('\t')
             entry_index = header.index('Entry')
             ec_number_index = header.index('EC number')

@@ -5,14 +5,26 @@
 
 import os
 import re
+
 import pandas as pd
-
 from gws_core import (
-    ConfigParams, Folder, IntParam, StrParam, Task, InputSpecs, OutputSpecs,
-    TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs, File
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    StrParam,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
-from .featurecounts_env import FeatureCountsShellProxyHelper
 
+from .featurecounts_env import FeatureCountsShellProxyHelper
 
 
 @task_decorator("FeatureCounts", human_name="FeatureCounts",
@@ -142,7 +154,7 @@ class FeatureCounts(Task):
 
     def _parse_gtf_for_gene_names(self, gtf_path: str) -> dict:
         geneid2name = {}
-        with open(gtf_path, 'r') as f:
+        with open(gtf_path) as f:
             for line in f:
                 if line.startswith('#'):
                     continue

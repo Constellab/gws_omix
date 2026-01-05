@@ -5,14 +5,26 @@
 
 import csv
 from pathlib import Path
-from typing import List
 
 import pandas as pd
-
-from gws_core import ( ConfigParams, ConfigSpecs, Folder, InputSpec, InputSpecs,IntParam,OutputSpec,OutputSpecs,
-                         Task,TaskInputs,TaskOutputs,task_decorator,File )
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 from gws_omix import FastqFolder
+
 from .fastq_init_env import FastqInitShellProxyHelper
 
 
@@ -36,15 +48,15 @@ def _read_metadata(path: Path) -> pd.DataFrame:
         path,
         sep="\t",
         comment="#",
-        header=0,             
+        header=0,
         quoting=csv.QUOTE_NONE,
         dtype=str,
     )
 
 
-def _normalise_paths(files: List[str], root: Path) -> List[str]:
+def _normalise_paths(files: list[str], root: Path) -> list[str]:
     """Rendre tous les chemins absolus et vérifier qu’ils existent."""
-    resolved: List[str] = []
+    resolved: list[str] = []
     for p in files:
         path = Path(p)
         if not path.is_absolute():

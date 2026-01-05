@@ -4,9 +4,23 @@
 
 import os
 
-from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
-                      IntParam, OutputSpec, OutputSpecs, ResourceSet, StrParam,
-                      Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ResourceSet,
+    StrParam,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
 from gws_omix.base_env.trimfq_env_task import TrimFqEnvHelper
 
 from ..file.fastq_folder import FastqFolder

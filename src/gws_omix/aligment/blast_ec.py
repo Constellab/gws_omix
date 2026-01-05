@@ -5,10 +5,25 @@
 import os
 import re
 
-from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
-                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec,
-                      OutputSpecs, StrParam, Task, TaskFileDownloader,
-                      TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (
+    CondaShellProxy,
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FloatParam,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    StrParam,
+    Task,
+    TaskFileDownloader,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
 from gws_omix.base_env.omix_env_task import BaseOmixEnvHelper
 
 
@@ -132,7 +147,7 @@ class BlastEC(Task):
 
         if result != 0:
             raise Exception(
-                f"Error while running blast, details are available in messages.")
+                "Error while running blast, details are available in messages.")
 
         self.log_success_message("Blast run successfully, parsing results")
 
@@ -196,7 +211,7 @@ class BlastEC(Task):
             "Creating corresponding EC number(s) for each gene")
 
         # Create dict. containing genes with their corresponding EC number(s)
-        with open(tabular_file, 'r') as lines:
+        with open(tabular_file) as lines:
             for line in lines:
                 if re.match("^#", line):
                     pass
@@ -213,7 +228,7 @@ class BlastEC(Task):
             "Creating corresponding EC number(s) for each gene")
 
         with open(filtered_file_path, 'w+') as filtered_file_fp:
-            with open(blast_output_file, 'r') as raw_fp:
+            with open(blast_output_file) as raw_fp:
                 # Create dict. containing for each lines of the blast output
                 # (which are over the identity threshold): Hit gene's EC numbers and Best hit information
                 # li = raw_fp.readlines()

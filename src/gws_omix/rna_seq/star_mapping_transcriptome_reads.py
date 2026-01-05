@@ -5,9 +5,22 @@
 
 import os
 
-from gws_core import (ConfigParams, ConfigSpecs, File, Folder, InputSpec,
-                      InputSpecs, IntParam, OutputSpec, OutputSpecs, Task,
-                      TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
 from gws_omix import FastqFolder
 
 from ..base_env.omix_env_task import BaseOmixEnvHelper

@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class MSAVisShellProxyHelper():
+class MSAVisShellProxyHelper:
     unique_env_name = "MSAVisShellProxy"
     env_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

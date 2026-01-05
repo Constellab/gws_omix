@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class EggnogShellProxyHelper():
+class EggnogShellProxyHelper:
     unique_env_name = "EggnogShellProxy"
     env_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

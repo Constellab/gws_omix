@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class FeatureCountsShellProxyHelper():
+class FeatureCountsShellProxyHelper:
     ENV_DIR_NAME = "FeatureCountsShellProxy"
     ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

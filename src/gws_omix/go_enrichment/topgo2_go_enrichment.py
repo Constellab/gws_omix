@@ -2,10 +2,23 @@
 
 import os
 
-from gws_core import (ConfigParams, ConfigSpecs, File, InputSpec, InputSpecs,
-                      IntParam, OutputSpec, OutputSpecs, ResourceSet, StrParam,
-                      TableImporter, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ResourceSet,
+    StrParam,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 
 from ..base_env.topgo2_env_task import TopGO2ShellProxyHelper
 

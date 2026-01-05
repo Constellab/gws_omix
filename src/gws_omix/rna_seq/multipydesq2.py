@@ -6,14 +6,13 @@
 import os
 import shlex
 from pathlib import Path
-from typing import Final, List
+from typing import Final
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import scipy.cluster.hierarchy as sch
-
 from gws_core import (
     ConfigParams,
     ConfigSpecs,
@@ -33,10 +32,11 @@ from gws_core import (
     TaskOutputs,
     task_decorator,
 )
+
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 
 
-def _split_csv(s: str) -> List[str]:
+def _split_csv(s: str) -> list[str]:
     return [z.strip() for z in str(s or "").split(",") if z.strip()]
 
 
@@ -204,7 +204,7 @@ class Pydesq2Multi(Task):
         return pr
 
     @staticmethod
-    def _volcano(path: str, id_col: str, padj: float, fc: float, extra_hover: List[str]) -> PlotlyResource:
+    def _volcano(path: str, id_col: str, padj: float, fc: float, extra_hover: list[str]) -> PlotlyResource:
         d = pd.read_csv(path)
         pcol = "padj" if "padj" in d.columns else ("pvalue" if "pvalue" in d.columns else None)
         if pcol is None:

@@ -1,15 +1,30 @@
 import os
-from typing import Tuple
-import numpy as np          # ← ajout
+
+import numpy as np  # ← ajout
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import scipy.cluster.hierarchy as sch
-from gws_core import (CondaShellProxy, ConfigParams, ConfigSpecs, File,
-                      FloatParam, InputSpec, InputSpecs, IntParam, OutputSpec,
-                      OutputSpecs, PlotlyResource, ShellProxy, StrParam, Table,
-                      TableImporter, Task, TaskFileDownloader, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FloatParam,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    PlotlyResource,
+    ShellProxy,
+    StrParam,
+    Table,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 
 

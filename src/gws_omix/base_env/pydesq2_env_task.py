@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class Pydesq2ShellProxyHelper():
+class Pydesq2ShellProxyHelper:
     unique_env_name = "Pydesq2ShellProxy"
     env_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

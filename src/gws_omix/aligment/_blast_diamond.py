@@ -1,7 +1,8 @@
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
 import sys
+
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+
 
 class Translator:
     def __init__(self, input_path, fasta_output_path):

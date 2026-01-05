@@ -1,7 +1,18 @@
-from gws_core import (AppConfig, AppType, ConfigParams, ConfigSpecs,
-                      InputSpecs, OutputSpec, OutputSpecs, ReflexResource,
-                      Task, TaskInputs, TaskOutputs, app_decorator,
-                      task_decorator)
+from gws_core import (
+    AppConfig,
+    AppType,
+    ConfigParams,
+    ConfigSpecs,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    ReflexResource,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    app_decorator,
+    task_decorator,
+)
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder import Folder

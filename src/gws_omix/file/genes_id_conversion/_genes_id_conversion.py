@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 g:Profiler ID conversion CLI
@@ -25,7 +24,7 @@ import csv
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 import requests
@@ -33,7 +32,7 @@ import requests
 API_BASE = "https://biit.cs.ut.ee/gprofiler/api/convert/convert/"  # POST JSON
 
 
-def _detect_sep(fp: str, sep_arg: Optional[str]) -> str:
+def _detect_sep(fp: str, sep_arg: str | None) -> str:
     """
     Detect the delimiter of a text table, unless the user explicitly provided --sep.
     Returns a single-character separator. Defaults to comma.
@@ -41,7 +40,7 @@ def _detect_sep(fp: str, sep_arg: Optional[str]) -> str:
     if sep_arg is not None and len(sep_arg) > 0:
         return sep_arg
 
-    with open(fp, "r", encoding="utf-8", errors="replace") as fh:
+    with open(fp, encoding="utf-8", errors="replace") as fh:
         sample = fh.read(64_000)
 
     candidates = [",", "\t", ";", "|"]
@@ -54,7 +53,7 @@ def _detect_sep(fp: str, sep_arg: Optional[str]) -> str:
         return max(counts, key=counts.get) if counts else ","
 
 
-def _read_table(fp: str, sep: Optional[str]) -> pd.DataFrame:
+def _read_table(fp: str, sep: str | None) -> pd.DataFrame:
     """
     Robust reader:
       - If sep provided, use it.
@@ -64,7 +63,7 @@ def _read_table(fp: str, sep: Optional[str]) -> pd.DataFrame:
     if sep is not None:
         return pd.read_csv(fp, sep=sep, dtype=str, keep_default_na=False)
 
-    with open(fp, "r", encoding="utf-8", errors="replace") as fh:
+    with open(fp, encoding="utf-8", errors="replace") as fh:
         sample = fh.read(64_000)
 
     candidates = [",", "\t", ";", "|"]
@@ -102,14 +101,14 @@ def _to_org_code(s: str) -> str:
     return val.lower()
 
 
-def _gconvert_post(org_code: str, ids: List[str], target_ns: str, numeric_ns: Optional[str]) -> List[Dict[str, Any]]:
+def _gconvert_post(org_code: str, ids: list[str], target_ns: str, numeric_ns: str | None) -> list[dict[str, Any]]:
     """
     Call g:Profiler gconvert via POST JSON.
     - Required: organism, query[], target
     - Optional: numeric_ns (e.g., 'ENTREZGENE_ACC') to treat bare numeric IDs properly.
     Returns a list of mapping rows (JSON objects).
     """
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "organism": org_code,
         "query": ids,        # send list, not a single string
         "target": target_ns, # g:Profiler calls this field 'target'

@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class Hisat2ShellProxyHelper():
+class Hisat2ShellProxyHelper:
     ENV_DIR_NAME = "Hisat2ShellProxy"
     ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

@@ -3,20 +3,20 @@ from __future__ import annotations
 import re
 import sys
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Sequence, Dict, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-import matplotlib.pyplot as plt
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
 
 
 # ───────────────────────── utilities ──────────────────────────────
-def _parse_float(x: str | float | None) -> Optional[float]:
+def _parse_float(x: str | float | None) -> float | None:
     return None if x is None or str(x).lower() in {"", "none", "na"} else float(x)
 
 def _split_comma(s: str | None) -> list[str]:
@@ -82,7 +82,7 @@ def _normalize_key_name(s: str) -> str:
 
 # ─────────────────── volcano & heat-map functions ─────────────────
 def _volcano(d: pd.DataFrame, label: str,
-             pthr: Optional[float], fcthr: Optional[float]) -> None:
+             pthr: float | None, fcthr: float | None) -> None:
     pcol = "padj" if "padj" in d.columns else ("pvalue" if "pvalue" in d.columns else None)
     if pcol is None:
         return
@@ -110,7 +110,7 @@ def _volcano(d: pd.DataFrame, label: str,
     plt.savefig(f"Volcano_{label}.png", dpi=300)
     plt.close()
 
-def _heatmap(ad: sc.AnnData, genes: List[str], label: str) -> None:
+def _heatmap(ad: sc.AnnData, genes: list[str], label: str) -> None:
     mat = (pd.DataFrame(ad[:, genes].X.T, index=genes, columns=ad.obs_names)
              .replace([np.inf, -np.inf], np.nan).dropna(how="any"))
     if mat.shape[0] < 3 or mat.shape[1] < 2:
@@ -123,7 +123,7 @@ def _heatmap(ad: sc.AnnData, genes: List[str], label: str) -> None:
 
 
 # ───────────────────────── GTF auto-mapping ───────────────────────
-def _choose_gtf_id_key(gtf_path: str, feature_ids_sample: set[str], prefer_name: str) -> Optional[str]:
+def _choose_gtf_id_key(gtf_path: str, feature_ids_sample: set[str], prefer_name: str) -> str | None:
     """
     Choose which GTF attribute key best matches the IDs used in the count table.
     Uses:
@@ -133,7 +133,7 @@ def _choose_gtf_id_key(gtf_path: str, feature_ids_sample: set[str], prefer_name:
     prefer_norm = _normalize_key_name(prefer_name)
 
     # Pass 1: collect key scores by matching values
-    scores: Dict[str, int] = {}
+    scores: dict[str, int] = {}
     seen_keys: set[str] = set()
 
     with Path(gtf_path).open() as fh:
@@ -185,7 +185,7 @@ def _build_gtf_annotation_table(
     # Pass A: discover what columns exist where, and candidate bridge keys
     gene_keys: set[str] = set()
     gene_has: set[str] = set()
-    bridge_candidates: Dict[str, int] = {}  # key -> count on ID-lines
+    bridge_candidates: dict[str, int] = {}  # key -> count on ID-lines
     id_line_has_cols: set[str] = set()
     id_lines_seen = 0
 
@@ -225,10 +225,10 @@ def _build_gtf_annotation_table(
     remaining = [c for c in requested_cols if c not in direct_cols]
 
     # choose a bridge key only if needed and possible
-    bridge_key: Optional[str] = None
+    bridge_key: str | None = None
     if remaining and gene_has:
         # candidate must be present on gene lines too, and reasonably present on ID lines
-        candidates = [k for k in bridge_candidates.keys() if k in gene_keys]
+        candidates = [k for k in bridge_candidates if k in gene_keys]
         if candidates:
             # score = presence on ID-lines + ability to retrieve remaining cols from gene
             candidates.sort(key=lambda k: bridge_candidates.get(k, 0), reverse=True)
@@ -236,11 +236,11 @@ def _build_gtf_annotation_table(
 
     # Pass B: actually build mappings
     # direct: feature_id -> {cols}
-    direct_map: Dict[str, Dict[str, str]] = {}
+    direct_map: dict[str, dict[str, str]] = {}
     # bridge: feature_id -> bridge_id
-    feat_to_bridge: Dict[str, str] = {}
+    feat_to_bridge: dict[str, str] = {}
     # gene: bridge_id -> {remaining cols}
-    bridge_to_cols: Dict[str, Dict[str, str]] = {}
+    bridge_to_cols: dict[str, dict[str, str]] = {}
 
     with Path(gtf_path).open() as fh:
         for line in fh:
@@ -305,8 +305,8 @@ class MultiDE:
         col_time: str | None,
         col_group: str | None,
         extras: list[str],
-        pthr: Optional[float],
-        fcthr: Optional[float],
+        pthr: float | None,
+        fcthr: float | None,
         gtf_path: str | None = None,
         annotation_columns: list[str] | None = None,
     ):

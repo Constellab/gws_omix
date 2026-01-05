@@ -4,16 +4,28 @@
 # About us: https://gencovery.com
 
 import csv
-import os
 from pathlib import Path
-from typing import List
 
 import pandas as pd
-from gws_core import (ConfigParams,ConfigSpecs,Folder,File,InputSpec,InputSpecs,OutputSpec,OutputSpecs,
-                       IntParam,Task,TaskInputs,TaskOutputs,task_decorator)
+from gws_core import (
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    Folder,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
+
+from gws_omix import FastqFolder
 
 from .salmon_env import SalmonShellProxyHelper
-from gws_omix import FastqFolder
 
 
 def _read_metadata(path: Path) -> pd.DataFrame:
@@ -28,9 +40,9 @@ def _read_metadata(path: Path) -> pd.DataFrame:
     )
 
 
-def _abs_paths(files: List[str], root: Path) -> List[str]:
+def _abs_paths(files: list[str], root: Path) -> list[str]:
     """Return absolute, verified paths (root-relative if needed)."""
-    out: List[str] = []
+    out: list[str] = []
     for p in files:
         fp = Path(p) if Path(p).is_absolute() else root / p
         if not fp.exists():

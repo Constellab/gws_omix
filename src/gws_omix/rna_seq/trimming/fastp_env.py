@@ -8,7 +8,7 @@ from gws_core import CondaShellProxy, MessageDispatcher
 
 
 # @task_decorator("TrimommaticShellProxyHelper", hide=True)
-class FastpShellProxyHelper():
+class FastpShellProxyHelper:
     ENV_DIR_NAME = "FastpShellProxy"
     ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

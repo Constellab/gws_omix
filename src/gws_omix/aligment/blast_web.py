@@ -9,11 +9,22 @@ from pathlib import Path
 from typing import Final
 
 from gws_core import (
-    ConfigParams, ConfigSpecs, File,
-    FloatParam, InputSpec, InputSpecs,
-    OutputSpec, OutputSpecs, ResourceSet,
-    ShellProxy, StrParam, TableImporter,
-    Task, TaskInputs, TaskOutputs, task_decorator
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    FloatParam,
+    InputSpec,
+    InputSpecs,
+    OutputSpec,
+    OutputSpecs,
+    ResourceSet,
+    ShellProxy,
+    StrParam,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
 
 from ..base_env.blast_web_env_task import BlastWebShellProxyHelper

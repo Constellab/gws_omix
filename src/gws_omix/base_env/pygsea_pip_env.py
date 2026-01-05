@@ -5,7 +5,7 @@ import os
 from gws_core import MessageDispatcher, PipShellProxy
 
 
-class PygseaPipShellProxyHelper():
+class PygseaPipShellProxyHelper:
     ENV_DIR_NAME = "PygseaPipShellProxyHelper"
     ENV_FILE_PATH = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),

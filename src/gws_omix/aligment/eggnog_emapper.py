@@ -4,12 +4,24 @@ from pathlib import Path
 from typing import Final
 
 from gws_core import (
-    ConfigParams, ConfigSpecs, File,
-    InputSpec, InputSpecs, IntParam,
-    OutputSpec, OutputSpecs, ShellProxy,
-    StrParam, Task, TaskInputs,
-    TaskOutputs, task_decorator,TableImporter, Table
+    ConfigParams,
+    ConfigSpecs,
+    File,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    ShellProxy,
+    StrParam,
+    Table,
+    TableImporter,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
+
 from gws_omix.base_env.eggnog_env_task import EggnogShellProxyHelper
 
 
@@ -30,7 +42,7 @@ class EggnogMapperTask(Task):
    and the sequence type (proteins, CDS, genome, or metagenome)—and outputs a cleaned annotation.tsv table with meaningful gene annotations.
     This automation makes eggNOG-mapper easier to integrate into large-scale genome or transcriptome annotation workflows.
      """
-     
+
     input_specs: Final[InputSpecs] = InputSpecs({
         "fasta": InputSpec(
             File, human_name="FASTA file",

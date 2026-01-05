@@ -7,14 +7,25 @@
 ##################### undooooooooooooooooooooone ##############
 import os
 import re
+
 from gws_core import (
-    ConfigParams, Folder, IntParam, StrParam, Task, InputSpecs, OutputSpecs,
-    TaskInputs, TaskOutputs, task_decorator, InputSpec, OutputSpec, ConfigSpecs
+    ConfigParams,
+    ConfigSpecs,
+    InputSpec,
+    InputSpecs,
+    IntParam,
+    OutputSpec,
+    OutputSpecs,
+    StrParam,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
 )
+
 from gws_omix import FastqFolder
 
 from .trimmomatic_env import TrimommaticShellProxyHelper
-
 
 
 @task_decorator("Trimmomatic", human_name="Trimmomatic",
