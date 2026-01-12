@@ -7,7 +7,7 @@ import os
 from gws_core import CondaShellProxy, MessageDispatcher
 
 
-class PyGenomeVizShellProxyHelper():
+class PyGenomeVizShellProxyHelper:
     ENV_DIR_NAME = "PyGenomeVizShellProxy"
     ENV_FILE_PATH = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
