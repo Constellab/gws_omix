@@ -46,6 +46,21 @@ def _split_csv(s: str) -> list[str]:
     short_description="DESeq2 contrasts + interactive PCA / volcano / heat-maps",
 )
 class Pydesq2Multi(Task):
+    """
+    pyDESeq2 multi-contrast differential expression task.
+
+    Runs DESeq2-style (PyDESeq2) differential expression for each treatment vs the chosen control,
+    plus an optional pooled “ALL vs CTRL” comparison. Covariates found in the metadata (timepoint,
+    group, and any user-provided extra covariates) are included in the design when available.
+
+    Outputs per contrast:
+    - FULL (unfiltered) results table and a FILTERED table (padj if available, else pvalue; + |log2FC| cutoff)
+    - interactive volcano plot (log2FC vs −log10(padj/pvalue))
+    - VST-based heatmap (top genes by |log2FC|, up/down balanced)
+
+    Also outputs a global VST-based PCA of all samples.
+    full documentation is available in community : https://constellab.community/bricks/gws_omix/latest/doc/use-cases/rna-seq-splice-aware-aligner-and-quasi-mapper
+    """
 
     input_specs: Final[InputSpecs] = InputSpecs({
         "count_table_file": InputSpec(File, human_name="Counts CSV"),
@@ -54,10 +69,11 @@ class Pydesq2Multi(Task):
     })
 
     output_specs: Final[OutputSpecs] = OutputSpecs({
-        "tables":        OutputSpec(ResourceSet, human_name="DE & summaries"),
-        "pca_plots":     OutputSpec(ResourceSet, human_name="Interactive PCA"),
-        "heatmap_plots": OutputSpec(ResourceSet, human_name="Interactive heat-maps"),
-        "volcano_plots": OutputSpec(ResourceSet, human_name="Interactive volcano"),
+        "tables_full":    OutputSpec(ResourceSet, human_name="DE results (FULL, unfiltered)"),
+        "tables_filtered": OutputSpec(ResourceSet, human_name="DE results (FILTERED)"),
+        "pca_plots":      OutputSpec(ResourceSet, human_name="Interactive PCA"),
+        "heatmap_plots":  OutputSpec(ResourceSet, human_name="Interactive heat-maps"),
+        "volcano_plots":  OutputSpec(ResourceSet, human_name="Interactive volcano"),
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
@@ -75,10 +91,10 @@ class Pydesq2Multi(Task):
             "Optional second grouping column (e.g. sex, strain)."),
         "extra_covariates": StrParam(default_value="", short_description=
             "Comma-separated list of additional covariate columns (added as main effects)."),
-        "pvalue_value": FloatParam(default_value=0.05, min_value=0.0,
-            short_description="P-value/FDR threshold for filtered outputs."),
+        "padj_value": FloatParam(default_value=0.05, min_value=0.0,
+            short_description="Threshold used for FILTERED outputs (uses padj if available else pvalue)."),
         "log2FoldChange_value": FloatParam(default_value=0.5, short_description=
-            "Absolute |log₂FC| cutoff for filtered outputs."),
+            "Absolute |log₂FC| cutoff for FILTERED outputs."),
 
         "annotation_columns": StrParam(default_value="", short_description=
             "Comma-separated extra columns for outputs/plots (e.g. gene_name,gene_biotype). "
@@ -204,22 +220,26 @@ class Pydesq2Multi(Task):
         return pr
 
     @staticmethod
-    def _volcano(path: str, id_col: str, padj: float, fc: float, extra_hover: list[str]) -> PlotlyResource:
-        d = pd.read_csv(path)
+    def _volcano(path_full_csv: str, id_col: str, padj_thr: float, fc_thr: float, extra_hover: list[str]) -> PlotlyResource:
+        """
+        Volcano interactif basé sur le CSV FULL (non filtré),
+        coloration par seuils (padj si dispo sinon pvalue).
+        """
+        d = pd.read_csv(path_full_csv)
         pcol = "padj" if "padj" in d.columns else ("pvalue" if "pvalue" in d.columns else None)
-        if pcol is None:
+        if pcol is None or "log2FoldChange" not in d.columns:
             pr = PlotlyResource(go.Figure())
-            pr.name = f"Volcano {Path(path).stem}"
+            pr.name = f"Volcano {Path(path_full_csv).stem}"
             return pr
 
         eps = d.loc[d[pcol] > 0, pcol].min()
         eps = eps if (eps is not None and not np.isnan(eps)) else 1e-300
 
         d["p_plot"] = -np.log10(d[pcol].replace(0, eps))
-        d["signif"] = (d[pcol] < padj) & (d.log2FoldChange.abs() > fc)
+        d["signif"] = (d[pcol] < float(padj_thr)) & (d["log2FoldChange"].abs() > float(fc_thr))
 
         hover = []
-        for c in [id_col, *extra_hover, pcol, "log2FoldChange"]:
+        for c in [id_col, *extra_hover, pcol, "log2FoldChange", "baseMean"]:
             if c and c in d.columns and c not in hover:
                 hover.append(c)
 
@@ -230,16 +250,16 @@ class Pydesq2Multi(Task):
             labels={
                 "log2FoldChange": "Log₂ FC",
                 "p_plot": f"-log₁₀({pcol})",
-                "signif": f"{pcol}<{padj} & |log2FC|>{fc}",
+                "signif": f"{pcol}<{padj_thr} & |log2FC|>{fc_thr}",
             },
-            title=Path(path).stem,
+            title=Path(path_full_csv).stem.replace("DE_FULL_", ""),
         )
-        fig.add_hline(y=-np.log10(padj), line_dash="dot", line_color="grey")
-        fig.add_vline(x=fc,  line_dash="dot", line_color="grey")
-        fig.add_vline(x=-fc, line_dash="dot", line_color="grey")
+        fig.add_hline(y=-np.log10(float(padj_thr)), line_dash="dot", line_color="grey")
+        fig.add_vline(x=float(fc_thr),  line_dash="dot", line_color="grey")
+        fig.add_vline(x=-float(fc_thr), line_dash="dot", line_color="grey")
 
         pr = PlotlyResource(fig)
-        pr.name = f"Volcano {Path(path).stem}"
+        pr.name = f"Volcano {Path(path_full_csv).stem}"
         return pr
 
     def run(self, p: ConfigParams, ins: TaskInputs) -> TaskOutputs:
@@ -248,14 +268,14 @@ class Pydesq2Multi(Task):
         gtf    = ins["gtf_file"].path
 
         samp   = p["samples_colname"]
-        feat   = p["genes_colname"]  # user-defined column name
+        feat   = p["genes_colname"]
         cond   = p["condition_column"]
         ctrl   = p["control_condition"]
         tp     = p["timepoint_column"] or "None"
         grp    = p["group_column"]     or "None"
         extras = p["extra_covariates"] or ""
-        pthr   = p["pvalue_value"]
-        fcthr  = p["log2FoldChange_value"]
+        pthr   = float(p["padj_value"])
+        fcthr  = float(p["log2FoldChange_value"])
 
         annot_cols_str = p.get("annotation_columns", "") or ""
         annot_cols = _split_csv(annot_cols_str)
@@ -284,7 +304,12 @@ class Pydesq2Multi(Task):
             raise RuntimeError("DESeq2 analysis failed – check logs")
 
         work = shell.working_dir
-        tables, pca, heat, volc = ResourceSet(), ResourceSet(), ResourceSet(), ResourceSet()
+
+        tables_full = ResourceSet()
+        tables_filt = ResourceSet()
+        pca = ResourceSet()
+        heat = ResourceSet()
+        volc = ResourceSet()
 
         pca.add_resource(
             PlotlyResource(
@@ -302,8 +327,9 @@ class Pydesq2Multi(Task):
         for fn in os.listdir(work):
             fp = os.path.join(work, fn)
 
-            if fn.startswith("DE_") and fn.endswith(".csv"):
-                tables.add_resource(
+            # FULL results
+            if fn.startswith("DE_FULL_") and fn.endswith(".csv"):
+                tables_full.add_resource(
                     TableImporter.call(
                         File(fp),
                         {"delimiter": ",", "header": 0, "file_format": "csv", "index_column": -1},
@@ -311,12 +337,23 @@ class Pydesq2Multi(Task):
                     fn,
                 )
                 volc.add_resource(
-                    self._volcano(fp, feat, float(pthr), float(fcthr), annot_cols),
+                    self._volcano(fp, feat, pthr, fcthr, annot_cols),
                     f"Volcano {Path(fp).stem}",
                 )
 
+            # FILTERED results
+            elif fn.startswith("DE_FILT_") and fn.endswith(".csv"):
+                tables_filt.add_resource(
+                    TableImporter.call(
+                        File(fp),
+                        {"delimiter": ",", "header": 0, "file_format": "csv", "index_column": -1},
+                    ),
+                    fn,
+                )
+
             elif fn.startswith("Summary_") and fn.endswith(".csv"):
-                tables.add_resource(
+                # summaries = filtrés (par construction dans le script)
+                tables_filt.add_resource(
                     TableImporter.call(
                         File(fp),
                         {"delimiter": ",", "header": 0, "file_format": "csv"},
@@ -328,8 +365,9 @@ class Pydesq2Multi(Task):
                 heat.add_resource(self._heatmap(fp), f"Heatmap {Path(fp).stem}")
 
         return {
-            "tables":        tables,
-            "pca_plots":     pca,
-            "heatmap_plots": heat,
-            "volcano_plots": volc,
+            "tables_full":     tables_full,
+            "tables_filtered": tables_filt,
+            "pca_plots":       pca,
+            "heatmap_plots":   heat,
+            "volcano_plots":   volc,
         }

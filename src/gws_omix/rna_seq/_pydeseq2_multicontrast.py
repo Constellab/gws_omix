@@ -76,45 +76,111 @@ def _match_sample_columns(raw_cols: list[str], sample_ids: list[str]) -> tuple[d
     return mapping, missing
 
 def _normalize_key_name(s: str) -> str:
-    # try to match "gene_ID" -> "gene_id", "TranscriptID" -> "transcriptid"
     return re.sub(r"[^a-z0-9]+", "_", str(s).strip().lower())
 
 
+def _pick_pcol(df: pd.DataFrame) -> str | None:
+    if "padj" in df.columns:
+        return "padj"
+    if "pvalue" in df.columns:
+        return "pvalue"
+    return None
+
+
 # ─────────────────── volcano & heat-map functions ─────────────────
-def _volcano(d: pd.DataFrame, label: str,
-             pthr: float | None, fcthr: float | None) -> None:
-    pcol = "padj" if "padj" in d.columns else ("pvalue" if "pvalue" in d.columns else None)
+def _volcano(full_df: pd.DataFrame, label: str, pthr: float | None, fcthr: float | None) -> None:
+    """
+    Volcano basé sur les résultats FULL (non filtrés), coloration par seuils.
+    """
+    pcol = _pick_pcol(full_df)
     if pcol is None:
         return
-    pos = d[pcol].dropna()
+
+    pos = full_df[pcol].dropna()
     pos = pos[pos > 0]
     eps = pos.min() if not pos.empty else 1e-300
 
-    dd = d.assign(
-        neglog10p=-np.log10(d[pcol].replace(0, eps)),
-        signif=((d[pcol] < (pthr or 1)) & (d.log2FoldChange.abs() > (fcthr or 0)))
-    )
+    thr_p = 1.0 if pthr is None else float(pthr)
+    thr_fc = 0.0 if fcthr is None else float(fcthr)
+
+    dd = full_df.copy()
+    dd["neglog10p"] = -np.log10(dd[pcol].replace(0, eps))
+    dd["signif"] = (dd[pcol] < thr_p) & (dd["log2FoldChange"].abs() > thr_fc)
+
     plt.figure(figsize=(5, 4))
-    plt.scatter(dd.log2FoldChange[~dd.signif], dd.neglog10p[~dd.signif],
+    plt.scatter(dd.loc[~dd["signif"], "log2FoldChange"], dd.loc[~dd["signif"], "neglog10p"],
                 s=8, alpha=.45, color="#A6ACBC")
-    plt.scatter(dd.log2FoldChange[dd.signif], dd.neglog10p[dd.signif],
+    plt.scatter(dd.loc[dd["signif"], "log2FoldChange"], dd.loc[dd["signif"], "neglog10p"],
                 s=8, alpha=.75, color="#D62728")
-    if pthr:
-        plt.axhline(-np.log10(pthr), ls="--", c="grey")
-    if fcthr:
-        plt.axvline(fcthr, ls="--", c="grey")
-        plt.axvline(-fcthr, ls="--", c="grey")
-    plt.xlabel("log₂ FC"); plt.ylabel("−log₁₀ p")
+
+    if pthr is not None:
+        plt.axhline(-np.log10(thr_p), ls="--", c="grey")
+    if fcthr is not None:
+        plt.axvline(thr_fc, ls="--", c="grey")
+        plt.axvline(-thr_fc, ls="--", c="grey")
+
+    plt.xlabel("log₂ FC")
+    plt.ylabel(f"−log₁₀({pcol})")
     plt.title(f"Volcano {label}")
     plt.tight_layout()
     plt.savefig(f"Volcano_{label}.png", dpi=300)
     plt.close()
 
+
+def _select_heatmap_genes(full_df: pd.DataFrame, n: int = 50) -> list[str]:
+    """
+    Sélectionne des gènes pour heatmap :
+    - priorise padj si dispo (sinon pvalue)
+    - prend up/down équilibré selon |log2FC|
+    """
+    if full_df.empty or "log2FoldChange" not in full_df.columns:
+        return []
+
+    pcol = _pick_pcol(full_df)
+    dd = full_df.copy()
+
+    if pcol is not None:
+        dd = dd.dropna(subset=[pcol])
+        dd = dd.sort_values(pcol, ascending=True)
+    else:
+        dd = dd.copy()
+
+    dd["absLFC"] = dd["log2FoldChange"].abs()
+    dd = dd.sort_values(["absLFC"], ascending=False)
+
+    # équilibrer up/down si possible
+    up = dd[dd["log2FoldChange"] > 0]
+    down = dd[dd["log2FoldChange"] < 0]
+
+    half = max(1, n // 2)
+    genes = []
+    if len(up) > 0:
+        genes += up.head(half).index.tolist()
+    if len(down) > 0:
+        genes += down.head(half).index.tolist()
+
+    # compléter si manque
+    if len(genes) < n:
+        rest = [g for g in dd.index.tolist() if g not in set(genes)]
+        genes += rest[: (n - len(genes))]
+
+    return genes[:n]
+
+
 def _heatmap(ad: sc.AnnData, genes: list[str], label: str) -> None:
+    if not genes:
+        return
+
+    genes = [g for g in genes if g in ad.var_names]
+    if len(genes) < 3:
+        return
+
     mat = (pd.DataFrame(ad[:, genes].X.T, index=genes, columns=ad.obs_names)
-             .replace([np.inf, -np.inf], np.nan).dropna(how="any"))
+             .replace([np.inf, -np.inf], np.nan)
+             .dropna(how="any"))
     if mat.shape[0] < 3 or mat.shape[1] < 2:
         return
+
     mat.to_csv(f"Heatmap_{label}.csv")
     sns.clustermap(mat, z_score=0, cmap="RdYlBu_r",
                    cbar_kws={"label": "z-score (VST)"}) \
@@ -124,15 +190,8 @@ def _heatmap(ad: sc.AnnData, genes: list[str], label: str) -> None:
 
 # ───────────────────────── GTF auto-mapping ───────────────────────
 def _choose_gtf_id_key(gtf_path: str, feature_ids_sample: set[str], prefer_name: str) -> str | None:
-    """
-    Choose which GTF attribute key best matches the IDs used in the count table.
-    Uses:
-      1) name match (case-insensitive normalized)
-      2) value overlap score with sample IDs
-    """
     prefer_norm = _normalize_key_name(prefer_name)
 
-    # Pass 1: collect key scores by matching values
     scores: dict[str, int] = {}
     seen_keys: set[str] = set()
 
@@ -153,19 +212,17 @@ def _choose_gtf_id_key(gtf_path: str, feature_ids_sample: set[str], prefer_name:
     if not seen_keys:
         return None
 
-    # Strong preference: if a key name matches genes_colname (normalized), use it
     name_matches = [k for k in seen_keys if _normalize_key_name(k) == prefer_norm]
     if name_matches:
-        # if multiple, take the one with highest overlap
         name_matches.sort(key=lambda k: scores.get(k, 0), reverse=True)
         return name_matches[0]
 
-    # Otherwise pick the highest overlap key
     best = max(scores.items(), key=lambda kv: kv[1])[0] if scores else None
     if best and scores.get(best, 0) > 0:
         return best
 
     return None
+
 
 def _build_gtf_annotation_table(
     gtf_path: str,
@@ -173,21 +230,13 @@ def _build_gtf_annotation_table(
     requested_cols: list[str],
     feature_ids_all: pd.Series,
 ) -> pd.DataFrame:
-    """
-    Build DF keyed by the count-table feature IDs (feature_key in GTF),
-    adding requested_cols. Works for gene-level or transcript-level, and if
-    requested columns are only available on gene features, it auto-selects a bridge key.
-    """
-    # normalize IDs
     feat_ids = feature_ids_all.astype(str).map(_strip_version)
     feat_set_sample = set(feat_ids.sample(min(200, len(feat_ids)), random_state=0).tolist())
 
-    # Pass A: discover what columns exist where, and candidate bridge keys
     gene_keys: set[str] = set()
     gene_has: set[str] = set()
-    bridge_candidates: dict[str, int] = {}  # key -> count on ID-lines
+    bridge_candidates: dict[str, int] = {}
     id_line_has_cols: set[str] = set()
-    id_lines_seen = 0
 
     with Path(gtf_path).open() as fh:
         for line in fh:
@@ -199,48 +248,36 @@ def _build_gtf_annotation_table(
             ftype = parts[2]
             attrs = _parse_gtf_attr(parts[8])
 
-            # gene feature lines
             if ftype == "gene":
                 gene_keys.update(attrs.keys())
                 for c in requested_cols:
                     if c in attrs:
                         gene_has.add(c)
 
-            # lines where the chosen feature_key appears
             if feature_key in attrs:
-                id_lines_seen += 1
                 for c in requested_cols:
                     if c in attrs:
                         id_line_has_cols.add(c)
 
-                # candidate bridges: any attribute key on this line that also exists on gene lines
                 for k in attrs.keys():
                     if k != feature_key:
                         bridge_candidates[k] = bridge_candidates.get(k, 0) + 1
 
-    # Decide what we can get directly from ID lines
     direct_cols = [c for c in requested_cols if c in id_line_has_cols]
-
-    # Remaining columns might need a bridge through gene features
     remaining = [c for c in requested_cols if c not in direct_cols]
 
-    # choose a bridge key only if needed and possible
     bridge_key: str | None = None
     if remaining and gene_has:
-        # candidate must be present on gene lines too, and reasonably present on ID lines
         candidates = [k for k in bridge_candidates if k in gene_keys]
         if candidates:
-            # score = presence on ID-lines + ability to retrieve remaining cols from gene
             candidates.sort(key=lambda k: bridge_candidates.get(k, 0), reverse=True)
             bridge_key = candidates[0]
 
-    # Pass B: actually build mappings
-    # direct: feature_id -> {cols}
     direct_map: dict[str, dict[str, str]] = {}
-    # bridge: feature_id -> bridge_id
     feat_to_bridge: dict[str, str] = {}
-    # gene: bridge_id -> {remaining cols}
     bridge_to_cols: dict[str, dict[str, str]] = {}
+
+    feat_all_set = set(feat_ids.tolist())
 
     with Path(gtf_path).open() as fh:
         for line in fh:
@@ -252,10 +289,9 @@ def _build_gtf_annotation_table(
             ftype = parts[2]
             attrs = _parse_gtf_attr(parts[8])
 
-            # direct annotations on ID lines
             if feature_key in attrs:
                 fid = _strip_version(attrs[feature_key])
-                if fid in feat_set_sample or fid in set(feat_ids.tolist()):
+                if fid in feat_set_sample or fid in feat_all_set:
                     if direct_cols:
                         dd = direct_map.get(fid, {})
                         for c in direct_cols:
@@ -266,7 +302,6 @@ def _build_gtf_annotation_table(
                     if bridge_key and bridge_key in attrs:
                         feat_to_bridge[fid] = _strip_version(attrs[bridge_key])
 
-            # gene lines for remaining cols via bridge key
             if bridge_key and remaining and ftype == "gene" and bridge_key in attrs:
                 bid = _strip_version(attrs[bridge_key])
                 dd = bridge_to_cols.get(bid, {})
@@ -276,14 +311,11 @@ def _build_gtf_annotation_table(
                 if dd:
                     bridge_to_cols[bid] = dd
 
-    # assemble final DF
-    out = pd.DataFrame({ "__feature_id__": feat_ids })
+    out = pd.DataFrame({"__feature_id__": feat_ids})
 
-    # apply direct cols
     for c in direct_cols:
         out[c] = out["__feature_id__"].map(lambda k: direct_map.get(k, {}).get(c, ""))
 
-    # apply bridged cols if any
     if bridge_key and remaining:
         bridge_series = out["__feature_id__"].map(lambda k: feat_to_bridge.get(k, ""))
         for c in remaining:
@@ -299,7 +331,7 @@ class MultiDE:
         counts_fp: str | Path,
         meta_fp: str | Path,
         col_sample: str,
-        col_feature: str,   # genes_colname (user-defined column name in count table)
+        col_feature: str,
         col_cond: str,
         ctrl_level: str,
         col_time: str | None,
@@ -344,7 +376,6 @@ class MultiDE:
                 f"{missing[:10]}{' …' if len(missing) > 10 else ''}"
             )
 
-        # Build counts table feature + sample columns
         counts_df = raw[[feat_col] + [colmap[s] for s in sample_ids]].copy()
         counts_df.rename(columns={colmap[s]: s for s in sample_ids}, inplace=True)
 
@@ -356,7 +387,6 @@ class MultiDE:
                 "DESeq2 requires unique feature IDs."
             )
 
-        # numeric matrix features x samples -> transpose
         count_mtx = (
             counts_df.set_index(feat_col)
                      .apply(pd.to_numeric, errors="coerce")
@@ -377,7 +407,6 @@ class MultiDE:
                  if c and c in meta.columns] + [self.c["Cond"]]
         design = "~ " + " + ".join(terms)
 
-        # Build annotation table: keep all non-sample columns + optional GTF columns
         self.feature_annot = self._build_feature_annotation(raw, sample_ids)
 
         self.dds = DeseqDataSet(counts=count_mtx, metadata=meta, design=design)
@@ -386,7 +415,6 @@ class MultiDE:
     def _build_feature_annotation(self, raw: pd.DataFrame, sample_ids: list[str]) -> pd.DataFrame | None:
         feat_col = self.c["Feature"]
 
-        # Identify which raw columns are samples (so we keep everything else)
         raw_cols = [str(c) for c in raw.columns.tolist()]
         colmap, _ = _match_sample_columns(raw_cols, [str(s) for s in sample_ids])
         sample_cols_in_raw = set(colmap.values())
@@ -402,13 +430,11 @@ class MultiDE:
         if not (self.gtf_path and self.annot_cols):
             return annot
 
-        # add only missing requested columns from GTF
         requested = [c for c in self.annot_cols if c]
         missing = [c for c in requested if c not in annot.columns]
         if not missing:
             return annot
 
-        # auto-detect which GTF attribute key matches the feature IDs used in counts
         feat_ids_series = annot[feat_col].astype(str).map(_strip_version)
         feat_sample_set = set(feat_ids_series.sample(min(200, len(feat_ids_series)), random_state=0).tolist())
 
@@ -428,7 +454,7 @@ class MultiDE:
             requested_cols=missing,
             feature_ids_all=annot[feat_col].astype(str),
         )
-        # merge: join on stripped IDs
+
         left = annot.copy()
         left["__k__"] = left[feat_col].astype(str).map(_strip_version)
         right = gtf_annot.copy()
@@ -437,36 +463,34 @@ class MultiDE:
         merged = pd.merge(left, right, on="__k__", how="left", suffixes=("", "_gtf"))
         merged.drop(columns=["__k__"], inplace=True, errors="ignore")
 
-        # ensure all missing columns exist
         for c in missing:
             if c not in merged.columns:
                 merged[c] = ""
 
         return merged.reset_index(drop=True)
 
-    def _contrast(self, tr: str, ref: str, label: str,
-                  dds: DeseqDataSet | None = None,
-                  ctx: dict[str, str] | None = None) -> pd.DataFrame:
-        ds = dds or self.dds
-        st = DeseqStats(ds, contrast=(self.c["Cond"], tr, ref))
-        st.summary(save=False)
-        df = st.get_results_df() if hasattr(st, "get_results_df") else st.results_df
+    def _filter_df(self, df_full: pd.DataFrame) -> pd.DataFrame:
+        """
+        Filtrage sur padj si dispo, sinon pvalue.
+        Applique aussi |log2FC| si demandé.
+        """
+        df = df_full.copy()
+        pcol = _pick_pcol(df)
 
-        if self.pthr is not None:
-            df = df[df.pvalue < self.pthr]
-        if self.fcthr is not None:
-            df = df[df.log2FoldChange.abs() > self.fcthr]
-        df = df.copy()
+        if self.pthr is not None and pcol is not None:
+            df = df[df[pcol] < float(self.pthr)]
 
-        if ctx:
-            for k, v in ctx.items():
-                if k not in df.columns:
-                    df.insert(0, k, v)
+        if self.fcthr is not None and "log2FoldChange" in df.columns:
+            df = df[df["log2FoldChange"].abs() > float(self.fcthr)]
 
+        return df
+
+    def _format_and_merge_annot(self, res: pd.DataFrame) -> pd.DataFrame:
         feat_col = self.c["Feature"]
 
-        out = df.copy()
+        out = res.copy()
         id_values = [str(i) for i in out.index]
+
         if feat_col in out.columns:
             out[feat_col] = id_values
             cols = [feat_col] + [c for c in out.columns if c != feat_col]
@@ -482,9 +506,41 @@ class MultiDE:
             rest = [c for c in out.columns if c not in ([feat_col] + annot_cols)]
             out = out[[feat_col] + annot_cols + rest]
 
-        out.sort_values("log2FoldChange", ascending=False).to_csv(f"DE_{label}.csv", index=False)
-        _volcano(df, label, self.pthr, self.fcthr)
-        return df
+        return out
+
+    def _contrast(
+        self,
+        tr: str,
+        ref: str,
+        label: str,
+        dds: DeseqDataSet | None = None,
+        ctx: dict[str, str] | None = None,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        ds = dds or self.dds
+        st = DeseqStats(ds, contrast=(self.c["Cond"], tr, ref))
+        st.summary(save=False)
+
+        df_full = st.get_results_df() if hasattr(st, "get_results_df") else st.results_df
+        df_full = df_full.copy()
+
+        if ctx:
+            for k, v in ctx.items():
+                if k not in df_full.columns:
+                    df_full.insert(0, k, v)
+
+        df_filt = self._filter_df(df_full)
+
+        # Exports (FULL then FILT), with annotations
+        full_out = self._format_and_merge_annot(df_full)
+        filt_out = self._format_and_merge_annot(df_filt)
+
+        full_out.sort_values("log2FoldChange", ascending=False).to_csv(f"DE_FULL_{label}.csv", index=False)
+        filt_out.sort_values("log2FoldChange", ascending=False).to_csv(f"DE_FILT_{label}.csv", index=False)
+
+        # Volcano from FULL
+        _volcano(df_full, label, self.pthr, self.fcthr)
+
+        return df_full, df_filt
 
     def _dds_pooled(self, mask: pd.Series) -> DeseqDataSet:
         cts = pd.DataFrame(self.dds.X[mask.values, :],
@@ -499,21 +555,27 @@ class MultiDE:
         dds_p.deseq2()
         return dds_p
 
-    def _vst_pca_heat(self, dfs: list[pd.DataFrame], labels: list[str]) -> None:
+    def _vst_pca_heat(self, dfs_full: list[pd.DataFrame], labels: list[str]) -> None:
         self.dds.vst_fit(use_design=False)
-        ad = sc.AnnData(self.dds.vst_transform(),
-                        obs=self.dds.obs.copy(),
-                        var=pd.DataFrame(index=self.dds.var_names))
+        ad = sc.AnnData(
+            self.dds.vst_transform(),
+            obs=self.dds.obs.copy(),
+            var=pd.DataFrame(index=self.dds.var_names),
+        )
+
         sc.pp.pca(ad, n_comps=min(30, ad.n_obs - 1, ad.n_vars - 1))
         (pd.DataFrame(ad.obsm["X_pca"][:, :2],
                       index=ad.obs_names, columns=["PC1", "PC2"])
            .join(ad.obs).to_csv("pca_metadata.csv"))
+
         v1, v2 = ad.uns["pca"]["variance_ratio"][:2]
         pd.DataFrame({"PC1 Proportion": [v1], "PC2 Proportion": [v2]}).to_csv("pca_proportions.csv", index=False)
 
-        for d, l in zip(dfs, labels):
-            if not d.empty:
-                _heatmap(ad, d.nlargest(50, "log2FoldChange").index.tolist(), l)
+        # Heatmaps: choose genes from FULL (prioritizing padj / absLFC)
+        for df_full, lbl in zip(dfs_full, labels):
+            genes = _select_heatmap_genes(df_full, n=50)
+            if genes:
+                _heatmap(ad, genes, lbl)
 
     def _stratified(self, col: str | None, store: list[tuple], tag: str, pooled: bool = False):
         if not col or col not in self.dds.obs.columns:
@@ -541,19 +603,25 @@ class MultiDE:
                 if tr == self.ctrl:
                     continue
                 lbl = f"{tr}_vs_{self.ctrl}_{tag}{lvl}"
-                df = self._contrast(tr, self.ctrl, lbl, sub_dds, {col: lvl})
-                store.append((lvl, tr, len(df),
-                              (df.log2FoldChange > 0).sum(),
-                              (df.log2FoldChange < 0).sum()))
+                df_full, df_filt = self._contrast(tr, self.ctrl, lbl, sub_dds, {col: lvl})
+
+                # summary basé sur FILT (ce que les gens attendent en général)
+                store.append((
+                    lvl, tr, len(df_filt),
+                    int((df_filt.log2FoldChange > 0).sum()) if not df_filt.empty else 0,
+                    int((df_filt.log2FoldChange < 0).sum()) if not df_filt.empty else 0,
+                ))
 
             if pooled:
                 try:
                     pool_dds = self._dds_pooled(mask)
                     lbl = f"ALL_vs_{self.ctrl}_{tag}{lvl}"
-                    df = self._contrast("ALL", self.ctrl, lbl, pool_dds, {col: lvl})
-                    store.append((lvl, "ALL", len(df),
-                                  (df.log2FoldChange > 0).sum(),
-                                  (df.log2FoldChange < 0).sum()))
+                    df_full, df_filt = self._contrast("ALL", self.ctrl, lbl, pool_dds, {col: lvl})
+                    store.append((
+                        lvl, "ALL", len(df_filt),
+                        int((df_filt.log2FoldChange > 0).sum()) if not df_filt.empty else 0,
+                        int((df_filt.log2FoldChange < 0).sum()) if not df_filt.empty else 0,
+                    ))
                 except Exception as e:
                     warnings.warn(f"{col} {lvl} pooled: {e}")
 
@@ -565,27 +633,31 @@ class MultiDE:
 
     def run(self):
         self.prepare()
-        dfs, labels = [], []
+
+        dfs_full: list[pd.DataFrame] = []
+        labels: list[str] = []
 
         for tr in self.dds.obs[self.c["Cond"]].cat.categories:
             if tr == self.ctrl:
                 continue
-            dfs.append(self._contrast(tr, self.ctrl, f"{tr}_vs_{self.ctrl}"))
+            df_full, _df_filt = self._contrast(tr, self.ctrl, f"{tr}_vs_{self.ctrl}")
+            dfs_full.append(df_full)
             labels.append(f"{tr}_vs_{self.ctrl}")
 
         if len(self.dds.obs[self.c["Cond"]].cat.categories) > 1:
             dds_pool = self._dds_pooled(self.dds.obs[self.c["Cond"]].notna())
-            dfs.append(self._contrast("ALL", self.ctrl, f"ALL_vs_{self.ctrl}", dds_pool))
+            df_full, _df_filt = self._contrast("ALL", self.ctrl, "ALL_vs_{0}".format(self.ctrl), dds_pool)
+            dfs_full.append(df_full)
             labels.append(f"ALL_vs_{self.ctrl}")
 
-        self._stratified(self.c["Time"], self.sum_time, 'T', True)
-        self._stratified(self.c["Group"], self.sum_group, 'G', True)
+        self._stratified(self.c["Time"], self.sum_time, "T", True)
+        self._stratified(self.c["Group"], self.sum_group, "G", True)
         if self.sum_time:
             self._write(self.sum_time, "Summary_Timepoint.csv", self.c["Time"])
         if self.sum_group:
             self._write(self.sum_group, "Summary_Group.csv", self.c["Group"])
 
-        self._vst_pca_heat(dfs, labels)
+        self._vst_pca_heat(dfs_full, labels)
 
 
 # ───────────────────────────── CLI ────────────────────────────────
@@ -599,9 +671,6 @@ if __name__ == "__main__":
         p_thr, fc_thr, *rest
     ) = sys.argv
 
-    # Optional:
-    # rest[0] = gtf_path (or "None")
-    # rest[1] = annotation_columns (comma-separated)
     gtf_path = rest[0] if len(rest) >= 1 and rest[0] not in {"None", ""} else None
     annot_cols = _split_comma(rest[1]) if len(rest) >= 2 else []
 

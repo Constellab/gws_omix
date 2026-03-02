@@ -28,7 +28,7 @@ from gws_core import (
 from gws_omix.base_env.pydesq2_env_task import Pydesq2ShellProxyHelper
 
 
-@task_decorator("pyDESeq2DifferentialAnalysis", human_name="pyDESeq2 pairwise differential analysis",
+@task_decorator("pyDESeq2DifferentialAnalysis", human_name="pyDESeq2 pairwise differential analysis",hide=True,
                 short_description="Compute differential analysis using pyDESeq2 python package (pairwise comparison)")
 class Pydesq2(Task):
     """

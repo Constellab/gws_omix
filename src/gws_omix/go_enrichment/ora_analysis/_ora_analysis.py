@@ -15,9 +15,22 @@ matplotlib.use("Agg")  # headless
 import matplotlib.pyplot as plt
 import seaborn as sns
 from gprofiler import GProfiler
+import inspect
 
 # ─────────────────────────── Helpers ────────────────────────────
 ENSEMBL_RE = r"^ENS[A-Z]*G\d+(\.\d+)?$"
+ALLOWED_CORR = {"gSCS", "fdr", "bonferroni"}
+
+def _corr_value_candidates(corr: str) -> list[str]:
+    """Possible spellings used by different g:Profiler python clients."""
+    c = (corr or "").strip()
+    if c == "gSCS":
+        return ["gSCS", "g_SCS", "analytical"]
+    if c == "fdr":
+        return ["fdr", "false_discovery_rate"]
+    if c == "bonferroni":
+        return ["bonferroni"]
+    return [c]
 
 def guess_code(scientific_name: str) -> str:
     parts = re.split(r"[\s_]+", scientific_name.strip())
@@ -96,11 +109,15 @@ def barplot(df: pd.DataFrame, outpng: Path, title: str, topn=20) -> bool:
     return True
 
 # ───────────────────── g:Profiler & filtering ────────────────────
-def run_gprofiler(query_genes: list[str], organism_code: str, sources: list[str]) -> pd.DataFrame:
+def run_gprofiler(query_genes: list[str], organism_code: str, sources: list[str], correction_method: str = "gSCS") -> pd.DataFrame:
     if not query_genes:
         return pd.DataFrame()
+    if correction_method not in ALLOWED_CORR:
+        raise ValueError(f"Invalid correction_method='{correction_method}'. Allowed: {sorted(ALLOWED_CORR)}")
+
     gp = GProfiler(return_dataframe=True)
-    res = gp.profile(
+
+    base_kwargs = dict(
         organism=organism_code,
         query=query_genes,
         all_results=True,
@@ -110,7 +127,46 @@ def run_gprofiler(query_genes: list[str], organism_code: str, sources: list[str]
         ordered=False,
         background=None,
     )
-    return res if res is not None else pd.DataFrame()
+
+    # Different python clients / versions use different parameter names.
+    corr_param_names = [
+        "correction_method",
+        "significance_threshold_method",
+        "threshold_algo",
+    ]
+
+    last_err: Exception | None = None
+    for corr_val in _corr_value_candidates(correction_method):
+        for pname in corr_param_names:
+            try:
+                res = gp.profile(**base_kwargs, **{pname: corr_val})
+                return res if res is not None else pd.DataFrame()
+            except TypeError as e:
+                # parameter name not supported
+                last_err = e
+                continue
+            except Exception as e:
+                # value rejected or request failed; try next
+                last_err = e
+                continue
+
+    # Last resort: run without explicit correction_method (backward compatibility)
+    try:
+        res = gp.profile(**base_kwargs)
+        return res if res is not None else pd.DataFrame()
+    except Exception as e:
+        last_err = e
+
+    sig = ""
+    try:
+        sig = str(inspect.signature(gp.profile))
+    except Exception:
+        pass
+    print(
+        "[WARN] g:Profiler call failed for all correction_method fallbacks. "
+        f"Requested='{correction_method}'. profile() signature={sig}. Last error={last_err}"
+    )
+    return pd.DataFrame()
 
 def filter_like_website(res: pd.DataFrame, alpha: float) -> pd.DataFrame:
     if res is None or res.empty:
@@ -207,6 +263,8 @@ if __name__ == "__main__":
     ap.add_argument("--outdir")
     ap.add_argument("--csv_dir")
     ap.add_argument("--fig_dir")
+    ap.add_argument("--correction_method", default="gSCS", choices=sorted(ALLOWED_CORR),
+                    help="Multiple testing correction for g:Profiler (gSCS, fdr, bonferroni). Default: gSCS")
     args = ap.parse_args()
 
     padj_thr = float(args.padj_thr or 0.05)
@@ -233,7 +291,8 @@ if __name__ == "__main__":
 
     gene_sets = build_gene_sets(df, id_series, padj_thr=padj_thr, lfc_thr=lfc_thr)
     sources = [s.strip() for s in (args.sources or "GO:BP,GO:MF,GO:CC,KEGG").split(",") if s.strip()]
-    print(f"[INFO] sources={sources}  padj_thr={padj_thr}  lfc_thr={lfc_thr}")
+    corr = args.correction_method
+    print(f"[INFO] sources={sources}  padj_thr={padj_thr}  lfc_thr={lfc_thr}  correction_method={corr}")
 
     for tag, genes in gene_sets.items():
         print(f"[INFO] {tag}: {len(genes)} genes")
@@ -242,7 +301,7 @@ if __name__ == "__main__":
             (csv_dir / f"ORA_{tag}_matrix_long.csv").write_text("", encoding="utf-8")
             continue
 
-        res  = run_gprofiler(genes, org_code, sources)
+        res  = run_gprofiler(genes, org_code, sources, correction_method=corr)
         fres = filter_like_website(res, padj_thr)
 
         table = fres if not fres.empty else res
@@ -260,6 +319,6 @@ if __name__ == "__main__":
 
         barplot(table if not table.empty else res,
                 fig_dir / f"ORA_{tag}_top{topn}.png",
-                f"ORA {tag} — {org_code}", topn=topn)
+                f"ORA {tag} — {org_code} — {corr}", topn=topn)
 
     print("✔ Done.")

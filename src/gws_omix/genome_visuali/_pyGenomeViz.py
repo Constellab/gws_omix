@@ -9,10 +9,7 @@ from pygenomeviz.parser import Genbank
 
 
 def setup_logger():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(levelname)s] %(message)s",
-    )
+    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
 def parse_args():
@@ -29,7 +26,7 @@ def main():
 
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
-    prefix = args.prefix
+    prefix = args.prefix.strip() or "pygenomeviz"
 
     output_dir.mkdir(parents=True, exist_ok=True)
     out_html = output_dir / f"{prefix}.html"
@@ -38,9 +35,14 @@ def main():
     logging.info(f"Output directory: {output_dir}")
     logging.info(f"Prefix: {prefix}")
 
-    gbk_files = sorted(input_dir.glob("*.gb"))
+    # Support common GenBank extensions
+    gbk_files = []
+    for ext in ("*.gb", "*.gbk", "*.genbank"):
+        gbk_files.extend(input_dir.glob(ext))
+    gbk_files = sorted(set(gbk_files))
+
     if not gbk_files:
-        raise RuntimeError("No GenBank files found")
+        raise RuntimeError("No GenBank files found (*.gb, *.gbk, *.genbank)")
 
     logging.info(f"Found {len(gbk_files)} GenBank files")
 
@@ -52,20 +54,15 @@ def main():
     for gbk_file in gbk_files:
         try:
             gbk = Genbank(gbk_file)
-            logging.info(
-                f"Loaded {gbk_file.name}, genome length: {gbk.genome_length}"
-            )
+            logging.info(f"Loaded {gbk_file.name}, genome length: {gbk.genome_length}")
 
-            # ✅ SEGMENTS = genome_length (OBLIGATOIRE)
             track = gv.add_feature_track(
                 gbk.name or gbk_file.stem,
                 gbk.genome_length,
             )
-
             track.add_sublabel()
 
             features = gbk.extract_features(feature_type="CDS")
-
             if not features:
                 logging.warning(f"No CDS features in {gbk_file.name}")
                 continue

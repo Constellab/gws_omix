@@ -3,9 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Final
+from typing import Final, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -33,6 +35,8 @@ from gws_core import (
 )
 
 from .ora_analysis_env import OraAnalysisShellProxyHelper
+
+CORRECTION_METHODS = ["gSCS", "fdr", "bonferroni"]
 
 SCIENTIFIC_NAMES = [
 "Daucus carota subsp. sativus","Bombus terrestris","Teladorsagia circumcincta","Ananas comosus",
@@ -430,12 +434,16 @@ def _grid_from_long(
 )
 class ORAEnrichmentTask(Task):
     """
-    This task perform functional enrichment (ORA) of differentially expressed genes using g:Profiler,
-    then package the results as tables, static barplots, and an interactive Plotly “Terms × Genes” grid.
-    The analysis script reads a DE results CSV or Table, builds three gene sets (ALL, UP, DOWN) based on FDR (padj) and optional |log2FC| thresholds, runs g:Profiler for selected sources (GO BP/MF/CC, KEGG), filters by FDR, writes CSVs, and saves top-N barplots.
-    The runner script executes that analysis, imports all outputs, and builds an interactive grid where bubble color reflects
-    p-value and size reflects |log2FC|, with dropdown pagination for both genes (horizontal) and terms (vertical)
-    via configurable grid_genes_per_page and grid_terms_per_page, plus extra spacing and margins to keep labels readable.
+    This task performs functional enrichment analysis (ORA) of differentially expressed genes using g:Profiler,
+    then packages the results as tables, static barplots, and an interactive Plotly “Terms × Genes” grid.
+    The analysis script reads a DE results CSV or Table, builds three gene sets (ALL, UP, DOWN) using the DE significance column (e.g., padj)
+    and an optional absolute |log2FC| threshold, runs g:Profiler on selected sources (GO:BP, GO:MF, GO:CC, KEGG),
+    applies a configurable multiple-testing correction for enrichment (gSCS, fdr/Benjamini–Hochberg, or bonferroni),
+    filters enriched terms by the chosen adjusted p-value threshold, writes CSV outputs, and saves top-N barplots.
+    The runner script executes the analysis, imports all outputs, and builds an interactive grid where bubble color reflects p-value and bubble size reflects |log2FC|,
+    with dropdown pagination for genes (horizontal) and terms (vertical) via grid_genes_per_page and grid_terms_per_page, plus extra spacing and margins to keep labels readable.
+
+    see full documentation : https://constellab.community/bricks/gws_omix/latest/doc/use-cases/pathway-enrichment-analysis-pea/
     """
 
     input_specs: Final[InputSpecs] = InputSpecs({
@@ -461,6 +469,8 @@ class ORAEnrichmentTask(Task):
             short_description="Top-N terms for static barplots."),
         "sources_list": StrParam(default_value="GO:BP,GO:MF,GO:CC,KEGG",
             short_description="Comma-separated sources for g:Profiler."),
+        "correction_method": StrParam(default_value="gSCS", allowed_values=CORRECTION_METHODS,
+            short_description="Multiple testing correction used by g:Profiler (gSCS, fdr, bonferroni)."),
         "grid_genes_per_page": FloatParam(default_value=25.0, min_value=1.0,
             short_description="Genes per page in the interactive grid."),
         "grid_terms_per_page": FloatParam(default_value=20.0, min_value=1.0,
@@ -489,6 +499,7 @@ class ORAEnrichmentTask(Task):
         lfc     = float(p["abs_log2fc"])
         topn    = int(p["topn_plot"])
         sources = p["sources_list"].strip() or "GO:BP,GO:MF,GO:CC,KEGG"
+        corr_method = (p.get("correction_method") or "gSCS").strip() or "gSCS"
         genes_per_page = int(p.get("grid_genes_per_page", 35))
         terms_per_page = int(p.get("grid_terms_per_page", 35))
 
@@ -500,11 +511,11 @@ class ORAEnrichmentTask(Task):
         cmd = (
             'python3 {py} --infile "{de}" --species "{sp}" '
             '--id_column "{idc}" --padj_thr {padj} --lfc_thr {lfc} '
-            '--sources "{src}" --topn {topn} '
+            '--sources "{src}" --correction_method "{corr}" --topn {topn} '
             '--outdir "{outdir}" --csv_dir "{csvdir}" --fig_dir "{figdir}"'
         ).format(
             py=self.python_file_path, de=de_csv, sp=species.replace('"', '\\"'),
-            idc=idcol, padj=padj, lfc=lfc, src=sources, topn=topn,
+            idc=idcol, padj=padj, lfc=lfc, src=sources, corr=corr_method, topn=topn,
             outdir=work, csvdir=csv_out, figdir=fig_out,
         )
 
