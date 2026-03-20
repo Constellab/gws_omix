@@ -1,0 +1,8 @@
+name: pycirclize
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+dependencies:
+  - pycirclize==1.10.1      

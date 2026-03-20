@@ -5,4 +5,7 @@ channels:
   - defaults
 
 dependencies:
-  - pygenomeviz==1.6.1      
+  - pygenomeviz==1.6.1
+  - biopython               # Required for FASTA extraction (SeqIO)
+  - mummer                  # Required for MUMmer genome comparison
+  - blast                   # Required for BLAST genome comparison
