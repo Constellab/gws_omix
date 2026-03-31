@@ -201,7 +201,7 @@ def _grid_from_long_gsea(
 @task_decorator(
     "GSEAEnrichmentGMT",
     human_name="Gene set enrichment analysis (GSEA)",
-    short_description="Pre-ranked GSEA using a signed ranking statistic (stat column) and a single GMT gene set file.",hide=True
+    short_description="Pre-ranked GSEA using a signed ranking statistic (stat column) and a single GMT gene set file."
 )
 class GSEAEnrichmentGMT(Task):
 

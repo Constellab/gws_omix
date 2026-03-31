@@ -1,0 +1,4 @@
+Name	Length	EffectiveLength	TPM	NumReads
+transcript1	100	80.0	1200.000	120
+transcript2	100	80.0	600.000	60
+transcript3	100	80.0	1800.000	180

@@ -1,11 +1,11 @@
 name: pygenomeviz
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - defaults
 
 dependencies:
   - pygenomeviz==1.6.1
-  - biopython               # Required for FASTA extraction (SeqIO)
-  - mummer                  # Required for MUMmer genome comparison
-  - blast                   # Required for BLAST genome comparison
+  - biopython==1.80
+  - mummer==3.23
+  - mmseqs2==17.b804f

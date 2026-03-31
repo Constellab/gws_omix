@@ -1,0 +1,7 @@
+Sample	Condition	timepoint	group
+ctrl_1	CTRL	T1	A
+ctrl_2	CTRL	T1	B
+ctrl_3	CTRL	T2	A
+treat_1	TREAT	T1	A
+treat_2	TREAT	T1	B
+treat_3	TREAT	T2	A

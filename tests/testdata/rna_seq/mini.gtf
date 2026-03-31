@@ -1,0 +1,9 @@
+chr1	manual	gene	1	100	.	+	.	gene_id "gene1"; gene_name "GENE1";
+chr1	manual	transcript	1	100	.	+	.	gene_id "gene1"; transcript_id "gene1_t1"; gene_name "GENE1";
+chr1	manual	exon	1	100	.	+	.	gene_id "gene1"; transcript_id "gene1_t1"; gene_name "GENE1";
+chr1	manual	gene	201	300	.	+	.	gene_id "gene2"; gene_name "GENE2";
+chr1	manual	transcript	201	300	.	+	.	gene_id "gene2"; transcript_id "gene2_t1"; gene_name "GENE2";
+chr1	manual	exon	201	300	.	+	.	gene_id "gene2"; transcript_id "gene2_t1"; gene_name "GENE2";
+chr2	manual	gene	1	100	.	+	.	gene_id "gene3"; gene_name "GENE3";
+chr2	manual	transcript	1	100	.	+	.	gene_id "gene3"; transcript_id "gene3_t1"; gene_name "GENE3";
+chr2	manual	exon	1	100	.	+	.	gene_id "gene3"; transcript_id "gene3_t1"; gene_name "GENE3";

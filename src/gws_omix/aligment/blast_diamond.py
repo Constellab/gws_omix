@@ -4,6 +4,8 @@
 
 import os
 
+import pandas as pd
+
 from gws_core import (
     ConfigParams,
     ConfigSpecs,
@@ -24,8 +26,6 @@ from gws_core import (
     TaskOutputs,
     task_decorator,
 )
-
-from gws_omix.base_env.diamond_env_task import DiamondShellProxyHelper
 
 
 @task_decorator("Diamond", human_name="Diamond",
@@ -81,47 +81,40 @@ class Diamond(Task):
         num_threads = params["num_threads"]
         query_cover_value = params["query_cover_value"]
 
-        diamond_input_path: str = None
-        if input_type_value == "nuc":
-            diamond_input_path = self.translate(input_path.path)
-        else:
-            diamond_input_path = input_path.path
-
         diamond_result_path = self.call_diamond(
-            diamond_input_path, evalue_value, num_threads, query_cover_value)
+            input_path.path, input_type_value, evalue_value, num_threads, query_cover_value)
 
-        # Use TableImporter to read the raw table
-        diamond_blast_table: Table = TableImporter.call(
-            File(diamond_result_path),
-            {'delimiter': 'tab', 'header': -1, 'file_format': 'tsv',
-                'index_column': 0, 'comment': '#'}
-        )
         raw_table_columns = ['Subject ID', 'Percentage of identical matches', 'Alignment length',
                              'Number of mismatches', 'Number of gap openings', 'Start of alignment in query',
                              'End of alignment in query', 'Start of alignment in subject',
                              'End of alignment in subject', 'Expected value', 'Bit score']
 
-        diamond_blast_table.set_all_column_names(raw_table_columns)
+        # Check if Diamond produced any hits (empty file = 0 hits)
+        file_has_data = False
+        with open(diamond_result_path) as f:
+            for line in f:
+                if not line.startswith('#') and line.strip():
+                    file_has_data = True
+                    break
+
+        if not file_has_data:
+            self.log_info_message("Diamond returned 0 hits. Returning empty table.")
+            diamond_blast_table = Table(pd.DataFrame(columns=raw_table_columns))
+        else:
+            # Use TableImporter to read the raw table
+            diamond_blast_table: Table = TableImporter.call(
+                File(diamond_result_path),
+                {'delimiter': 'tab', 'header': -1, 'file_format': 'tsv',
+                    'index_column': 0, 'comment': '#'}
+            )
+            diamond_blast_table.set_all_column_names(raw_table_columns)
 
         # Return the output table
         return {
             'output_path': diamond_blast_table
         }
 
-    def translate(self, input_file_path: str) -> str:
-        # Execute the command
-        shell_proxy: ShellProxy = DiamondShellProxyHelper.create_proxy(
-            self.message_dispatcher)
-
-        fasta_output_path = os.path.join(shell_proxy.working_dir, 'output.fasta')
-
-        # call python file
-        cmd = f"python3 {self.python_file_path} {input_file_path} {fasta_output_path}"
-        shell_proxy.run(cmd, shell_mode=True)
-
-        return fasta_output_path
-
-    def call_diamond(self, diamond_input_path: str, evalue_value: float, num_threads: int,
+    def call_diamond(self, diamond_input_path: str, input_type_value: str, evalue_value: float, num_threads: int,
                      query_cover_value: int) -> str:
 
         file_downloader = TaskFileDownloader(brick_name=Diamond.get_brick_name(),
@@ -140,15 +133,18 @@ class Diamond(Task):
 
         output_file = os.path.join(shell_proxy.working_dir, 'output.tsv')
 
+        # blastp for protein input, blastx for nucleotide input
+        blast_mode = 'blastp' if input_type_value == 'prot' else 'blastx'
+
         command = [
             diamond_exe_path,
-            'blastp',
+            blast_mode,
             '--evalue', str(evalue_value),
             '--query-cover', str(query_cover_value),
             '-q', diamond_input_path,
             '-o', output_file,
             '--threads', str(num_threads),
-            '-d', swissprot_exe_path,  # Add 'swissprot' to the prefix
+            '-d', swissprot_exe_path,
             '--header'
         ]
         shell_proxy.run(command)

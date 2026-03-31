@@ -137,7 +137,7 @@ class SalmonQuant(Task):
 
                 cmd = (
                     f"salmon quant -i {index_path} -p {threads} -l A "
-                    f"-r {in_fp} --validateMappings -o {out_dir}"
+                    f"-r {in_fp} --validateMappings --minAssignedFrags 1 -o {out_dir}"
                 )
                 print("[DEBUG]", cmd)
                 if shell.run(cmd, shell_mode=True) != 0:
@@ -155,7 +155,7 @@ class SalmonQuant(Task):
                 cmd = (
                     f"salmon quant -i {index_path} -p {threads} -l A "
                     f"-1 {fwd_fp} -2 {rev_fp} "
-                    f"--validateMappings -o {out_dir}"
+                    f"--validateMappings --minAssignedFrags 1 -o {out_dir}"
                 )
                 print("[DEBUG]", cmd)
                 if shell.run(cmd, shell_mode=True) != 0:
