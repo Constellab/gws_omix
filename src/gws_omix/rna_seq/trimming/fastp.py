@@ -61,7 +61,7 @@ class Fastp(Task):
     or paired-end (contains both forward-absolute-filepath and reverse-absolute-filepath).
     Key options: - threads
                  - Forward_separator/Reverse_separator (suffixes like 1/2),
-                 - 5_prime_hard_trimming_read_size (bases trimmed from the 5′ end applied to both mates in PE).
+                 - five_prime_hard_trimming_read_size (bases trimmed from the 5′ end applied to both mates in PE).
 
     The task auto-resolves relative paths against fastq_folder, executes fastp, and returns a FastqFolder pointing to the result directory.
     """
@@ -96,7 +96,7 @@ class Fastp(Task):
         "threads": IntParam(default_value=4, min_value=2),
         "Forward_separator": StrParam(default_value=""),
         "Reverse_separator": StrParam(default_value=""),
-        "5_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0),
+        "five_prime_hard_trimming_read_size": IntParam(default_value=0, min_value=0),
     })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -110,7 +110,7 @@ class Fastp(Task):
         threads  = params["threads"]
         fwd_sep  = params["Forward_separator"]
         rev_sep  = params["Reverse_separator"]
-        headcrop = params["5_prime_hard_trimming_read_size"]
+        headcrop = params["five_prime_hard_trimming_read_size"]
 
         is_paired = {"forward-absolute-filepath", "reverse-absolute-filepath"} <= set(meta.columns)
         is_single = "absolute-filepath" in meta.columns

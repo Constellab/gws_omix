@@ -73,7 +73,7 @@ class Trimmomatic(Task):
             allowed_values=["R2", "2", "r2", " "],
             short_description="Reverse read identifier (for Paired-end)"
         ),
-        "5_prime_hard_trimming_read_size": IntParam(
+        "five_prime_hard_trimming_read_size": IntParam(
             default_value=0, min_value=0,
             short_description="Bases to remove from 5' end"
         )
@@ -89,7 +89,7 @@ class Trimmomatic(Task):
         seq_type = params["sequencing_type"]
         fwd_sep = params["Forward_separator"]
         rev_sep = params["Reverse_separator"]
-        headcrop = params["5_prime_hard_trimming_read_size"]
+        headcrop = params["five_prime_hard_trimming_read_size"]
 
         shell_proxy = TrimommaticShellProxyHelper.create_proxy(self.message_dispatcher)
         result_path = os.path.join(shell_proxy.working_dir, "result")
