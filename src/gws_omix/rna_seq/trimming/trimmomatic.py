@@ -5,6 +5,7 @@
 
 
 ##################### undooooooooooooooooooooone ##############
+from gws_core.config.param.select_param import SelectParam
 import os
 import re
 
@@ -61,16 +62,16 @@ class Trimmomatic(Task):
     config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=2, min_value=2, short_description="Number of threads"),
         "min_len": IntParam(default_value=35, min_value=30, short_description="Minimum read length to keep"),
-        "sequencing_type": StrParam(
-            allowed_values=["Paired-end", "Single-end"],
+        "sequencing_type": SelectParam(
+            options=["Paired-end", "Single-end"],
             short_description="Choose Single-end or Paired-end"
         ),
-        "Forward_separator": StrParam(
-            allowed_values=["R1", "1", "r1", " "],
+        "Forward_separator": SelectParam(
+            options=["R1", "1", "r1", " "],
             short_description="Forward read identifier (for Paired-end)"
         ),
-        "Reverse_separator": StrParam(
-            allowed_values=["R2", "2", "r2", " "],
+        "Reverse_separator": SelectParam(
+            options=["R2", "2", "r2", " "],
             short_description="Reverse read identifier (for Paired-end)"
         ),
         "five_prime_hard_trimming_read_size": IntParam(

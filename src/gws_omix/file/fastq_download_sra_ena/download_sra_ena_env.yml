@@ -3,5 +3,5 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - fastq-dl==3.0.1
+  - fastq-dl==4.0.1
   - pandas==2.3.3

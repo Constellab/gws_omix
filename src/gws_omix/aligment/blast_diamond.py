@@ -2,6 +2,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 import os
 
 import pandas as pd
@@ -56,8 +57,8 @@ class Diamond(Task):
     config_specs: ConfigSpecs = ConfigSpecs(
         {
             "input_type_value":
-            StrParam(
-                default_value="nuc", allowed_values=["nuc", "prot"],
+            SelectParam(
+                default_value="nuc", options=["nuc", "prot"],
                 short_description="Type of alignement to perform : Prot against Prot database (i.e blastp) or Translated Nucl against prot database (i.e blastx). [Respectivly, options : prot, nuc ]. Default = nuc"),
             "evalue_value":
             FloatParam(

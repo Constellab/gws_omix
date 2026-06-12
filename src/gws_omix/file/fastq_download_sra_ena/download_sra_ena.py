@@ -5,6 +5,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 import os
 import shlex
 
@@ -67,14 +68,14 @@ class FastqDLRunner(Task):
         ),
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         "accession": StrParam(
             default_value="",
             short_description="Accession(s) comma-separated (PRJNA..., SRP..., SRX..., SRR...)"
         ),
-        "provider": StrParam(
+        "provider": SelectParam(
             default_value="sra",
-            allowed_values=["sra", "ena"],
+            options=["sra", "ena"],
             short_description="Provider: ena or sra"
         ),
         "cpus": IntParam(
@@ -82,7 +83,7 @@ class FastqDLRunner(Task):
             min_value=1,
             short_description="CPUs for fastq-dl (esp. for SRA)"
         ),
-    }
+    })
 
     python_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),

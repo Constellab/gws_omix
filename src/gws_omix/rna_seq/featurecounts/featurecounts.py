@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 import os
 import re
 
@@ -54,8 +55,8 @@ class FeatureCounts(Task):
 
     config_specs: ConfigSpecs = ConfigSpecs({
         "threads": IntParam(default_value=4, min_value=1, short_description="Number of threads"),
-        "sequencing_type": StrParam(
-            allowed_values=["Paired-end", "Single-end"],
+        "sequencing_type": SelectParam(
+            options=["Paired-end", "Single-end"],
             short_description="Library type for featureCounts"
         ),
         "strandedness": IntParam(

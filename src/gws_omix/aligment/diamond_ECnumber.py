@@ -1,3 +1,4 @@
+from gws_core.config.param.select_param import SelectParam
 import os
 
 import pandas as pd
@@ -48,9 +49,9 @@ class ECnumber(Task):
     })
 
     config_specs = ConfigSpecs({
-        'taxonomy': StrParam(
+        'taxonomy': SelectParam(
             default_value='fungi',
-            allowed_values=['fungi'],
+            options=['fungi'],
             human_name='Organism group',
             short_description='Taxonomic group used to select the EC number reference database.',
         )

@@ -2,8 +2,8 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 from __future__ import annotations
+from gws_core.config.param.select_param import SelectParam
 
 import os
 from pathlib import Path
@@ -457,7 +457,7 @@ class ORAEnrichmentTask(Task):
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
-        "organism_name": StrParam(allowed_values=SCIENTIFIC_NAMES,
+        "organism_name": SelectParam(options=SCIENTIFIC_NAMES,
             short_description="Scientific name (select from list)."),
         "genes_colname": StrParam(
             short_description="Name of the column that holds gene IDs (Ensembl or symbols or mixed)."),
@@ -469,7 +469,7 @@ class ORAEnrichmentTask(Task):
             short_description="Top-N terms for static barplots."),
         "sources_list": StrParam(default_value="GO:BP,GO:MF,GO:CC,KEGG",
             short_description="Comma-separated sources for g:Profiler."),
-        "correction_method": StrParam(default_value="gSCS", allowed_values=CORRECTION_METHODS,
+        "correction_method": SelectParam(default_value="gSCS", options=CORRECTION_METHODS,
             short_description="Multiple testing correction used by g:Profiler (gSCS, fdr, bonferroni)."),
         "grid_genes_per_page": FloatParam(default_value=25.0, min_value=1.0,
             short_description="Genes per page in the interactive grid."),

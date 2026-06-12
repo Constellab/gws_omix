@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 import os
 import shlex
 from typing import Final
@@ -130,21 +131,21 @@ class IDConvertTask(Task):
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
-        "organism_name": StrParam(
-            allowed_values=SCIENTIFIC_NAMES,
+        "organism_name": SelectParam(
+            options=SCIENTIFIC_NAMES,
             short_description="Scientific name or g:Profiler code (e.g., 'Homo sapiens').",
         ),
         "id_column": StrParam(
             default_value="",
             short_description="Column to convert (leave blank to use the first column).",
         ),
-        "target_namespace": StrParam(
-            allowed_values=TARGET_NAMES,
+        "target_namespace": SelectParam(
+            options=TARGET_NAMES,
             default_value="ENSG",
             short_description="g:Profiler target namespace.",
         ),
-        "numeric_namespace": StrParam(
-            allowed_values=NUMERIC_IDS_TREATED,
+        "numeric_namespace": SelectParam(
+            options=NUMERIC_IDS_TREATED,
             default_value="auto",
             short_description="How to treat bare numeric IDs (e.g., ENTREZGENE_ACC). Recommended when IDs are numbers; otherwise set 'auto'.",
         ),

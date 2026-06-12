@@ -5,6 +5,7 @@
 # Proprietary and confidential
 # Written by Gencovery SAS, 2024
 
+from gws_core.config.param.select_param import SelectParam
 from pathlib import Path
 from typing import Final, List
 
@@ -69,8 +70,8 @@ class PyGenomeVizCompare(Task):
                 default_value="pygenomeviz",
                 short_description="Output file prefix",
             ),
-            "comparison_mode": StrParam(
-                allowed_values=COMPARISON_MODES,
+            "comparison_mode": SelectParam(
+                options=COMPARISON_MODES,
                 default_value="visualization_only",
                 short_description=(
                     "visualization_only: display annotations only; "

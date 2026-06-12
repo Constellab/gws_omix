@@ -4,6 +4,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 import os
 import shutil
 from typing import Final
@@ -49,8 +50,8 @@ class LocalBlast(Task):
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
-        "sequence_type": StrParam(allowed_values=["nucl", "prot"]),
-        "blast_program": StrParam(allowed_values=["blastn", "blastp", "blastx", "tblastn"]),
+        "sequence_type": SelectParam(options=["nucl", "prot"]),
+        "blast_program": SelectParam(options=["blastn", "blastp", "blastx", "tblastn"]),
         "evalue": FloatParam(default_value=1e-5),
         "max_target_seqs": IntParam(default_value=5),
         "threads": IntParam(default_value=8)

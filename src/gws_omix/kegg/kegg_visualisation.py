@@ -1,3 +1,4 @@
+from gws_core.config.param.select_param import SelectParam
 import os
 import re
 import shlex
@@ -116,7 +117,7 @@ class KEGGVisualisation(Task):
     })
 
     config_specs = ConfigSpecs({
-        "organism_name": StrParam(allowed_values=SUPPORTED_ORGANISM_NAMES, human_name="Organism (autocomplete)"),
+        "organism_name": SelectParam(options=SUPPORTED_ORGANISM_NAMES, human_name="Organism (autocomplete)"),
         "col_entrez": StrParam(
             default_value="NCBI GeneID",
             human_name="NCBI Entrez Gene column",

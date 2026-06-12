@@ -4,6 +4,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 from pathlib import Path
 from typing import Final, List, Optional
 
@@ -125,8 +126,8 @@ class IQTree3(Task):
             default_value="",
             short_description="Output prefix (default: aligned FASTA filename stem)"
         ),
-        "model": StrParam(
-            allowed_values=["MFP"],
+        "model": SelectParam(
+            options=["MFP"],
             default_value="MFP",
             short_description=(
                 "Substitution model. MFP (ModelFinder Plus): IQ-TREE teste de "

@@ -4,6 +4,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.select_param import SelectParam
 import os
 from pathlib import Path
 from typing import Final
@@ -46,12 +47,12 @@ class BlastWebRunner(Task):
     })
 
     config_specs: Final[ConfigSpecs] = ConfigSpecs({
-        "blast_program": StrParam(
-            allowed_values=["blastn", "blastp", "blastx", "tblastn"],
+        "blast_program": SelectParam(
+            options=["blastn", "blastp", "blastx", "tblastn"],
             short_description="BLAST program"
         ),
-        "sequence_type": StrParam(
-            allowed_values=["nucl", "prot"],
+        "sequence_type": SelectParam(
+            options=["nucl", "prot"],
             short_description="Type of sequences in input"
         ),
         "evalue": FloatParam(default_value=1e-3, min_value=0.0),
