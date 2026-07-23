@@ -5,7 +5,7 @@
 
 <br/>
 
-# 👋 Welcome to GWS Omix 
+# 👋 Welcome to GWS Omix
 
 ```gws_omix``` is a [Constellab](https://constellab.io) library (called bricks) developped by [Gencovery](https://gencovery.com/). GWS stands for Gencovery Web Services.
 
@@ -19,8 +19,15 @@
 
 ## ✅ Features
 
-Gencovery brick for omics data analysis
-Molecular sequence analysis
+Gencovery brick for omics data analysis, wrapping widely-used bioinformatics tools as Constellab tasks:
+- **Sequence alignment & search**: BLAST against NCBI (web) or a local RefSeq database, DIAMOND alignment with EC number mapping, multiple sequence alignment and visualization
+- **RNA-seq pipeline**: FastQC quality control, read trimming (Trimmomatic, Fastp), genome/transcriptome mapping and indexing (STAR, HISAT2, Salmon), read counting (FeatureCounts), quality report aggregation (MultiQC), differential expression analysis (pyDESeq2, multi-contrast)
+- **Functional enrichment**: over-representation analysis (ORA) and gene set enrichment analysis (GSEA), GAF-to-GMT gene set conversion, gene ID conversion
+- **KEGG pathway analysis**: KEGG enrichment with Pathview visualization
+- **Genome visualization**: circular genome plots (pyCirclize), comparative genome visualization (pyGenomeViz)
+- **Phylogenetics**: tree construction (IQ-TREE) and tree visualization (phyTreeViz)
+- **Data acquisition**: FASTQ download from SRA/ENA
+- **Showcase app**: generate a demo Omix showcase application
 
 ## 📄 Documentation
 
